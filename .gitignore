@@ -1,0 +1,9 @@
+# Dart tooling
+.dart_tool/
+.packages
+
+# Built site (made by `dart run tool/build.dart`; GitHub Actions builds it too)
+build/
+
+# Local editor / assistant settings
+.claude/

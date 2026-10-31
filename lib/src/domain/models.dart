@@ -1,0 +1,666 @@
+/// What the app stores: people, trips and everything inside a trip.
+///
+/// Money is always in whole cents, so sums never drift. Days are UTC midnights,
+/// so counting days never trips over a clock change.
+library;
+
+typedef Json = Map<String, dynamic>;
+
+List<T> _list<T>(Object? raw, T Function(Json) read) => [
+      for (final item in (raw as List<dynamic>? ?? const <dynamic>[]))
+        read(item as Json)
+    ];
+
+List<String> _strings(Object? raw) => [
+      for (final item in (raw as List<dynamic>? ?? const <dynamic>[]))
+        item as String
+    ];
+
+/// A calendar day as a UTC midnight.
+DateTime dayOf(int year, int month, int day) => DateTime.utc(year, month, day);
+
+/// Today on this device.
+DateTime today([DateTime? now]) {
+  final clock = now ?? DateTime.now();
+  return dayOf(clock.year, clock.month, clock.day);
+}
+
+/// `2027-06-12`
+String dayKey(DateTime day) => '${day.year.toString().padLeft(4, '0')}-'
+    '${day.month.toString().padLeft(2, '0')}-'
+    '${day.day.toString().padLeft(2, '0')}';
+
+DateTime parseDay(String key) {
+  final parts = key.split('-').map(int.parse).toList();
+  return dayOf(parts[0], parts[1], parts[2]);
+}
+
+class Person {
+  Person({required this.id, required this.name});
+
+  factory Person.fromJson(Json json) =>
+      Person(id: json['id'] as String, name: json['name'] as String);
+
+  final String id;
+  String name;
+
+  Json toJson() => {'id': id, 'name': name};
+}
+
+/// A place to stay the group is comparing.
+class Offer {
+  Offer({
+    required this.id,
+    required this.name,
+    required this.pricePerNight,
+    this.rating,
+    this.beachMeters,
+    this.source = 'Ručno',
+    this.link,
+    Set<String>? votes,
+  }) : votes = votes ?? {};
+
+  factory Offer.fromJson(Json json) => Offer(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        pricePerNight: json['pricePerNight'] as int,
+        rating: (json['rating'] as num?)?.toDouble(),
+        beachMeters: json['beachMeters'] as int?,
+        source: json['source'] as String? ?? 'Ručno',
+        link: json['link'] as String?,
+        votes: _strings(json['votes']).toSet(),
+      );
+
+  final String id;
+  String name;
+  int pricePerNight;
+  double? rating;
+  int? beachMeters;
+  String source;
+  String? link;
+  Set<String> votes;
+
+  Json toJson() => {
+        'id': id,
+        'name': name,
+        'pricePerNight': pricePerNight,
+        'rating': rating,
+        'beachMeters': beachMeters,
+        'source': source,
+        'link': link,
+        'votes': votes.toList(),
+      };
+}
+
+enum PlaceKind {
+  restaurant('Restorani', 'restorani'),
+  cafe('Kafići', 'kafići'),
+  beachBar('Beach barovi', 'beach bar'),
+  wineShop('Vinoteke', 'vinoteka'),
+  winery('Vinarije', 'vinarija');
+
+  const PlaceKind(this.label, this.searchWord);
+
+  final String label;
+
+  /// What to look for on Google Maps.
+  final String searchWord;
+}
+
+/// A restaurant, cafe, beach bar, wine shop or winery.
+class Place {
+  Place({
+    required this.id,
+    required this.kind,
+    required this.name,
+    this.rating,
+    this.pricePerPerson,
+    this.note,
+    this.link,
+    this.planned = false,
+  });
+
+  factory Place.fromJson(Json json) => Place(
+        id: json['id'] as String,
+        kind: PlaceKind.values.byName(json['kind'] as String),
+        name: json['name'] as String,
+        rating: (json['rating'] as num?)?.toDouble(),
+        pricePerPerson: json['pricePerPerson'] as int?,
+        note: json['note'] as String?,
+        link: json['link'] as String?,
+        planned: json['planned'] as bool? ?? false,
+      );
+
+  final String id;
+  PlaceKind kind;
+  String name;
+  double? rating;
+  int? pricePerPerson;
+  String? note;
+  String? link;
+  bool planned;
+
+  Json toJson() => {
+        'id': id,
+        'kind': kind.name,
+        'name': name,
+        'rating': rating,
+        'pricePerPerson': pricePerPerson,
+        'note': note,
+        'link': link,
+        'planned': planned,
+      };
+}
+
+/// A dish the group wants to try, with its price from the menu.
+class Dish {
+  Dish({
+    required this.id,
+    required this.name,
+    required this.price,
+    this.placeName,
+    this.servings = 1,
+  });
+
+  factory Dish.fromJson(Json json) => Dish(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        price: json['price'] as int,
+        placeName: json['placeName'] as String?,
+        servings: json['servings'] as int? ?? 1,
+      );
+
+  final String id;
+  String name;
+  int price;
+  String? placeName;
+  int servings;
+
+  Json toJson() => {
+        'id': id,
+        'name': name,
+        'price': price,
+        'placeName': placeName,
+        'servings': servings,
+      };
+}
+
+/// One thing on one day of the plan.
+class Stop {
+  Stop({
+    required this.id,
+    required this.dayIndex,
+    required this.title,
+    this.time = '',
+    this.cost = 0,
+  });
+
+  factory Stop.fromJson(Json json) => Stop(
+        id: json['id'] as String,
+        dayIndex: json['dayIndex'] as int,
+        title: json['title'] as String,
+        time: json['time'] as String? ?? '',
+        cost: json['cost'] as int? ?? 0,
+      );
+
+  final String id;
+  int dayIndex;
+  String title;
+
+  /// `08:30`, or empty when the time does not matter.
+  String time;
+  int cost;
+
+  Json toJson() => {
+        'id': id,
+        'dayIndex': dayIndex,
+        'title': title,
+        'time': time,
+        'cost': cost,
+      };
+}
+
+/// The drive there: everything the transport estimate needs.
+class Drive {
+  Drive({
+    this.route = '',
+    this.kilometres = 0,
+    this.roundTrip = true,
+    this.litresPer100 = 7,
+    this.fuelPrice = 150,
+    this.cars = 1,
+    this.tolls = 0,
+    this.ferry = 0,
+  });
+
+  factory Drive.fromJson(Json json) => Drive(
+        route: json['route'] as String? ?? '',
+        kilometres: (json['kilometres'] as num?)?.toDouble() ?? 0,
+        roundTrip: json['roundTrip'] as bool? ?? true,
+        litresPer100: (json['litresPer100'] as num?)?.toDouble() ?? 7,
+        fuelPrice: json['fuelPrice'] as int? ?? 150,
+        cars: json['cars'] as int? ?? 1,
+        tolls: json['tolls'] as int? ?? 0,
+        ferry: json['ferry'] as int? ?? 0,
+      );
+
+  String route;
+
+  /// One way.
+  double kilometres;
+  bool roundTrip;
+  double litresPer100;
+
+  /// Cents per litre.
+  int fuelPrice;
+  int cars;
+
+  /// All cars, both ways.
+  int tolls;
+
+  /// All cars, both ways.
+  int ferry;
+
+  int get fuelCost {
+    final distance = kilometres * (roundTrip ? 2 : 1);
+    return (distance / 100 * litresPer100 * fuelPrice * cars).round();
+  }
+
+  int get totalCost => fuelCost + tolls + ferry;
+
+  Json toJson() => {
+        'route': route,
+        'kilometres': kilometres,
+        'roundTrip': roundTrip,
+        'litresPer100': litresPer100,
+        'fuelPrice': fuelPrice,
+        'cars': cars,
+        'tolls': tolls,
+        'ferry': ferry,
+      };
+}
+
+enum CostCategory {
+  stay('Smještaj'),
+  food('Hrana i piće'),
+  transport('Prijevoz'),
+  activities('Izleti i vino'),
+  other('Ostalo');
+
+  const CostCategory(this.label);
+
+  final String label;
+}
+
+/// Money someone really spent on the trip.
+class Expense {
+  Expense({
+    required this.id,
+    required this.title,
+    required this.amount,
+    required this.payerId,
+    required this.sharedBy,
+    this.category = CostCategory.other,
+  });
+
+  factory Expense.fromJson(Json json) => Expense(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        amount: json['amount'] as int,
+        payerId: json['payerId'] as String,
+        sharedBy: _strings(json['sharedBy']),
+        category: CostCategory.values.byName(json['category'] as String),
+      );
+
+  final String id;
+  String title;
+  int amount;
+  String payerId;
+
+  /// Everyone who shares this cost, in the order of the group.
+  List<String> sharedBy;
+  CostCategory category;
+
+  Json toJson() => {
+        'id': id,
+        'title': title,
+        'amount': amount,
+        'payerId': payerId,
+        'sharedBy': sharedBy,
+        'category': category.name,
+      };
+}
+
+/// One person paying another back.
+class Payment {
+  Payment({required this.fromId, required this.toId, required this.amount});
+
+  factory Payment.fromJson(Json json) => Payment(
+        fromId: json['fromId'] as String,
+        toId: json['toId'] as String,
+        amount: json['amount'] as int,
+      );
+
+  final String fromId;
+  final String toId;
+  final int amount;
+
+  Json toJson() => {'fromId': fromId, 'toId': toId, 'amount': amount};
+}
+
+enum Reaction {
+  heart('Srce'),
+  laugh('Smijeh'),
+  cheers('Živjeli'),
+  sun('Sunce'),
+  star('Zvijezda');
+
+  const Reaction(this.label);
+
+  final String label;
+}
+
+class Comment {
+  Comment({
+    required this.id,
+    required this.authorId,
+    required this.text,
+    required this.at,
+  });
+
+  factory Comment.fromJson(Json json) => Comment(
+        id: json['id'] as String,
+        authorId: json['authorId'] as String,
+        text: json['text'] as String,
+        at: DateTime.parse(json['at'] as String),
+      );
+
+  final String id;
+  final String authorId;
+  final String text;
+  final DateTime at;
+
+  Json toJson() => {
+        'id': id,
+        'authorId': authorId,
+        'text': text,
+        'at': at.toIso8601String(),
+      };
+}
+
+/// A photo of the trip. The picture itself is kept apart, under its [id].
+class Photo {
+  Photo({
+    required this.id,
+    required this.takenAt,
+    required this.addedBy,
+    this.latitude,
+    this.longitude,
+    Map<String, Reaction>? reactions,
+    List<Comment>? comments,
+  })  : reactions = reactions ?? {},
+        comments = comments ?? [];
+
+  factory Photo.fromJson(Json json) => Photo(
+        id: json['id'] as String,
+        takenAt: DateTime.parse(json['takenAt'] as String),
+        addedBy: json['addedBy'] as String,
+        latitude: (json['latitude'] as num?)?.toDouble(),
+        longitude: (json['longitude'] as num?)?.toDouble(),
+        reactions: {
+          for (final entry
+              in (json['reactions'] as Json? ?? const <String, dynamic>{})
+                  .entries)
+            entry.key: Reaction.values.byName(entry.value as String),
+        },
+        comments: _list(json['comments'], Comment.fromJson),
+      );
+
+  final String id;
+
+  /// When the photo was taken, as the phone's clock showed it.
+  final DateTime takenAt;
+  final String addedBy;
+  final double? latitude;
+  final double? longitude;
+
+  /// One reaction per person.
+  Map<String, Reaction> reactions;
+  List<Comment> comments;
+
+  DateTime get day => dayOf(takenAt.year, takenAt.month, takenAt.day);
+
+  Json toJson() => {
+        'id': id,
+        'takenAt': takenAt.toIso8601String(),
+        'addedBy': addedBy,
+        'latitude': latitude,
+        'longitude': longitude,
+        'reactions': {
+          for (final entry in reactions.entries) entry.key: entry.value.name,
+        },
+        'comments': [for (final comment in comments) comment.toJson()],
+      };
+}
+
+/// A song on the playlist, linked from Spotify, YouTube or Apple Music.
+class Song {
+  Song({
+    required this.id,
+    required this.title,
+    required this.link,
+    required this.addedBy,
+  });
+
+  factory Song.fromJson(Json json) => Song(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        link: json['link'] as String,
+        addedBy: json['addedBy'] as String,
+      );
+
+  final String id;
+  String title;
+  String link;
+  final String addedBy;
+
+  Json toJson() => {
+        'id': id,
+        'title': title,
+        'link': link,
+        'addedBy': addedBy,
+      };
+}
+
+enum TripPhase { upcoming, active, past }
+
+class Trip {
+  Trip({
+    required this.id,
+    required this.country,
+    required this.city,
+    required this.start,
+    required this.end,
+    required this.memberIds,
+    this.coverId,
+    this.chosenOfferId,
+    this.anthemTitle,
+    this.anthemClipId,
+    List<Offer>? offers,
+    List<Place>? places,
+    List<Dish>? dishes,
+    List<Stop>? stops,
+    Drive? drive,
+    List<Expense>? expenses,
+    List<Payment>? payments,
+    List<Photo>? photos,
+    List<Song>? songs,
+  })  : offers = offers ?? [],
+        places = places ?? [],
+        dishes = dishes ?? [],
+        stops = stops ?? [],
+        drive = drive ?? Drive(),
+        expenses = expenses ?? [],
+        payments = payments ?? [],
+        photos = photos ?? [],
+        songs = songs ?? [];
+
+  factory Trip.fromJson(Json json) => Trip(
+        id: json['id'] as String,
+        country: json['country'] as String,
+        city: json['city'] as String,
+        start: parseDay(json['start'] as String),
+        end: parseDay(json['end'] as String),
+        memberIds: _strings(json['memberIds']),
+        coverId: json['coverId'] as String?,
+        chosenOfferId: json['chosenOfferId'] as String?,
+        anthemTitle: json['anthemTitle'] as String?,
+        anthemClipId: json['anthemClipId'] as String?,
+        offers: _list(json['offers'], Offer.fromJson),
+        places: _list(json['places'], Place.fromJson),
+        dishes: _list(json['dishes'], Dish.fromJson),
+        stops: _list(json['stops'], Stop.fromJson),
+        drive: json['drive'] == null
+            ? null
+            : Drive.fromJson(json['drive'] as Json),
+        expenses: _list(json['expenses'], Expense.fromJson),
+        payments: _list(json['payments'], Payment.fromJson),
+        photos: _list(json['photos'], Photo.fromJson),
+        songs: _list(json['songs'], Song.fromJson),
+      );
+
+  final String id;
+  String country;
+  String city;
+  DateTime start;
+  DateTime end;
+
+  /// The group of this trip, in a fixed order.
+  List<String> memberIds;
+
+  /// The photo on the postcard.
+  String? coverId;
+  String? chosenOfferId;
+
+  /// The song that opens the trip, and its stored first 10 seconds.
+  String? anthemTitle;
+  String? anthemClipId;
+
+  List<Offer> offers;
+  List<Place> places;
+  List<Dish> dishes;
+  List<Stop> stops;
+  Drive drive;
+  List<Expense> expenses;
+  List<Payment> payments;
+  List<Photo> photos;
+  List<Song> songs;
+
+  int get nights => end.difference(start).inDays;
+
+  /// Calendar days from the first to the last, both included.
+  int get dayCount => nights + 1;
+
+  int get people => memberIds.length;
+
+  DateTime dayAt(int index) => start.add(Duration(days: index));
+
+  /// Offers are compared here; this is the one the group picked, if any.
+  Offer? get chosenOffer {
+    for (final offer in offers) {
+      if (offer.id == chosenOfferId) return offer;
+    }
+    return null;
+  }
+
+  TripPhase phaseOn(DateTime day) {
+    if (day.isBefore(start)) return TripPhase.upcoming;
+    if (day.isAfter(end)) return TripPhase.past;
+    return TripPhase.active;
+  }
+
+  Json toJson() => {
+        'id': id,
+        'country': country,
+        'city': city,
+        'start': dayKey(start),
+        'end': dayKey(end),
+        'memberIds': memberIds,
+        'coverId': coverId,
+        'chosenOfferId': chosenOfferId,
+        'anthemTitle': anthemTitle,
+        'anthemClipId': anthemClipId,
+        'offers': [for (final item in offers) item.toJson()],
+        'places': [for (final item in places) item.toJson()],
+        'dishes': [for (final item in dishes) item.toJson()],
+        'stops': [for (final item in stops) item.toJson()],
+        'drive': drive.toJson(),
+        'expenses': [for (final item in expenses) item.toJson()],
+        'payments': [for (final item in payments) item.toJson()],
+        'photos': [for (final item in photos) item.toJson()],
+        'songs': [for (final item in songs) item.toJson()],
+      };
+}
+
+enum ThemeChoice {
+  system('Kao mobitel'),
+  light('Svijetlo'),
+  dark('Tamno');
+
+  const ThemeChoice(this.label);
+
+  final String label;
+}
+
+/// Everything saved on the device.
+class AppData {
+  AppData({
+    List<Person>? people,
+    this.meId,
+    List<Trip>? trips,
+    this.theme = ThemeChoice.system,
+    this.anthemMuted = false,
+  })  : people = people ?? [],
+        trips = trips ?? [];
+
+  factory AppData.fromJson(Json json) => AppData(
+        people: _list(json['people'], Person.fromJson),
+        meId: json['meId'] as String?,
+        trips: _list(json['trips'], Trip.fromJson),
+        theme: ThemeChoice.values
+            .byName(json['theme'] as String? ?? ThemeChoice.system.name),
+        anthemMuted: json['anthemMuted'] as bool? ?? false,
+      );
+
+  List<Person> people;
+
+  /// Who is using this phone.
+  String? meId;
+  List<Trip> trips;
+  ThemeChoice theme;
+
+  /// Stays on until the speaker is tapped again.
+  bool anthemMuted;
+
+  Person? personById(String id) {
+    for (final person in people) {
+      if (person.id == id) return person;
+    }
+    return null;
+  }
+
+  Trip? tripById(String id) {
+    for (final trip in trips) {
+      if (trip.id == id) return trip;
+    }
+    return null;
+  }
+
+  Json toJson() => {
+        'people': [for (final item in people) item.toJson()],
+        'meId': meId,
+        'trips': [for (final item in trips) item.toJson()],
+        'theme': theme.name,
+        'anthemMuted': anthemMuted,
+      };
+}

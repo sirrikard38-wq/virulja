@@ -1,0 +1,19 @@
+{
+  "name": "VIRULJA",
+  "short_name": "VIRULJA",
+  "description": "Zajednička putovanja: plan, troškovi i uspomene.",
+  "lang": "hr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E9E6DF",
+  "theme_color": "#4F5730",
+  "categories": ["travel", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
