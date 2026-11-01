@@ -67,8 +67,8 @@ web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
 }
 
 web.HTMLElement _addSong(Ui ui, Trip trip) {
-  final link = input(type: 'url', placeholder: 'Zalijepi link pjesme');
-  final title = input(placeholder: 'Naziv pjesme');
+  final link = input(type: 'url');
+  final title = input();
   final error = errorLine();
 
   void add() {

@@ -68,11 +68,11 @@ String _sourceOf(String link) {
 }
 
 web.HTMLElement _addOffer(Ui ui, Trip trip) {
-  final name = input(placeholder: 'Kuća Mare');
-  final price = numberInput(placeholder: '186');
-  final rating = numberInput(placeholder: '4,8');
-  final beach = numberInput(placeholder: '300');
-  final link = input(type: 'url', placeholder: 'https://');
+  final name = input();
+  final price = numberInput();
+  final rating = numberInput();
+  final beach = numberInput();
+  final link = input(type: 'url');
   final error = errorLine();
 
   void add() {

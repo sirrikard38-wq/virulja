@@ -30,8 +30,8 @@ web.HTMLElement _line(BudgetLine line) {
 }
 
 web.HTMLElement _addExpense(Ui ui, Trip trip) {
-  final title = input(placeholder: 'Večera na rivi');
-  final amount = numberInput(placeholder: '120');
+  final title = input();
+  final amount = numberInput();
   final category = select(CostCategory.values, (c) => c.label, selected: CostCategory.food);
   final payer = select(trip.memberIds, ui.nameOf, selected: ui.meIn(trip));
   final boxes = {for (final id in trip.memberIds) id: checkInput(checked: true)};

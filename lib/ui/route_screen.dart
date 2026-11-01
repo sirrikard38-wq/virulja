@@ -15,8 +15,8 @@ double? _parseNumber(String text) =>
 
 web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
   final time = input(type: 'time');
-  final title = input(placeholder: 'Izlet brodom');
-  final cost = numberInput(placeholder: '168');
+  final title = input();
+  final cost = numberInput();
   final error = errorLine();
 
   void add() {
@@ -47,7 +47,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
 
 web.HTMLElement _driveForm(Ui ui, Trip trip) {
   final drive = trip.drive;
-  final route = input(value: drive.route, placeholder: 'Zagreb – Split');
+  final route = input(value: drive.route);
   final km = numberInput(value: drive.kilometres == 0 ? '' : _number(drive.kilometres));
   final litres = numberInput(value: _number(drive.litresPer100));
   final fuel = numberInput(value: euros(drive.fuelPrice).replaceAll(' €', ''));

@@ -34,11 +34,11 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
 }
 
 web.HTMLElement _addPlace(Ui ui, Trip trip) {
-  final name = input(placeholder: 'Konoba Stara uvala');
-  final rating = numberInput(placeholder: '4,7');
-  final price = numberInput(placeholder: '28');
-  final note = input(placeholder: 'Peka, rezervirati dan ranije');
-  final link = input(type: 'url', placeholder: 'https://');
+  final name = input();
+  final rating = numberInput();
+  final price = numberInput();
+  final note = input();
+  final link = input(type: 'url');
   final error = errorLine();
 
   void add() {
@@ -92,10 +92,10 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
 }
 
 web.HTMLElement _addDish(Ui ui, Trip trip) {
-  final name = input(placeholder: 'Peka od hobotnice');
-  final price = numberInput(placeholder: '28');
+  final name = input();
+  final price = numberInput();
   final servings = numberInput(value: '1');
-  final place = input(placeholder: 'Konoba Stara uvala');
+  final place = input();
   final error = errorLine();
 
   void add() {
