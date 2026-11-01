@@ -234,7 +234,11 @@ void _glideToChosenChip(_ChipPlace from) {
   });
 }
 
-/// One category of the screen: a fixed kind, or one the group made.
+/// What this person's order of the categories calls the dishes.
+const String _dishesKey = 'dishes';
+
+/// One category of the screen: a fixed kind, one the group made, or the dishes,
+/// which are neither.
 class _Tab {
   const _Tab(this.label, this.searchWord, {this.kind, this.custom});
 
@@ -243,19 +247,23 @@ class _Tab {
   final PlaceKind? kind;
   final CustomKind? custom;
 
+  bool get isDishes => kind == null && custom == null;
+
   /// What this person's order of the categories calls it.
-  String get key => custom?.id ?? kind!.name;
+  String get key => custom?.id ?? kind?.name ?? _dishesKey;
 
   bool holds(Place place) => custom != null
       ? place.customKindId == custom!.id
       : place.customKindId == null && place.kind == kind;
 }
 
-/// [tabs] in the order this person chose. Categories made since come last.
+/// [tabs] in the order this person chose. Categories made since come last; the
+/// dishes come first until this person moves them.
 List<_Tab> _inOrder(List<_Tab> tabs, List<String> order) {
   int place(_Tab tab) {
     final at = order.indexOf(tab.key);
-    return at >= 0 ? at : order.length + tabs.indexOf(tab);
+    if (at >= 0) return at;
+    return tab.isDishes ? -1 : order.length + tabs.indexOf(tab);
   }
 
   return tabs.toList()..sort((a, b) => place(a).compareTo(place(b)));
@@ -392,12 +400,12 @@ web.HTMLElement _newKind(Ui ui, void Function(String label) add) {
 
 web.HTMLElement foodScreen(Ui ui, Trip trip) {
   final tabs = _inOrder([
+    _Tab(tr('Hrana i piće'), ''),
     for (final kind in PlaceKind.values) _Tab(kind.label, kind.searchWord, kind: kind),
     for (final custom in trip.customKinds)
       _Tab(custom.label, custom.label, custom: custom),
   ], ui.data.kindOrder[trip.id] ?? const []);
-  final customAt = tabs.indexWhere(
-      (tab) => tab.custom != null && tab.custom!.id == ui.customKindId);
+  final customAt = tabs.indexWhere((tab) => tab.key == ui.customKindId);
   final index = customAt >= 0
       ? customAt
       : tabs.indexWhere((tab) => tab.kind == ui.placeKind);
@@ -405,7 +413,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   final places = trip.places.where(tab.holds).toList();
 
   void choose(_Tab item) {
-    ui.customKindId = item.custom?.id;
+    ui.customKindId = item.kind == null ? item.key : null;
     ui.placeKind = item.kind ?? ui.placeKind;
   }
 
@@ -443,26 +451,29 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
 
   final custom = tab.custom;
   final sliding = el('div', cls: 'slide-page', children: [
-    el('div', cls: 'pad gap-top', children: [
-      outLink(tr('Traži: {0} u mjestu {1}', [tab.label, trip.city]), mapsSearchFor(tab.searchWord, trip)),
-    ]),
-    if (places.isEmpty)
-      el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
-    for (final place in places) _placeRow(ui, trip, place),
-    _addPlace(ui, trip, custom),
-    if (custom != null)
+    if (tab.isDishes) ...[
+      sectionTitle(tr('Jela koja želimo probati')),
+      if (trip.dishes.isEmpty)
+        el('p', cls: 'soft pad', text: tr('Dodajte jela s cijenom s jelovnika.')),
+      for (final dish in trip.dishes) _dishRow(ui, trip, dish),
+      _addDish(ui, trip),
+    ] else ...[
       el('div', cls: 'pad gap-top', children: [
-        button(
-          cls: 'text-button',
-          text: tr('Obriši kategoriju'),
-          onTap: () => removeKind(custom),
-        ),
+        outLink(tr('Traži: {0} u mjestu {1}', [tab.label, trip.city]), mapsSearchFor(tab.searchWord, trip)),
       ]),
-    sectionTitle(tr('Jela koja želimo probati')),
-    if (trip.dishes.isEmpty)
-      el('p', cls: 'soft pad', text: tr('Dodajte jela s cijenom s jelovnika.')),
-    for (final dish in trip.dishes) _dishRow(ui, trip, dish),
-    _addDish(ui, trip),
+      if (places.isEmpty)
+        el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
+      for (final place in places) _placeRow(ui, trip, place),
+      _addPlace(ui, trip, custom),
+      if (custom != null)
+        el('div', cls: 'pad gap-top', children: [
+          button(
+            cls: 'text-button',
+            text: tr('Obriši kategoriju'),
+            onTap: () => removeKind(custom),
+          ),
+        ]),
+    ],
   ]);
   final chipRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (final item in tabs)

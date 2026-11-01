@@ -59,7 +59,8 @@ class Ui {
   OfferSort offerSort = OfferSort.price;
   PlaceKind placeKind = PlaceKind.restaurant;
 
-  /// The group's own category that is open, instead of [placeKind].
+  /// The category that is open instead of [placeKind]: the group's own one, or
+  /// the dishes.
   String? customKindId;
   bool addingKind = false;
   int routeDay = 0;

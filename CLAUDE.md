@@ -51,7 +51,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Photos: one tap on every phone; each person picks from the gallery and the app sorts
   by day. No automatic gallery reading.
 - Photos have reactions and comments, one reaction per person.
-- Food planning has both: places with a price per person and dishes with prices.
+- Food planning has both: places with a price per person and dishes with prices. The
+  dishes are only in their own category of that row, named like the screen: Hrana i piće.
 - First version also has: drive calculation, actual costs, who owes whom, voting.
 - The postcard has a round seal with no background, as the user asked, so its ink follows
   the photo: dark on a bright corner, light with a shadow otherwise (`lib/src/domain/seal.dart`).
