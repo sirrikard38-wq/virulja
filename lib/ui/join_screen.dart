@@ -27,21 +27,27 @@ Future<void> copyCode(Ui ui, Trip trip) async {
   }
 }
 
-/// A trip's code; a tap copies it and says so above the code for a moment.
+/// A trip's code; a tap copies it and says so beside the code for a moment.
 web.HTMLElement codeRow(Trip trip) {
-  final label = el('div', cls: 'small', text: trip.city);
+  final note = el('span', cls: 'label', attrs: {'style': 'color:var(--accent);font-size:17px'});
   return button(
     cls: 'title-link pad gap-top',
     onTap: () async {
       try {
         await web.window.navigator.clipboard.writeText(trip.code ?? '').toDart;
-        label.textContent = 'Kopirano';
-        Timer(const Duration(seconds: 2), () => label.textContent = trip.city);
+        note.textContent = 'Kopirano';
+        Timer(const Duration(seconds: 2), () => note.textContent = '');
       } on Object {
-        label.textContent = 'Kopiraj ručno';
+        note.textContent = 'Kopiraj ručno';
       }
     },
-    children: [label, el('div', cls: 'label', text: trip.code)],
+    children: [
+      el('div', cls: 'small', text: trip.city),
+      el('div', attrs: {'style': 'display:flex;align-items:center;gap:12px'}, children: [
+        el('span', cls: 'label', text: trip.code),
+        note,
+      ]),
+    ],
   );
 }
 
