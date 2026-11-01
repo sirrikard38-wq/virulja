@@ -366,3 +366,10 @@ label:focus-within { outline: none; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+.divider {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.18;
+  margin: 36px 16px 8px;
+}

@@ -28,6 +28,7 @@ web.HTMLElement groupScreen(Ui ui) {
       ui.toast('Spremljeno.');
     }),
     if (cloud != null) ...[
+      el('hr', cls: 'divider'),
       sectionTitle('Imaš šifru putovanja?'),
       codeField(ui),
       el('p', cls: 'small pad gap-top', text: cloud.reachable

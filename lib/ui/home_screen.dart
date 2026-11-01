@@ -138,6 +138,7 @@ web.HTMLElement homeScreen(Ui ui) {
       ],
     ),
     if (ui.cloud != null) ...[
+      el('hr', cls: 'divider'),
       sectionTitle('Imaš šifru putovanja?'),
       codeField(ui),
     ],
