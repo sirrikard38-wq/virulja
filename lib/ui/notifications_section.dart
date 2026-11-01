@@ -24,7 +24,13 @@ web.HTMLElement notificationsSection(Ui ui) {
         await turnOffPush();
         await cloud.removePushDevice();
       } else {
-        final device = await turnOnPush(key);
+        final Map<String, String>? device;
+        try {
+          device = await turnOnPush(key);
+        } on Object {
+          ui.toast('Mobitel nije dopustio prijavu za obavijesti.');
+          return;
+        }
         if (device == null) {
           ui.toast('Obavijesti nisu dopuštene u postavkama mobitela.');
           return;
@@ -33,7 +39,7 @@ web.HTMLElement notificationsSection(Ui ui) {
         ui.toast('Obavijesti su uključene.');
       }
     } on Object {
-      ui.toast('Nema veze. Pokušaj ponovno.');
+      ui.toast('Mobitel je prijavljen, ali spremanje nije uspjelo.');
     }
     ui.rerender();
   }
