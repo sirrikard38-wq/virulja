@@ -34,6 +34,10 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
     for (final stop in trip.stops)
       TripEvent('stop:${stop.id}', tr('Novo u Planu napada: {0}', [stop.title]), 'napad',
           from: stop.addedBy),
+    // Everyone may need to vote, except the person it is about.
+    for (final person in trip.kickVotes.keys)
+      TripEvent('kick:$person', tr('Glasanje za izbacivanje: {0}', [name(person)]), 'plan',
+          from: person),
     for (final request in trip.requests)
       TripEvent('request:${request.id}', tr('{0} želi na putovanje', [request.name]), 'plan'),
   ];

@@ -255,9 +255,30 @@ class CloudSync {
     _store.save();
   }
 
+  /// Takes out whoever has enough votes. Only an admin may lock them out as well;
+  /// without that they can still ask to come back, and the group decides again.
+  void _kickVotedOut(Trip trip) {
+    for (final person in trip.kickVotes.keys.toList()) {
+      if (!trip.memberIds.contains(person)) {
+        trip.kickVotes.remove(person);
+      } else if (trip.kickVotesAgainst(person) >= trip.kickVotesNeeded) {
+        final uid = trip.uids[person];
+        if (uid != null) {
+          _send('PUT', 'banned/${trip.id}/$uid', json: true).catchError(
+              (Object _) => const HttpReply(0, ''));
+        }
+        trip.memberIds.remove(person);
+        trip.adminIds.remove(person);
+        trip.uids.remove(person);
+        trip.kickVotes.remove(person);
+      }
+    }
+  }
+
   /// Puts in the group whoever has enough approvals, at once: everyone sees them
-  /// there, and their own phone finds out at its next look.
-  void admitAccepted(Trip trip) {
+  /// there, and their own phone finds out at its next look. Takes out those voted out.
+  void settleGroup(Trip trip) {
+    _kickVotedOut(trip);
     for (final request in trip.requests.toList()) {
       final person = request.personId;
       if (person == null || request.approvals.length < trip.approvalsNeeded) continue;
@@ -390,7 +411,7 @@ class CloudSync {
     }
     trip.copyFrom(cloud.trip);
     _learnPeople(trip, cloud);
-    admitAccepted(trip);
+    settleGroup(trip);
     pushSoon();
     onChange?.call();
   }

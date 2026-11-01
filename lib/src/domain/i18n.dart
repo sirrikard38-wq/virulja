@@ -261,6 +261,13 @@ const Map<String, List<String>> _texts = {
   'Daj admina': ['Make admin', 'Yönetici yap'],
   'Makni admina': ['Stop being admin', 'Yöneticilikten çık'],
 
+  'Glasati za izbacivanje: {0}?': ['Vote to remove {0}?', '{0} için çıkarma oyu verilsin mi?'],
+  'Glasanje za izbacivanje: {0}': ['Vote to remove: {0}', 'Çıkarma oylaması: {0}'],
+  'Glasalo: {0} od {1}': ['Votes: {0} of {1}', 'Oy: {0}/{1}'],
+  'Izbaci · {0}/{1}': ['Remove · {0}/{1}', 'Çıkar · {0}/{1}'],
+  'Izbaci': ['Remove', 'Çıkar'],
+  'Povuci glas': ['Take back vote', 'Oyu geri al'],
+
   // Songs
   'Pripremam himnu...': ['Preparing the anthem...', 'Marş hazırlanıyor...'],
   'Himna je spremljena.': ['The anthem is saved.', 'Marş kaydedildi.'],

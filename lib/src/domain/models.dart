@@ -719,6 +719,7 @@ class Trip {
     List<Leg>? legs,
     List<JoinRequest>? requests,
     List<CustomKind>? customKinds,
+    Map<String, Set<String>>? kickVotes,
     Drive? drive,
     List<Expense>? expenses,
     List<Payment>? payments,
@@ -734,6 +735,7 @@ class Trip {
         legs = legs ?? [],
         requests = requests ?? [],
         customKinds = customKinds ?? [],
+        kickVotes = kickVotes ?? {},
         drive = drive ?? Drive(),
         expenses = expenses ?? [],
         payments = payments ?? [],
@@ -763,6 +765,8 @@ class Trip {
         legs: _list(json['legs'], Leg.fromJson),
         requests: _list(json['requests'], JoinRequest.fromJson),
         customKinds: _list(json['customKinds'], CustomKind.fromJson),
+        kickVotes: (json['kickVotes'] as Json? ?? const <String, dynamic>{})
+            .map((person, voters) => MapEntry(person, _strings(voters).toSet())),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -806,6 +810,9 @@ class Trip {
   List<Leg> legs;
   List<JoinRequest> requests;
   List<CustomKind> customKinds;
+
+  /// Person -> who voted to put them out of the group.
+  Map<String, Set<String>> kickVotes;
   Drive drive;
   List<Expense> expenses;
   List<Payment> payments;
@@ -822,6 +829,14 @@ class Trip {
   /// How many members must let a newcomer in: two, or everyone in a smaller
   /// group, so someone alone on a trip decides alone.
   int get approvalsNeeded => min(2, memberIds.length);
+
+  /// At least half of everyone except the person in question.
+  int get kickVotesNeeded => memberIds.length ~/ 2;
+
+  /// The votes against [person] that count: those of members, not their own.
+  int kickVotesAgainst(String person) => (kickVotes[person] ?? const <String>{})
+      .where((voter) => voter != person && memberIds.contains(voter))
+      .length;
 
   DateTime dayAt(int index) => start.add(Duration(days: index));
 
@@ -862,6 +877,7 @@ class Trip {
     legs = other.legs;
     requests = other.requests;
     customKinds = other.customKinds;
+    kickVotes = other.kickVotes;
     drive = other.drive;
     expenses = other.expenses;
     payments = other.payments;
@@ -891,6 +907,9 @@ class Trip {
         'legs': [for (final item in legs) item.toJson()],
         'requests': [for (final item in requests) item.toJson()],
         'customKinds': [for (final item in customKinds) item.toJson()],
+        'kickVotes': {
+          for (final entry in kickVotes.entries) entry.key: entry.value.toList(),
+        },
         'drive': drive.toJson(),
         'expenses': [for (final item in expenses) item.toJson()],
         'payments': [for (final item in payments) item.toJson()],

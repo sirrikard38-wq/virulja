@@ -123,6 +123,8 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     if (ui.showPeople)
       for (final id in trip.memberIds) memberRow(ui, trip, id),
     for (final request in trip.requests) requestCard(ui, trip, request),
+    for (final id in trip.kickVotes.keys)
+      if (id != ui.meIn(trip)) kickCard(ui, trip, id),
     el('div', cls: 'tabs', children: [
       for (final entry in tabs.entries)
         button(

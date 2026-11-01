@@ -21,7 +21,7 @@ web.HTMLElement requestCard(Ui ui, Trip trip, JoinRequest request) {
       chip(given ? tr('Prihvaćeno') : tr('Prihvati'), () {
         if (given) return;
         request.approvals.add(me);
-        ui.cloud?.admitAccepted(trip);
+        ui.cloud?.settleGroup(trip);
         ui.changed();
       }, on: given),
       chip(tr('Odbij'), () {

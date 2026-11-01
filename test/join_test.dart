@@ -73,6 +73,38 @@ void main() {
     expect(copy.places.single.customKindId, 'k1');
   });
 
+  group('voting someone out', () {
+    test('takes half of everyone else, rounded up', () {
+      expect([2, 3, 4, 5, 6].map((n) => _trip([for (var i = 0; i < n; i++) 'p$i']).kickVotesNeeded),
+          [1, 1, 2, 2, 3]);
+    });
+
+    test('counts only other members', () {
+      final trip = _trip(['a', 'b', 'c', 'd'])
+        ..kickVotes = {
+          'd': {'a', 'd', 'gone'},
+        };
+      expect(trip.kickVotesAgainst('d'), 1);
+    });
+
+    test('votes survive the cloud and the group hears about them', () {
+      final trip = _trip(['a', 'b', 'c'])
+        ..kickVotes = {
+          'c': {'a'},
+        };
+      final tree = unflatten(flatten(tripToTree(trip, (id) => id)));
+      final back = tripFromTree(trip.id, jsonDecode(jsonEncode(tree)) as Tree)!.trip;
+      expect(back.kickVotes, {
+        'c': {'a'},
+      });
+      final copy = Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json);
+      expect(copy.kickVotes['c'], {'a'});
+      final event = tripEvents(trip, const {'c': 'Mate'}).single;
+      expect(event.text, 'Glasanje za izbacivanje: Mate');
+      expect(event.from, 'c');
+    });
+  });
+
   group('joining', () {
     test('a lone member decides alone, a bigger group needs two approvals', () {
       expect(_trip(['a']).approvalsNeeded, 1);
