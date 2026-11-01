@@ -2,6 +2,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import '../src/domain/settlement.dart';
 import 'context.dart';
@@ -44,11 +45,11 @@ web.HTMLElement _addExpense(Ui ui, Trip trip) {
         if (boxes[id]!.checked) id,
     ];
     if (title.value.trim().isEmpty || cents == null || cents == 0) {
-      error.textContent = 'Upiši što je plaćeno i koliko.';
+      error.textContent = tr('Upiši što je plaćeno i koliko.');
       return;
     }
     if (sharers.isEmpty) {
-      error.textContent = 'Označi tko dijeli trošak.';
+      error.textContent = tr('Označi tko dijeli trošak.');
       return;
     }
     trip.expenses.add(Expense(
@@ -62,19 +63,19 @@ web.HTMLElement _addExpense(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  return adder('Dodaj trošak', [
-    field('Što', title),
+  return adder(tr('Dodaj trošak'), [
+    field(tr('Što'), title),
     el('div', cls: 'fields', children: [
-      field('Iznos (€)', amount, tight: true),
-      field('Vrsta', category, tight: true),
+      field(tr('Iznos (€)'), amount, tight: true),
+      field(tr('Vrsta'), category, tight: true),
     ]),
-    field('Tko je platio', payer),
-    el('p', cls: 'label', text: 'Tko dijeli trošak', attrs: {'style': 'margin-top:12px'}),
+    field(tr('Tko je platio'), payer),
+    el('p', cls: 'label', text: tr('Tko dijeli trošak'), attrs: {'style': 'margin-top:12px'}),
     el('div', cls: 'checks', children: [
       for (final id in trip.memberIds) checkbox(ui.nameOf(id), boxes[id]!),
     ]),
     error,
-    primaryButton('Dodaj trošak', add),
+    primaryButton(tr('Dodaj trošak'), add),
   ]);
 }
 
@@ -85,7 +86,7 @@ web.HTMLElement _transferRow(Ui ui, Trip trip, Transfer transfer) => el(
         el('div', cls: 'grow', text: '${ui.nameOf(transfer.fromId)} → '
             '${ui.nameOf(transfer.toId)}'),
         el('div', cls: 'price', text: euros(transfer.amount)),
-        chip('Podmireno', () {
+        chip(tr('Podmireno'), () {
           trip.payments.add(Payment(
             id: ui.store.newId(),
             fromId: transfer.fromId,
@@ -102,20 +103,20 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
   final transfers = settle(balances(trip));
   final recent = trip.expenses.reversed.take(20);
   return el('div', children: [
-    topBar('Troškovi'),
+    topBar(tr('Troškovi')),
     el('div', cls: 'three', children: [
-      _total('Plan', budget.plannedTotal),
-      _total('Potrošeno', budget.actualTotal),
-      _total('Ostaje', budget.plannedTotal - budget.actualTotal),
+      _total(tr('Plan'), budget.plannedTotal),
+      _total(tr('Potrošeno'), budget.actualTotal),
+      _total(tr('Ostaje'), budget.plannedTotal - budget.actualTotal),
     ]),
     for (final line in budget.lines)
       if (line.planned > 0 || line.actual > 0) _line(line),
-    sectionTitle('Tko kome duguje'),
+    sectionTitle(tr('Tko kome duguje')),
     if (transfers.isEmpty)
-      el('p', cls: 'soft pad', text: 'Svi su računi podmireni.'),
+      el('p', cls: 'soft pad', text: tr('Svi su računi podmireni.')),
     for (final transfer in transfers) _transferRow(ui, trip, transfer),
     _addExpense(ui, trip),
-    if (recent.isNotEmpty) sectionTitle('Plaćeno'),
+    if (recent.isNotEmpty) sectionTitle(tr('Plaćeno')),
     for (final expense in recent)
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', children: [

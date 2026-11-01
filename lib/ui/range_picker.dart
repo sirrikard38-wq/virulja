@@ -1,6 +1,7 @@
 import 'package:web/web.dart' as web;
 
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'dom.dart';
 import 'icons.dart';
@@ -60,9 +61,9 @@ class RangePicker {
     final from = start, to = end;
     final length = dayOf(_month.year, _month.month + 1, 0).day;
     final summary = from == null
-        ? 'Odaberi polazak'
+        ? tr('Odaberi polazak')
         : to == null
-            ? '${dayAndMonth(from)}: odaberi povratak'
+            ? '${dayAndMonth(from)}: ${tr('Odaberi povratak')}'
             : dateRange(from, to);
     show(
       element,
@@ -70,12 +71,12 @@ class RangePicker {
         el('p', cls: 'label pad gap-top', text: summary),
         el('div', cls: 'calendar card', children: [
           el('div', cls: 'calendar-head', children: [
-            button(cls: 'icon-button', ariaLabel: 'Prethodni mjesec', onTap: () => _shift(-1), children: [icon('back')]),
-            el('span', cls: 'label', text: '${_months[_month.month - 1]} ${_month.year}'),
-            button(cls: 'icon-button', ariaLabel: 'Sljedeći mjesec', onTap: () => _shift(1), children: [icon('send')]),
+            button(cls: 'icon-button', ariaLabel: tr('Prethodni mjesec'), onTap: () => _shift(-1), children: [icon('back')]),
+            el('span', cls: 'label', text: '${tr(_months[_month.month - 1])} ${_month.year}'),
+            button(cls: 'icon-button', ariaLabel: tr('Sljedeći mjesec'), onTap: () => _shift(1), children: [icon('send')]),
           ]),
           el('div', cls: 'calendar-days', children: [
-            for (final name in const ['P', 'U', 'S', 'Č', 'P', 'S', 'N'])
+            for (final name in weekdayLetters)
               el('span', cls: 'small', text: name),
             for (var i = 1; i < _month.weekday; i++) el('span'),
             for (var d = 1; d <= length; d++)

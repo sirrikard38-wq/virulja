@@ -3,6 +3,7 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -10,7 +11,7 @@ import 'widgets.dart';
 
 /// Opens WhatsApp with the trip's code ready to send.
 void sendCodeOnWhatsApp(Trip trip) {
-  final text = 'Šifra putovanja "${trip.city}": ${trip.code}\n'
+  final text = '${tr('Šifra putovanja "{0}": {1}', [trip.city, trip.code])}\n'
       '${web.window.location.href.split('#').first}';
   web.window.open(
     Uri.https('wa.me', '/', {'text': text}).toString(),
@@ -21,9 +22,9 @@ void sendCodeOnWhatsApp(Trip trip) {
 Future<void> copyCode(Ui ui, Trip trip) async {
   try {
     await web.window.navigator.clipboard.writeText(trip.code ?? '').toDart;
-    ui.toast('Šifra je kopirana.');
+    ui.toast(tr('Šifra je kopirana.'));
   } on Object {
-    ui.toast('Šifra: ${trip.code}');
+    ui.toast(tr('Šifra: {0}', [trip.code]));
   }
 }
 
@@ -35,10 +36,10 @@ web.HTMLElement codeRow(Trip trip) {
     onTap: () async {
       try {
         await web.window.navigator.clipboard.writeText(trip.code ?? '').toDart;
-        note.textContent = 'Kopirano';
+        note.textContent = tr('Kopirano');
         Timer(const Duration(seconds: 2), () => note.textContent = '');
       } on Object {
-        note.textContent = 'Kopiraj ručno';
+        note.textContent = tr('Kopiraj ručno');
       }
     },
     children: [
@@ -58,14 +59,14 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
   try {
     final found = await cloud.findTrip(code);
     if (found == null) {
-      error.textContent = 'Nema putovanja s tom šifrom.';
+      error.textContent = tr('Nema putovanja s tom šifrom.');
       return;
     }
     final trip = found.trip.trip;
     if (ui.data.tripById(trip.id) == null) {
       if (trip.approvalsNeeded > 0) {
         await cloud.askToJoin(found);
-        ui.toast('Zahtjev je poslan. Grupa te mora prihvatiti.');
+        ui.toast(tr('Zahtjev je poslan. Grupa te mora prihvatiti.'));
         ui.rerender();
         return;
       }
@@ -73,8 +74,7 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
     }
     ui.openTrip(ui.data.tripById(trip.id)!);
   } on Object {
-    error.textContent = 'Ne mogu provjeriti šifru. Možda si uklonjen s putovanja '
-        'ili nema interneta.';
+    error.textContent = tr('Ne mogu provjeriti šifru. Možda si uklonjen s putovanja ili nema interneta.');
   }
 }
 
@@ -84,12 +84,12 @@ web.HTMLElement codeField(Ui ui) {
     ..setAttribute('autocorrect', 'off');
   final error = errorLine();
   return el('div', children: [
-    field('Šifra putovanja', code),
+    field(tr('Šifra putovanja'), code),
     error,
-    primaryButton('Uđi na putovanje', () {
+    primaryButton(tr('Uđi na putovanje'), () {
       final typed = code.value.trim();
       if (typed.length != 10) {
-        error.textContent = 'Šifra ima 10 znakova.';
+        error.textContent = tr('Šifra ima 10 znakova.');
       } else {
         joinByCode(ui, typed, error);
       }

@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import '../src/domain/offers.dart';
 import 'anthem.dart';
@@ -71,7 +72,7 @@ class Ui {
   /// Who this phone is on [trip].
   String meIn(Trip trip) => data.identities[trip.id] ?? meId;
 
-  String nameOf(String id) => data.personById(id)?.name ?? 'Netko';
+  String nameOf(String id) => data.personById(id)?.name ?? tr('Netko');
 
   /// Saves a change and passes it on to the group.
   void saved() {

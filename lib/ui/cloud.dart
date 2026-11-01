@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import '../src/domain/session.dart';
 import '../src/domain/tree.dart';
@@ -64,7 +65,7 @@ class CloudSync {
   static const Duration _pushDelay = Duration(milliseconds: 600);
   static const Duration _retryDelay = Duration(seconds: 20);
   static const Duration _streamRetryDelay = Duration(seconds: 5);
-  static const Duration _waitingCheck = Duration(seconds: 30);
+  static const Duration _waitingCheck = Duration(seconds: 5);
 
   /// The database rules refuse anything bigger.
   static const int _maxBlobLength = 3000000;
@@ -111,6 +112,7 @@ class CloudSync {
     await _session.token();
     await _send('PUT', 'push/${_session.uid}', json: {
       ...device,
+      'lang': language.name,
       'trips': {
         for (final trip in _data.trips)
           trip.id: {'city': trip.city, 'start': dayKey(trip.start)},
@@ -247,10 +249,28 @@ class CloudSync {
     await _send('PATCH', 'trips/${trip.id}/requests/${_session.uid}', json: {
       'name': _nameOf(_data.meId!),
       'phone': _data.personById(_data.meId!)?.phone,
+      'person': _data.meId,
     });
     _data.waiting[trip.id] = trip.city;
     _store.save();
   }
+
+  /// Puts in the group whoever has enough approvals, at once: everyone sees them
+  /// there, and their own phone finds out at its next look.
+  void admitAccepted(Trip trip) {
+    for (final request in trip.requests.toList()) {
+      final person = request.personId;
+      if (person == null || request.approvals.length < trip.approvalsNeeded) continue;
+      _learnNames({person: request.name});
+      _data.personById(person)?.phone ??= request.phone;
+      if (!trip.memberIds.contains(person)) trip.memberIds.add(person);
+      trip.uids[person] = request.id;
+      trip.requests.remove(request);
+    }
+  }
+
+  /// The sender writes in each person's language.
+  void languageChanged() => _updatePushDevice();
 
   /// Sees what the groups decided about this phone.
   Future<void> _checkWaiting() async {
@@ -261,16 +281,18 @@ class CloudSync {
         if (found == null) continue;
         final trip = found.trip.trip;
         final mine = trip.requests.where((item) => item.id == _session.uid);
-        if (mine.isEmpty) {
+        final accepted = mine.isNotEmpty &&
+            mine.first.approvals.length >= trip.approvalsNeeded;
+        if (trip.memberIds.contains(_data.meId) || accepted) {
+          _data.waiting.remove(entry.key);
+          if (accepted) trip.requests.remove(mine.first);
+          join(found);
+          onNotice?.call(tr('{0}: grupa te prihvatila.', [entry.value]));
+          onChange?.call();
+        } else if (mine.isEmpty) {
           _data.waiting.remove(entry.key);
           _store.save();
-          onNotice?.call('${entry.value}: zahtjev je odbijen.');
-          onChange?.call();
-        } else if (mine.first.approvals.length >= trip.approvalsNeeded) {
-          _data.waiting.remove(entry.key);
-          trip.requests.remove(mine.first);
-          join(found);
-          onNotice?.call('${entry.value}: grupa te prihvatila.');
+          onNotice?.call(tr('{0}: zahtjev je odbijen.', [entry.value]));
           onChange?.call();
         }
       }
@@ -368,6 +390,8 @@ class CloudSync {
     }
     trip.copyFrom(cloud.trip);
     _learnPeople(trip, cloud);
+    admitAccepted(trip);
+    pushSoon();
     onChange?.call();
   }
 

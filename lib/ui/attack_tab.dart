@@ -2,6 +2,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/attack.dart';
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -23,7 +24,7 @@ void _remove(Ui ui, Trip trip, NextUp item) {
     ..activeBy = null;
   stop?.hiddenInAttack = true;
   ui.changed();
-  ui.offerUndo('Maknuto iz Plana napada', () {
+  ui.offerUndo(tr('Maknuto iz Plana napada'), () {
     poll
       ?..active = true
       ..activeBy = activeBy;
@@ -34,7 +35,7 @@ void _remove(Ui ui, Trip trip, NextUp item) {
 
 web.HTMLElement _closeButton(Ui ui, Trip trip, NextUp item) => button(
       cls: 'icon-button',
-      ariaLabel: 'Makni: ${item.title}',
+      ariaLabel: tr('Makni: {0}', [item.title]),
       onTap: () => _remove(ui, trip, item),
       children: [icon('close', size: 20)],
     );
@@ -43,10 +44,10 @@ web.HTMLElement _closeButton(Ui ui, Trip trip, NextUp item) => button(
 web.HTMLElement _dayVotes(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
   return el('div', children: [
-    el('div', cls: 'small', attrs: {'style': 'margin-top:8px'}, text: 'Koji dan idemo?'),
+    el('div', cls: 'small', attrs: {'style': 'margin-top:8px'}, text: tr('Koji dan idemo?')),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final day in remainingDays(trip, DateTime.now()))
-        chip('Dan ${day + 1} · ${poll.dayVotes[day]?.length ?? 0}', () {
+        chip(tr('Dan {0} · {1}', [day + 1, poll.dayVotes[day]?.length ?? 0]), () {
           final people = poll.dayVotes[day] ??= {};
           if (!people.remove(me)) people.add(me);
           if (people.isEmpty) poll.dayVotes.remove(day);
@@ -66,7 +67,7 @@ web.HTMLElement _texts(Ui ui, Trip trip, NextUp item, {required bool big}) {
       el('div', cls: 'small', text: [
         _when(trip, item),
         if (item.detail != null) item.detail!,
-        if (item.past) 'prošlo',
+        if (item.past) tr('prošlo'),
       ].join(' · ')),
     if (poll != null && poll.single && !item.past) _dayVotes(ui, trip, poll),
   ]);
@@ -77,7 +78,7 @@ web.HTMLElement _texts(Ui ui, Trip trip, NextUp item, {required bool big}) {
 web.HTMLElement attackTab(Ui ui, Trip trip) {
   final items = planOfAttack(trip, DateTime.now());
   if (items.isEmpty) {
-    return el('p', cls: 'soft pad gap-top', text: 'Još nema ničega u planu.');
+    return el('p', cls: 'soft pad gap-top', text: tr('Još nema ničega u planu.'));
   }
   final next = items.first.past ? null : items.first;
   return el('div', children: [

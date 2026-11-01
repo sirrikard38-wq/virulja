@@ -1,3 +1,4 @@
+import 'i18n.dart';
 import 'models.dart';
 
 enum OfferSort {
@@ -6,9 +7,11 @@ enum OfferSort {
   beach('Blizina plaže'),
   votes('Glasovi');
 
-  const OfferSort(this.label);
+  const OfferSort(this._label);
 
-  final String label;
+  final String _label;
+
+  String get label => tr(_label);
 }
 
 /// A copy of [offers] in the order of [sort]. Offers without the value being

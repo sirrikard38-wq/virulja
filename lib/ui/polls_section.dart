@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -18,7 +19,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     ]),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)
-        chip('${option.time} · ${option.votes.length}', () {
+        chip('${tr(option.time)} · ${option.votes.length}', () {
           final had = option.votes.contains(me);
           if (poll.single) {
             for (final other in poll.options) {
@@ -33,7 +34,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     ]),
     button(
       cls: 'text-button',
-      text: poll.active ? 'Makni iz Plana napada' : 'Stavi u Plan napada',
+      text: poll.active ? tr('Makni iz Plana napada') : tr('Stavi u Plan napada'),
       onTap: () {
         poll.active = !poll.active;
         poll.activeBy = poll.active ? me : null;
@@ -50,12 +51,12 @@ web.HTMLElement pollsTab(Ui ui, Trip trip) {
   return el('div', children: [
     el('div', cls: 'chips', children: [
       for (var i = 0; i < trip.dayCount; i++)
-        chip('Dan ${i + 1}', () {
+        chip(tr('Dan {0}', [i + 1]), () {
           ui.routeDay = i;
           ui.rerender();
         }, on: i == day),
     ]),
-    if (polls.isEmpty) el('p', cls: 'soft pad', text: 'Za ovaj dan još nema anketa.'),
+    if (polls.isEmpty) el('p', cls: 'soft pad', text: tr('Za ovaj dan još nema anketa.')),
     for (final poll in polls) _pollCard(ui, trip, poll),
     _newPoll(ui, trip, day),
   ]);
@@ -75,7 +76,7 @@ void addYesNoPoll(Ui ui, Trip trip, String title) {
         PollOption(id: 'o$i', time: answers[i]),
     ],
   ));
-  ui.toast('Dodano u Ankete.');
+  ui.toast(tr('Dodano u Ankete.'));
 }
 
 /// A new poll: the choices are times, price ranges or locations, as many as
@@ -97,7 +98,7 @@ web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
             el('div', attrs: {'style': 'display:flex;align-items:center;gap:6px'}, children: [
               button(
                 cls: 'icon-button',
-                ariaLabel: 'Makni: $label',
+                ariaLabel: tr('Makni: {0}', [label]),
                 onTap: () {
                   choices.remove(choice);
                   row.remove();
@@ -115,7 +116,7 @@ web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
 
   void add() {
     if (title.value.trim().isEmpty) {
-      error.textContent = 'Upiši što odlučujete.';
+      error.textContent = tr('Upiši što odlučujete.');
       return;
     }
     final filled = {
@@ -136,15 +137,15 @@ web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
     ui.changed();
   }
 
-  return adder('Nova anketa', [
-    field('Što odlučujemo', title),
+  return adder(tr('Nova anketa'), [
+    field(tr('Što odlučujemo'), title),
     rows,
     el('div', attrs: {'style': 'display:flex;flex-wrap:wrap;gap:16px;margin-top:12px'}, children: [
-      more('Vrijeme', type: 'time'),
-      more('Raspon cijene'),
-      more('Lokacija'),
+      more(tr('Vrijeme'), type: 'time'),
+      more(tr('Raspon cijene')),
+      more(tr('Lokacija')),
     ]),
     error,
-    primaryButton('Napravi anketu', add),
+    primaryButton(tr('Napravi anketu'), add),
   ]);
 }

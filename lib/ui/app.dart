@@ -3,6 +3,7 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'anthem.dart';
 import 'cloud.dart';
@@ -14,6 +15,7 @@ import 'group_screen.dart';
 import 'home_screen.dart';
 import 'icons.dart';
 import 'install.dart';
+import 'language_section.dart';
 import 'memories_screen.dart';
 import 'playlist_screen.dart';
 import 'route_screen.dart';
@@ -92,6 +94,7 @@ class ViruljaApp {
   Timer? _toastTimer;
   Timer? _undoTimer;
   bool _redrawWaiting = false;
+  bool _languageOpen = false;
 
   /// Ring length of the speaker: the circumference of its circle.
   static const double _ringLength = 125.7;
@@ -230,7 +233,7 @@ class ViruljaApp {
     _ring = ring;
     return button(
       cls: 'round right',
-      ariaLabel: _data.anthemMuted ? 'Uključi himnu' : 'Utišaj himnu',
+      ariaLabel: _data.anthemMuted ? tr('Uključi himnu') : tr('Utišaj himnu'),
       onTap: () => _tapSpeaker(trip),
       children: [
         svg('svg', cls: 'ring', attrs: {
@@ -244,9 +247,34 @@ class ViruljaApp {
     );
   }
 
+  /// In the corner of the screens that are not about one trip or its memories.
+  List<web.HTMLElement> _languageCorner() => [
+        button(
+          cls: 'round right lang-button',
+          ariaLabel: tr('Jezik'),
+          text: language.name.toUpperCase(),
+          onTap: () {
+            _languageOpen = !_languageOpen;
+            render();
+          },
+        ),
+        if (_languageOpen)
+          el('div', cls: 'lang-menu card', children: [
+            for (final choice in Language.values)
+              button(
+                text: choice.label,
+                cls: choice == language ? 'on' : null,
+                onTap: () {
+                  _languageOpen = false;
+                  chooseLanguage(_ui, choice);
+                },
+              ),
+          ]),
+      ];
+
   web.HTMLElement _backButton() => button(
         cls: 'round left',
-        ariaLabel: 'Natrag',
+        ariaLabel: tr('Natrag'),
         onTap: _arrow,
         children: [icon('back')],
       );
@@ -261,9 +289,9 @@ class ViruljaApp {
           children: [icon(name), web.document.createTextNode(label)],
         );
     return el('nav', cls: 'nav', children: [
-      item('#/', 'compass', 'Putovanja', page != 'uspomene' && page != 'grupa'),
-      item('#/uspomene', 'photo', 'Uspomene', page == 'uspomene'),
-      item('#/grupa', 'group', 'Postavke', page == 'grupa'),
+      item('#/', 'compass', tr('Putovanja'), page != 'uspomene' && page != 'grupa'),
+      item('#/uspomene', 'photo', tr('Uspomene'), page == 'uspomene'),
+      item('#/grupa', 'group', tr('Postavke'), page == 'grupa'),
     ]);
   }
 
@@ -305,6 +333,8 @@ class ViruljaApp {
   }
 
   void render() {
+    language = _data.chosenLanguage;
+    web.document.documentElement?.setAttribute('lang', language.name);
     _redrawWaiting = false;
     _applyTheme();
     final place = _Place(web.window.location.hash);
@@ -341,11 +371,13 @@ class ViruljaApp {
       el('div', cls: frameClass, children: [
         page,
         if (hasBack) _backButton(),
+        if (trip == null && place.page != 'uspomene' && place.page != 'novo')
+          ..._languageCorner(),
         if (trip != null && trip.anthemClipId != null) _speaker(trip),
         if (trip != null && _mainTabs.contains(place.section))
           button(
             cls: trip.anthemClipId != null ? 'round right second' : 'round right',
-            ariaLabel: 'Postavke',
+            ariaLabel: tr('Postavke'),
             onTap: () => _go('#/p/${trip.id}/uredi'),
             children: [icon('tool', size: 22)],
           ),
@@ -360,7 +392,7 @@ class ViruljaApp {
       ..textContent = ''
       ..append(el('span', text: message))
       ..append(button(
-        text: 'Poništi',
+        text: tr('Poništi'),
         onTap: () {
           _undoTimer?.cancel();
           _undoBar.classList.remove('show');

@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -118,9 +119,9 @@ web.HTMLElement linkIcon(String address, String label) => el(
 
 web.HTMLElement removeButton(String what, void Function() onConfirmed) => button(
       cls: 'icon-button',
-      ariaLabel: 'Ukloni: $what',
+      ariaLabel: tr('Ukloni: {0}', [what]),
       onTap: () {
-        if (web.window.confirm('Ukloniti: $what?')) onConfirmed();
+        if (web.window.confirm(tr('Ukloniti: {0}?', [what]))) onConfirmed();
       },
       children: [icon('close', size: 20)],
     );
@@ -168,8 +169,8 @@ web.HTMLElement storedImage(
 /// `2.420` with the right word; the small line under a place to stay.
 String offerFacts(Offer offer) => [
       if (offer.rating != null) offer.rating!.toString().replaceAll('.', ','),
-      if (offer.beachMeters != null) '${offer.beachMeters} m do plaže',
-      offer.source,
+      if (offer.beachMeters != null) tr('{0} m do plaže', [offer.beachMeters]),
+      tr(offer.source),
     ].join(' · ');
 
 /// The perforated stamp on a postcard.

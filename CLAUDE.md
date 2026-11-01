@@ -1,8 +1,13 @@
 # VIRULJA
 
 A trip app for a family or group of friends, used on phones as an installable web
-app. Everything the user sees is in Croatian; code and comments are in English. The
-user writes in Croatian and is not a programmer: explain things in plain words.
+app in Croatian, English and Turkish; code and comments are in English. The user writes
+in Croatian and is not a programmer: explain things in plain words.
+
+Every text in the code is the Croatian one inside `tr()`, with `{0}` for what goes into it;
+English and Turkish are in `lib/src/domain/i18n.dart`, and `test/i18n_test.dart` fails if
+one is missing. Dates and counts are in `format.dart`. Stored texts stay Croatian keys
+(poll answers Da, Ne, Možda; offer source Ručno) and are translated when shown.
 
 ## Commands
 

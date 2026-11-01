@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -11,18 +12,19 @@ web.HTMLElement requestCard(Ui ui, Trip trip, JoinRequest request) {
   final given = request.approvals.contains(me);
   final phone = request.phone;
   return el('div', cls: 'poll card', children: [
-    el('div', cls: 'label', text: '${request.name} želi na putovanje'),
+    el('div', cls: 'label', text: tr('{0} želi na putovanje', [request.name])),
     el('div', cls: 'small', text: [
       if (phone != null && phone.isNotEmpty) phone,
-      'Prihvatilo: ${request.approvals.length} od ${trip.approvalsNeeded}',
+      tr('Prihvatilo: {0} od {1}', [request.approvals.length, trip.approvalsNeeded]),
     ].join(' · ')),
     el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:8px'}, children: [
-      chip(given ? 'Prihvaćeno' : 'Prihvati', () {
+      chip(given ? tr('Prihvaćeno') : tr('Prihvati'), () {
         if (given) return;
         request.approvals.add(me);
+        ui.cloud?.admitAccepted(trip);
         ui.changed();
       }, on: given),
-      chip('Odbij', () {
+      chip(tr('Odbij'), () {
         trip.requests.remove(request);
         ui.changed();
       }),
@@ -33,5 +35,5 @@ web.HTMLElement requestCard(Ui ui, Trip trip, JoinRequest request) {
 /// The trips this phone is waiting to enter.
 List<web.HTMLElement> waitingNotes(Ui ui) => [
       for (final city in ui.data.waiting.values)
-        el('p', cls: 'soft pad gap-top', text: '$city: čeka se da te grupa prihvati.'),
+        el('p', cls: 'soft pad gap-top', text: tr('{0}: čeka se da te grupa prihvati.', [city])),
     ];

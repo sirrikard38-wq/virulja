@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/i18n.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'push.dart';
@@ -9,8 +10,7 @@ import 'push.dart';
 /// The switch for trip reminders on this phone.
 web.HTMLElement notificationsSection(Ui ui) {
   if (!pushWorks) {
-    return el('p', cls: 'soft pad', text: 'Za obavijesti prvo stavi aplikaciju na '
-        'početni zaslon. iPhone treba imati iOS 16.4 ili noviji.');
+    return el('p', cls: 'soft pad', text: tr('Za obavijesti prvo stavi aplikaciju na početni zaslon. iPhone treba imati iOS 16.4 ili noviji.'));
   }
   var on = false;
   late final web.HTMLElement toggle;
@@ -28,29 +28,29 @@ web.HTMLElement notificationsSection(Ui ui) {
         try {
           device = await turnOnPush(key);
         } on Object {
-          ui.toast('Mobitel nije dopustio prijavu za obavijesti.');
+          ui.toast(tr('Mobitel nije dopustio prijavu za obavijesti.'));
           return;
         }
         if (device == null) {
-          ui.toast('Obavijesti nisu dopuštene u postavkama mobitela.');
+          ui.toast(tr('Obavijesti nisu dopuštene u postavkama mobitela.'));
           return;
         }
         await cloud.savePushDevice(device);
-        ui.toast('Obavijesti su uključene.');
+        ui.toast(tr('Obavijesti su uključene.'));
       }
     } on Object {
-      ui.toast('Mobitel je prijavljen, ali spremanje nije uspjelo.');
+      ui.toast(tr('Mobitel je prijavljen, ali spremanje nije uspjelo.'));
     }
     ui.rerender();
   }
 
-  toggle = button(cls: 'secondary wide', text: 'Uključi obavijesti', onTap: tap);
+  toggle = button(cls: 'secondary wide', text: tr('Uključi obavijesti'), onTap: tap);
   unawaited(pushDevice().then((device) {
     on = device != null;
-    if (on) toggle.textContent = 'Isključi obavijesti';
+    if (on) toggle.textContent = tr('Isključi obavijesti');
   }).catchError((Object _) {}));
   return el('div', children: [
-    el('p', cls: 'soft pad', text: 'Podsjetnik za putovanje'),
+    el('p', cls: 'soft pad', text: tr('Podsjetnik za putovanje')),
     toggle,
   ]);
 }

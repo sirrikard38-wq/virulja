@@ -6,6 +6,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
@@ -16,7 +17,7 @@ import 'widgets.dart';
 
 String _placeFacts(Place place) => [
       if (place.rating != null) place.rating!.toString().replaceAll('.', ','),
-      if (place.pricePerPerson != null) '${euros(place.pricePerPerson!)} po osobi',
+      if (place.pricePerPerson != null) tr('{0} po osobi', [euros(place.pricePerPerson!)]),
       if (place.note != null) place.note!,
     ].join(' · ');
 
@@ -24,7 +25,7 @@ String _placeFacts(Place place) => [
 web.HTMLElement _voteChip(Ui ui, Trip trip, String name) {
   bool same(Poll poll) => poll.single && poll.title == name;
   final polled = trip.polls.any(same);
-  return chip(polled ? 'U anketi' : 'Glasaj', () {
+  return chip(polled ? tr('U anketi') : tr('Glasaj'), () {
     polled ? trip.polls.removeWhere(same) : addYesNoPoll(ui, trip, name);
     ui.changed();
   }, on: polled);
@@ -37,14 +38,14 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
       el('div', cls: 'label', text: place.name),
       el('div', cls: 'small', text: _placeFacts(place)),
       el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
-        chip(place.planned ? 'U planu' : 'Dodaj u plan', () {
+        chip(place.planned ? tr('U planu') : tr('Dodaj u plan'), () {
           place.planned = !place.planned;
           ui.changed();
         }, on: place.planned),
         _voteChip(ui, trip, place.name),
       ]),
     ]),
-    if (link != null) linkIcon(link, 'Otvori ${place.name}'),
+    if (link != null) linkIcon(link, tr('Otvori {0}', [place.name])),
     removeButton(place.name, () {
       trip.places.remove(place);
       ui.changed();
@@ -66,7 +67,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
 
   void add() {
     if (name.value.trim().isEmpty) {
-      error.textContent = 'Upiši naziv mjesta.';
+      error.textContent = tr('Upiši naziv mjesta.');
       return;
     }
     final address = link.value.trim();
@@ -84,16 +85,16 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
     ui.changed();
   }
 
-  return adder('Dodaj mjesto', [
-    field('Link', link),
-    field('Naziv', name),
+  return adder(tr('Dodaj mjesto'), [
+    field(tr('Link'), link),
+    field(tr('Naziv'), name),
     el('div', cls: 'fields', children: [
-      field('Ocjena', rating, tight: true),
-      field('Cijena po osobi (€)', price, tight: true),
+      field(tr('Ocjena'), rating, tight: true),
+      field(tr('Cijena po osobi (€)'), price, tight: true),
     ]),
-    field('Bilješka', note),
+    field(tr('Bilješka'), note),
     error,
-    primaryButton('Dodaj mjesto', add),
+    primaryButton(tr('Dodaj mjesto'), add),
   ]);
 }
 
@@ -126,7 +127,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   void add() {
     final cents = parseEuros(price.value);
     if (name.value.trim().isEmpty || cents == null) {
-      error.textContent = 'Upiši jelo i cijenu.';
+      error.textContent = tr('Upiši jelo i cijenu.');
       return;
     }
     final where = place.value.trim();
@@ -140,15 +141,15 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  return adder('Dodaj jelo', [
-    field('Jelo', name),
+  return adder(tr('Dodaj jelo'), [
+    field(tr('Jelo'), name),
     el('div', cls: 'fields', children: [
-      field('Cijena (€)', price, tight: true),
-      field('Porcija', servings, tight: true),
+      field(tr('Cijena (€)'), price, tight: true),
+      field(tr('Porcija'), servings, tight: true),
     ]),
-    field('Gdje', place),
+    field(tr('Gdje'), place),
     error,
-    primaryButton('Dodaj jelo', add),
+    primaryButton(tr('Dodaj jelo'), add),
   ]);
 }
 
@@ -359,26 +360,149 @@ class _Tab {
   final PlaceKind? kind;
   final CustomKind? custom;
 
+  /// What this person's order of the categories calls it.
+  String get key => custom?.id ?? kind!.name;
+
   bool holds(Place place) => custom != null
       ? place.customKindId == custom!.id
       : place.customKindId == null && place.kind == kind;
+}
+
+/// [tabs] in the order this person chose. Categories made since come last.
+List<_Tab> _inOrder(List<_Tab> tabs, List<String> order) {
+  int place(_Tab tab) {
+    final at = order.indexOf(tab.key);
+    return at >= 0 ? at : order.length + tabs.indexOf(tab);
+  }
+
+  return tabs.toList()..sort((a, b) => place(a).compareTo(place(b)));
+}
+
+/// How long a finger must rest on a category to pick it up, and how far it may
+/// wander meanwhile before it counts as scrolling the row.
+const Duration _holdTime = Duration(milliseconds: 380);
+const double _holdWander = 8;
+
+/// A long press picks a category up, the others wobble as icons do on a phone,
+/// and it goes where the finger drops it. [save] gets the new order.
+void _reorderOnHold(web.HTMLElement row, void Function(List<String> keys) save) {
+  Timer? hold;
+  web.HTMLElement? held;
+  var lifted = false;
+  double startX = 0, startY = 0, startLeft = 0, startScroll = 0;
+  final active = web.AddEventListenerOptions(passive: false);
+
+  void follow(web.HTMLElement chip, double x) {
+    final moved = x - startX + row.scrollLeft - startScroll;
+    chip.style.transform = 'translateX(${moved - (chip.offsetLeft - startLeft)}px)';
+  }
+
+  void passBy(web.HTMLElement other, void Function() swap) {
+    final before = other.offsetLeft;
+    swap();
+    other.style
+      ..transition = 'none'
+      ..transform = 'translateX(${before - other.offsetLeft}px)';
+    other.getBoundingClientRect(); // so that the browser sees where it starts
+    other.style
+      ..transition = 'transform 120ms ease'
+      ..transform = '';
+  }
+
+  double middle(web.Element element) {
+    final box = element.getBoundingClientRect();
+    return box.left + box.width / 2;
+  }
+
+  void finish(web.Event event) {
+    hold?.cancel();
+    final chip = held;
+    held = null;
+    if (!lifted || chip == null) return;
+    lifted = false;
+    event.preventDefault();
+    chip.classList.remove('lifted');
+    chip.style.transform = '';
+    row.classList.remove('arranging');
+    final chips = row.querySelectorAll('[data-tab]');
+    save([
+      for (var i = 0; i < chips.length; i++)
+        (chips.item(i) as web.Element).getAttribute('data-tab')!,
+    ]);
+  }
+
+  row.addEventListener('touchstart', ((web.TouchEvent event) {
+    final chip = (event.target as web.Element).closest('[data-tab]') as web.HTMLElement?;
+    if (chip == null || event.touches.length != 1) return;
+    final touch = event.touches.item(0)!;
+    startX = touch.clientX.toDouble();
+    startY = touch.clientY.toDouble();
+    startLeft = chip.offsetLeft.toDouble();
+    startScroll = row.scrollLeft.toDouble();
+    held = chip;
+    hold?.cancel();
+    hold = Timer(_holdTime, () {
+      lifted = true;
+      chip.classList.add('lifted');
+      row.classList.add('arranging');
+      try {
+        web.window.navigator.vibrate(15.toJS);
+      } on Object {
+        // Not every phone can.
+      }
+    });
+  }).toJS);
+  row.addEventListener('touchmove', ((web.TouchEvent event) {
+    final chip = held;
+    if (chip == null) return;
+    final touch = event.touches.item(0)!;
+    final x = touch.clientX.toDouble();
+    if (!lifted) {
+      if ((x - startX).abs() > _holdWander ||
+          (touch.clientY - startY).abs() > _holdWander) {
+        hold?.cancel();
+        held = null;
+      }
+      return;
+    }
+    event.preventDefault();
+    if (x < 40) row.scrollLeft -= 6;
+    if (x > web.window.innerWidth - 40) row.scrollLeft += 6;
+    follow(chip, x);
+    final next = chip.nextElementSibling;
+    final previous = chip.previousElementSibling;
+    if (next != null && next.hasAttribute('data-tab') && middle(chip) > middle(next)) {
+      passBy(next as web.HTMLElement, () => row.insertBefore(next, chip));
+      follow(chip, x);
+    } else if (previous != null &&
+        previous.hasAttribute('data-tab') &&
+        middle(chip) < middle(previous)) {
+      passBy(previous as web.HTMLElement, () => row.insertBefore(chip, previous));
+      follow(chip, x);
+    }
+  }).toJS, active);
+  row.addEventListener('touchend', finish.toJS, active);
+  row.addEventListener('touchcancel', finish.toJS, active);
+  row.addEventListener('contextmenu', ((web.Event event) {
+    if (held != null) event.preventDefault();
+  }).toJS);
 }
 
 /// The field for a new category, under the row of categories.
 web.HTMLElement _newKind(Ui ui, void Function(String label) add) {
   final name = input();
   return el('div', cls: 'new-kind', children: [
-    field('Nova kategorija', name),
-    primaryButton('Dodaj kategoriju', () => add(name.value.trim())),
+    field(tr('Nova kategorija'), name),
+    primaryButton(tr('Dodaj kategoriju'), () => add(name.value.trim())),
   ]);
 }
 
 web.HTMLElement foodScreen(Ui ui, Trip trip) {
-  final tabs = [
+  final tabs = _inOrder([
     for (final kind in PlaceKind.values) _Tab(kind.label, kind.searchWord, kind: kind),
     for (final custom in trip.customKinds)
       _Tab(custom.label, custom.label, custom: custom),
-  ];
+  ], ui.data.kindOrder[trip.id] ?? const []);
   final customAt = tabs.indexWhere(
       (tab) => tab.custom != null && tab.custom!.id == ui.customKindId);
   final index = customAt >= 0
@@ -417,7 +541,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   }
 
   void removeKind(CustomKind custom) {
-    if (!web.window.confirm('Obrisati kategoriju ${custom.label} i mjesta u njoj?')) return;
+    if (!web.window.confirm(tr('Obrisati kategoriju {0} i mjesta u njoj?', [custom.label]))) return;
     trip.places.removeWhere(tab.holds);
     trip.customKinds.remove(custom);
     ui.customKindId = null;
@@ -427,34 +551,33 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   final custom = tab.custom;
   final sliding = el('div', cls: 'slide-page', children: [
     el('div', cls: 'pad gap-top', children: [
-      outLink('Traži: ${tab.label} u mjestu ${trip.city}', mapsSearchFor(tab.searchWord, trip)),
+      outLink(tr('Traži: {0} u mjestu {1}', [tab.label, trip.city]), mapsSearchFor(tab.searchWord, trip)),
     ]),
     if (places.isEmpty)
-      el('p', cls: 'soft pad gap-top', text: 'Još nema spremljenih mjesta.'),
+      el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
     for (final place in places) _placeRow(ui, trip, place),
     _addPlace(ui, trip, custom),
     if (custom != null)
       el('div', cls: 'pad gap-top', children: [
         button(
           cls: 'text-button',
-          text: 'Obriši kategoriju',
+          text: tr('Obriši kategoriju'),
           onTap: () => removeKind(custom),
         ),
       ]),
-    sectionTitle('Jela koja želimo probati'),
+    sectionTitle(tr('Jela koja želimo probati')),
     if (trip.dishes.isEmpty)
-      el('p', cls: 'soft pad', text: 'Dodajte jela s cijenom s jelovnika.'),
+      el('p', cls: 'soft pad', text: tr('Dodajte jela s cijenom s jelovnika.')),
     for (final dish in trip.dishes) _dishRow(ui, trip, dish),
     _addDish(ui, trip),
   ]);
-  final page = el('div', cls: 'swipe-area', children: [
-    topBar('Hrana i piće'),
-    el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
+  final chipRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (final item in tabs)
-        chip(item.label, () => show(item), on: identical(item, tab)),
+        chip(item.label, () => show(item), on: identical(item, tab))
+          ..setAttribute('data-tab', item.key),
       button(
         cls: ui.addingKind ? 'chip on-outline' : 'chip',
-        ariaLabel: 'Nova kategorija',
+        ariaLabel: tr('Nova kategorija'),
         onTap: () {
           ui.addingKind = !ui.addingKind;
           ui.rerender();
@@ -462,11 +585,19 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
         },
         children: [icon(ui.addingKind ? 'minus' : 'plus', size: 18)],
       ),
-    ]),
+  ]);
+  _reorderOnHold(chipRow, (keys) {
+    ui.data.kindOrder[trip.id] = keys;
+    ui.store.save();
+    ui.rerender();
+  });
+  final page = el('div', cls: 'swipe-area', children: [
+    topBar(tr('Hrana i piće')),
+    chipRow,
     if (ui.addingKind) _newKind(ui, addKind),
     el('div', cls: 'slide-clip', children: [sliding]),
     el('div', cls: 'row stick-bottom', children: [
-      el('div', cls: 'grow', text: 'Procjena za hranu i piće'),
+      el('div', cls: 'grow', text: tr('Procjena za hranu i piće')),
       el('div', cls: 'price', text: euros(plannedCost(trip, CostCategory.food))),
     ]),
   ]);

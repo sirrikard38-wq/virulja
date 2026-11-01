@@ -2,6 +2,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import '../src/domain/offers.dart';
@@ -21,20 +22,20 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
     el('div', attrs: {'style': 'display:flex;justify-content:space-between;gap:12px'},
         children: [
       el('div', cls: 'grow', children: [
-        if (best) el('span', cls: 'badge', text: 'Preporuka'),
+        if (best) el('span', cls: 'badge', text: tr('Preporuka')),
         el('div', cls: 'label', text: offer.name, attrs: {'style': 'font-size:16px'}),
         el('div', cls: 'small', text: offerFacts(offer)),
       ]),
       el('div', cls: 'price', children: [
         el('div', text: euros(offer.pricePerNight), attrs: {'style': 'font-size:18px'}),
-        el('div', cls: 'small', text: 'po noći'),
+        el('div', cls: 'small', text: tr('po noći')),
       ]),
     ]),
     el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:8px;align-items:center'},
         children: [
       button(
         cls: voted ? 'chip on' : 'chip',
-        ariaLabel: 'Glasaj za ${offer.name}, ${offer.votes.length}',
+        ariaLabel: tr('Glasaj za {0}, {1}', [offer.name, offer.votes.length]),
         onTap: () {
           voted ? offer.votes.remove(me) : offer.votes.add(me);
           ui.changed();
@@ -44,12 +45,12 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
           web.document.createTextNode('${offer.votes.length}'),
         ],
       ),
-      chip(chosen ? 'Odabrano' : 'Odaberi', () {
+      chip(chosen ? tr('Odabrano') : tr('Odaberi'), () {
         trip.chosenOfferId = chosen ? null : offer.id;
         ui.changed();
       }, on: chosen),
       el('span', cls: 'grow'),
-      if (link != null) linkIcon(link, 'Otvori ponudu'),
+      if (link != null) linkIcon(link, tr('Otvori ponudu')),
       removeButton(offer.name, () {
         trip.offers.remove(offer);
         if (chosen) trip.chosenOfferId = null;
@@ -82,12 +83,12 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
   void add() {
     final cents = parseEuros(price.value);
     if (name.value.trim().isEmpty || cents == null || cents == 0) {
-      error.textContent = 'Upiši naziv i cijenu po noći.';
+      error.textContent = tr('Upiši naziv i cijenu po noći.');
       return;
     }
     final stars = double.tryParse(rating.value.trim().replaceAll(',', '.'));
     if (rating.value.trim().isNotEmpty && (stars == null || stars < 0 || stars > 5)) {
-      error.textContent = 'Ocjena ide od 0 do 5.';
+      error.textContent = tr('Ocjena ide od 0 do 5.');
       return;
     }
     final address = link.value.trim();
@@ -103,16 +104,16 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  return adder('Dodaj ponudu', [
-    field('Link ponude', link),
-    field('Naziv', name),
+  return adder(tr('Dodaj ponudu'), [
+    field(tr('Link ponude'), link),
+    field(tr('Naziv'), name),
     el('div', cls: 'fields', children: [
-      field('Cijena po noći (€)', price, tight: true),
-      field('Ocjena (0 do 5)', rating, tight: true),
+      field(tr('Cijena po noći (€)'), price, tight: true),
+      field(tr('Ocjena (0 do 5)'), rating, tight: true),
     ]),
-    field('Do plaže (m)', beach),
+    field(tr('Do plaže (m)'), beach),
     error,
-    primaryButton('Dodaj ponudu', add),
+    primaryButton(tr('Dodaj ponudu'), add),
   ]);
 }
 
@@ -120,15 +121,14 @@ web.HTMLElement stayScreen(Ui ui, Trip trip) {
   final offers = sortOffers(trip.offers, ui.offerSort);
   final best = offers.isEmpty ? null : recommendedOffer(offers, trip.people);
   return el('div', children: [
-    topBar('Smještaj'),
+    topBar(tr('Smještaj')),
     el('div', cls: 'two', attrs: {'style': 'padding-top:0'}, children: [
-      outLink('Traži na Bookingu', bookingSearch(trip)),
-      outLink('Traži na Airbnbu', airbnbSearch(trip)),
+      outLink(tr('Traži na Bookingu'), bookingSearch(trip)),
+      outLink(tr('Traži na Airbnbu'), airbnbSearch(trip)),
     ]),
     if (offers.isEmpty)
       el('p', cls: 'soft pad gap-top',
-          text: 'Nađite ponude koje vam se sviđaju i dodajte ih ovdje, '
-              'pa ih usporedite i glasajte.')
+          text: tr('Nađite ponude koje vam se sviđaju i dodajte ih ovdje, pa ih usporedite i glasajte.'))
     else ...[
       el('div', cls: 'chips', children: [
         for (final sort in OfferSort.values)

@@ -2,6 +2,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'attack_tab.dart';
 import 'context.dart';
@@ -42,33 +43,33 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
               ui.startAnthem(trip);
             }),
           el('span', cls: 'grow', children: [
-            el('span', cls: 'small', text: 'Himna putovanja',
+            el('span', cls: 'small', text: tr('Himna putovanja'),
                 attrs: {'style': 'display:block'}),
-            el('span', cls: 'label', text: anthem ?? 'Dodaj himnu',
+            el('span', cls: 'label', text: anthem ?? tr('Dodaj himnu'),
                 attrs: {'style': 'display:block'}),
           ]),
-          el('span', cls: 'soft', text: 'Playlista · ${trip.songs.length}'),
+          el('span', cls: 'soft', text: tr('Playlista · {0}', [trip.songs.length])),
         ],
       )..setAttribute('style', 'margin:0;padding:6px 12px;width:100%'),
     ]),
     el('div', cls: 'two', children: [
-      _tile('Smještaj', euros(budget.line(CostCategory.stay).planned),
+      _tile(tr('Smještaj'), euros(budget.line(CostCategory.stay).planned),
           () => ui.go(ui.tripRoute(trip, 'smjestaj'))),
-      _tile('Hrana i piće', euros(budget.line(CostCategory.food).planned),
+      _tile(tr('Hrana i piće'), euros(budget.line(CostCategory.food).planned),
           () => ui.go(ui.tripRoute(trip, 'hrana'))),
-      _tile('Plan puta', '${trip.dayCount} dana',
+      _tile(tr('Plan puta'), daysCount(trip.dayCount),
           () => ui.go(ui.tripRoute(trip, 'put'))),
-      _tile('Troškovi', euros(budget.plannedTotal),
+      _tile(tr('Troškovi'), euros(budget.plannedTotal),
           () => ui.go(ui.tripRoute(trip, 'troskovi'))),
     ]),
     if (chosen != null) ...[
-      sectionTitle('Odabrani smještaj'),
+      sectionTitle(tr('Odabrani smještaj')),
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', children: [
           el('div', cls: 'label', text: chosen.name),
           el('div', cls: 'small', text: offerFacts(chosen)),
         ]),
-        el('div', cls: 'price', text: '${euros(chosen.pricePerNight)}/noć'),
+        el('div', cls: 'price', text: tr('{0}/noć', [euros(chosen.pricePerNight)])),
       ]),
     ],
   ]);
@@ -76,11 +77,11 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
 
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final cover = trip.coverId;
-  const tabs = {
-    'plan': 'Plan',
-    'slike': 'Uspomene',
-    'ankete': 'Ankete',
-    'napad': 'Plan napada',
+  final tabs = {
+    'plan': tr('Plan'),
+    'slike': tr('Uspomene'),
+    'ankete': tr('Ankete'),
+    'napad': tr('Plan napada'),
   };
   return el('div', children: [
     el('div', cls: 'hero', children: [
@@ -113,7 +114,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
         onTap: () => ui.go(ui.tripRoute(trip, 'troskovi')),
         children: [
           el('div', attrs: {'style': 'text-align:right;flex:none'}, children: [
-            el('div', cls: 'small', text: 'po osobi'),
+            el('div', cls: 'small', text: tr('po osobi')),
             el('div', cls: 'title', text: euros(Budget.of(trip).plannedPerPerson)),
           ]),
         ],

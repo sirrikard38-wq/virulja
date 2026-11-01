@@ -1,8 +1,9 @@
 import 'package:web/web.dart' as web;
 
-import '../src/domain/countries.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
+import 'country_names.dart';
 import 'dom.dart';
 import 'join_screen.dart';
 import 'media.dart';
@@ -14,35 +15,35 @@ import 'widgets.dart';
 /// the code.
 web.HTMLElement _members(Ui ui, Trip trip) {
   return el('div', children: [
-    sectionTitle('Šifra putovanja'),
+    sectionTitle(tr('Šifra putovanja')),
     el('div', cls: 'row', children: [
-      el('div', cls: 'grow title', text: trip.code ?? 'Priprema se...'),
+      el('div', cls: 'grow title', text: trip.code ?? tr('Priprema se...')),
     ]),
     el('div', cls: 'two', children: [
-      secondaryButton('Pošalji na WhatsApp', () => sendCodeOnWhatsApp(trip)),
-      secondaryButton('Kopiraj', () => copyCode(ui, trip)),
+      secondaryButton(tr('Pošalji na WhatsApp'), () => sendCodeOnWhatsApp(trip)),
+      secondaryButton(tr('Kopiraj'), () => copyCode(ui, trip)),
     ]),
     el('div', cls: 'pad gap-top', children: [
-      button(cls: 'text-button', text: 'Promijeni šifru', onTap: () async {
-        if (!web.window.confirm('Promijeniti šifru? Članovi ostaju na putovanju.')) {
+      button(cls: 'text-button', text: tr('Promijeni šifru'), onTap: () async {
+        if (!web.window.confirm(tr('Promijeniti šifru? Članovi ostaju na putovanju.'))) {
           return;
         }
         try {
           await ui.cloud?.changeCode(trip);
         } on Object {
-          ui.toast('Nema veze. Pokušaj ponovno.');
+          ui.toast(tr('Nema veze. Pokušaj ponovno.'));
         }
         ui.rerender();
       }),
     ]),
-    sectionTitle('Grupa'),
+    sectionTitle(tr('Grupa')),
     for (final id in trip.memberIds) memberRow(ui, trip, id),
   ]);
 }
 
 /// Makes a new trip, or changes [trip] when there is one.
 web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
-  final country = input(value: trip?.country ?? 'Hrvatska', list: 'drzave');
+  final country = input(value: trip?.country ?? (language == Language.hr ? 'Hrvatska' : ''), list: 'drzave');
   final city = input(value: trip?.city ?? '');
   final dates = RangePicker(start: trip?.start, end: trip?.end);
   final error = errorLine();
@@ -50,19 +51,19 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     'type': 'file',
     'accept': 'image/*',
   }) as web.HTMLInputElement;
-  final coverName = el('span', text: 'Odaberi fotografiju');
+  final coverName = el('span', text: tr('Odaberi fotografiju'));
   cover.onChange.listen((_) {
-    if (pickedFiles(cover).isNotEmpty) coverName.textContent = 'Fotografija odabrana';
+    if (pickedFiles(cover).isNotEmpty) coverName.textContent = tr('Fotografija odabrana');
   });
 
   Future<void> save() async {
     final from = dates.start, to = dates.end;
     final message = city.value.trim().isEmpty
-        ? 'Upiši grad.'
+        ? tr('Upiši grad.')
         : country.value.trim().isEmpty
-            ? 'Upiši državu.'
+            ? tr('Upiši državu.')
             : from == null || to == null
-                ? 'Odaberi polazak i povratak u kalendaru.'
+                ? tr('Odaberi polazak i povratak u kalendaru.')
                 : null;
     if (message != null) {
       error.textContent = message;
@@ -90,7 +91,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
         await storePicture(ui.store, id, files.first);
         saved.coverId = id;
       } on Object {
-        ui.toast('Tu fotografiju ne mogu pročitati.');
+        ui.toast(tr('Tu fotografiju ne mogu pročitati.'));
       }
     }
     if (trip == null) ui.data.trips.add(saved);
@@ -105,8 +106,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
   /// Takes the trip off this phone. For the rest of the group nothing changes,
   /// so nobody can wipe a shared trip by accident.
   void remove() {
-    if (!web.window.confirm('Ukloniti putovanje ${trip!.city} s ovog mobitela? '
-        'Ostali u grupi i dalje će ga imati.')) {
+    if (!web.window.confirm(tr('Ukloniti putovanje {0} s ovog mobitela? Ostali u grupi i dalje će ga imati.', [trip!.city]))) {
       return;
     }
     for (final photo in trip.photos) {
@@ -121,26 +121,26 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
   }
 
   return el('div', children: [
-    topBar(trip == null ? 'Novo putovanje' : 'Postavke'),
+    topBar(trip == null ? tr('Novo putovanje') : tr('Postavke')),
     el('datalist', attrs: {'id': 'drzave'}, children: [
-      for (final name in countries) el('option', attrs: {'value': name}),
+      for (final name in countryNames()) el('option', attrs: {'value': name}),
     ]),
-    field('Država', country),
-    field('Grad', city),
+    field(tr('Država'), country),
+    field(tr('Grad'), city),
     dates.element,
-    el('p', cls: 'label pad gap-top', text: 'Fotografija za razglednicu'),
+    el('p', cls: 'label pad gap-top', text: tr('Fotografija za razglednicu')),
     el('label', cls: 'secondary wide', attrs: {'style': 'margin-top:6px'}, children: [
       cover,
       coverName,
     ]),
     error,
-    primaryButton(trip == null ? 'Napravi putovanje' : 'Spremi', save),
+    primaryButton(trip == null ? tr('Napravi putovanje') : tr('Spremi'), save),
     if (trip != null && ui.cloud != null) _members(ui, trip),
     if (trip != null)
       el('div', cls: 'pad gap-top', children: [
         button(
           cls: 'text-button danger',
-          text: 'Ukloni s ovog mobitela',
+          text: tr('Ukloni s ovog mobitela'),
           onTap: remove,
         ),
       ]),

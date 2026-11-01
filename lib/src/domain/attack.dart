@@ -1,3 +1,4 @@
+import 'i18n.dart';
 import 'models.dart';
 
 /// One thing in the plan of attack: a stop of the plan or an active poll.
@@ -45,7 +46,7 @@ NextUp _result(Poll poll) {
   }
   final choice = best?.time;
   if (choice == null) {
-    return NextUp(day, '', poll.title, detail: 'Još nema glasova', poll: poll);
+    return NextUp(day, '', poll.title, detail: tr('Još nema glasova'), poll: poll);
   }
   return _clock.hasMatch(choice)
       ? NextUp(day, choice, poll.title, poll: poll)

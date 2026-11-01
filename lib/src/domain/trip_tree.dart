@@ -104,6 +104,7 @@ Tree tripToTree(
           request.id: {
             'name': request.name,
             'phone': request.phone,
+            'person': request.personId,
             'approvals': _set(request.approvals),
           },
       },

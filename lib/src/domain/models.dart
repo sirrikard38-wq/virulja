@@ -6,6 +6,8 @@ library;
 
 import 'dart:math';
 
+import 'i18n.dart';
+
 typedef Json = Map<String, dynamic>;
 
 List<T> _list<T>(Object? raw, T Function(Json) read) => [
@@ -229,12 +231,15 @@ enum PlaceKind {
   wineShop('Vinoteke', 'vinoteka'),
   winery('Vinarije', 'vinarija');
 
-  const PlaceKind(this.label, this.searchWord);
+  const PlaceKind(this._label, this._searchWord);
 
-  final String label;
+  final String _label;
+  final String _searchWord;
+
+  String get label => tr(_label);
 
   /// What to look for on Google Maps.
-  final String searchWord;
+  String get searchWord => tr(_searchWord);
 }
 
 /// A restaurant, cafe, beach bar, wine shop or winery.
@@ -450,9 +455,11 @@ enum CostCategory {
   activities('Izleti i vino'),
   other('Ostalo');
 
-  const CostCategory(this.label);
+  const CostCategory(this._label);
 
-  final String label;
+  final String _label;
+
+  String get label => tr(_label);
 }
 
 /// Money someone really spent on the trip.
@@ -526,9 +533,11 @@ enum Reaction {
   sun('Sunce'),
   star('Zvijezda');
 
-  const Reaction(this.label);
+  const Reaction(this._label);
 
-  final String label;
+  final String _label;
+
+  String get label => tr(_label);
 }
 
 /// Person -> their reactions. Older saves hold one reaction name per person.
@@ -895,9 +904,11 @@ enum ThemeChoice {
   light('Svijetlo'),
   dark('Tamno');
 
-  const ThemeChoice(this.label);
+  const ThemeChoice(this._label);
 
-  final String label;
+  final String _label;
+
+  String get label => tr(_label);
 }
 
 /// Someone who entered the right code and waits for the group to let them in.
@@ -906,6 +917,7 @@ class JoinRequest {
     required this.id,
     required this.name,
     this.phone,
+    this.personId,
     Set<String>? approvals,
   }) : approvals = approvals ?? {};
 
@@ -913,6 +925,7 @@ class JoinRequest {
         id: json['id'] as String,
         name: json['name'] as String,
         phone: json['phone'] as String?,
+        personId: json['person'] as String?,
         approvals: _strings(json['approvals']).toSet(),
       );
 
@@ -921,6 +934,9 @@ class JoinRequest {
   final String name;
   final String? phone;
 
+  /// Who they are in the app; with this the group can let them in itself.
+  final String? personId;
+
   /// The members who said yes.
   final Set<String> approvals;
 
@@ -928,6 +944,7 @@ class JoinRequest {
         'id': id,
         'name': name,
         'phone': phone,
+        'person': personId,
         'approvals': approvals.toList(),
       };
 }
@@ -942,7 +959,10 @@ class AppData {
     this.anthemMuted = false,
     Map<String, String>? identities,
     Map<String, String>? waiting,
-  })  : people = people ?? [],
+    Map<String, List<String>>? kindOrder,
+    this.chosenLanguage = Language.hr,
+  })  : kindOrder = kindOrder ?? {},
+        people = people ?? [],
         trips = trips ?? [],
         identities = identities ?? {},
         waiting = waiting ?? {};
@@ -955,6 +975,10 @@ class AppData {
             .cast<String, String>(),
         waiting: (json['waiting'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
+        kindOrder: (json['kindOrder'] as Json? ?? const <String, dynamic>{})
+            .map((trip, order) => MapEntry(trip, _strings(order))),
+        chosenLanguage:
+            Language.values.asNameMap()[json['language']] ?? Language.hr,
         theme: ThemeChoice.values
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
         anthemMuted: json['anthemMuted'] as bool? ?? false,
@@ -976,6 +1000,11 @@ class AppData {
 
   /// Trip id -> place, for trips this phone has asked to enter.
   Map<String, String> waiting;
+
+  /// Trip id -> this person's order of the categories of food and drink.
+  Map<String, List<String>> kindOrder;
+
+  Language chosenLanguage;
 
   Person? personById(String id) {
     for (final person in people) {
@@ -999,5 +1028,7 @@ class AppData {
         'anthemMuted': anthemMuted,
         'identities': identities,
         'waiting': waiting,
+        'kindOrder': kindOrder,
+        'language': chosenLanguage.name,
       };
 }

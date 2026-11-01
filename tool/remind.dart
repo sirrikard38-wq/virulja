@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:virulja/src/domain/i18n.dart';
 import 'package:virulja/src/domain/models.dart';
 import 'package:virulja/src/domain/reminders.dart';
 import 'package:virulja/src/domain/session.dart';
@@ -39,6 +40,9 @@ Future<({int status, String body})> _call(
     body: await response.transform(utf8.decoder).join(),
   );
 }
+
+Language _languageOf(Map<dynamic, dynamic> device) =>
+    Language.values.asNameMap()[device['lang']] ?? Language.hr;
 
 String _secret(String name) {
   final value = Platform.environment[name] ?? '';
@@ -114,13 +118,15 @@ Future<void> main(List<String> args) async {
       // The first look at a trip only takes note: its past is not news.
       if (known != null) {
         final told = (jsonDecode(known) as List).toSet();
-        for (final event in found.where((event) => !told.contains(event.key))) {
-          for (final uid in devices.keys) {
-            final isOnTrip =
-                (((devices[uid] as Map)['trips'] as Map?) ?? const {}).containsKey(id);
+        for (final uid in devices.keys) {
+          final device = devices[uid] as Map;
+          if (!((device['trips'] as Map?) ?? const {}).containsKey(id)) continue;
+          language = _languageOf(device);
+          for (final event in tripEvents(trip, cloud.names)) {
+            if (told.contains(event.key)) continue;
             final isSender = event.from != null && trip.uids[event.from] == uid;
             final isForThem = event.to == null || trip.uids[event.to] == uid;
-            if (isOnTrip && !isSender && isForThem) {
+            if (!isSender && isForThem) {
               (inbox[uid] ??= []).add({
                 'title': trip.city,
                 'body': event.text,
@@ -143,8 +149,9 @@ Future<void> main(List<String> args) async {
   for (final entry in devices.entries) {
     final device = entry.value as Map;
     final trips = (device['trips'] as Map?) ?? const {};
+    language = _languageOf(device);
     final messages = [
-      if (testing) {'title': 'VIRULJA', 'body': 'Obavijesti rade.', 'route': '#/'},
+      if (testing) {'title': 'VIRULJA', 'body': tr('Obavijesti rade.'), 'route': '#/'},
       if (events) ...?inbox[entry.key],
       if (!testing && !events)
         for (final trip in trips.entries)

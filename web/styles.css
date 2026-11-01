@@ -201,6 +201,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .chips.glide-start .chip.on { color: var(--ink); }
 .chips.glide-start .chip.leaving { color: var(--on-accent); }
 .chip-marker { position: absolute; z-index: 0; background: var(--accent); }
+.chips .chip { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.chip.lifted { z-index: 2; scale: 1.08; box-shadow: 0 6px 16px rgba(0, 0, 0, .35); }
+.chips.arranging .chip:not(.lifted) { animation: wobble 180ms ease-in-out infinite alternate; }
+@keyframes wobble { from { rotate: -1.2deg; } to { rotate: 1.2deg; } }
 .chip.on-outline { color: var(--accent); border-color: var(--accent); }
 .badge { display: inline-block; padding: 1px 8px; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 700; }
 
@@ -377,6 +381,20 @@ details.adder .wide { width: 100%; }
   transition: opacity .2s;
 }
 .toast.show { opacity: 1; }
+
+.round.lang-button { font-size: 13px; font-weight: 700; }
+.lang-menu {
+  position: fixed;
+  z-index: 6;
+  top: calc(var(--top-safe) + 60px);
+  right: max(14px, calc(50% - 226px));
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  padding: 4px;
+}
+.lang-menu button { min-height: 44px; padding: 0 12px; text-align: left; font-size: 15px; }
+.lang-menu button.on { color: var(--accent); font-weight: 700; }
 
 .undo-bar {
   position: fixed;

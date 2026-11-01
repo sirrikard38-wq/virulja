@@ -1,3 +1,4 @@
+import 'i18n.dart';
 import 'models.dart';
 
 /// Something in a trip people get a notification about.
@@ -21,20 +22,20 @@ class TripEvent {
 /// Everything in [trip] that makes a notification. [names] gives person id ->
 /// name. The wording avoids he or she: names say nothing about that.
 List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
-  String name(String id) => names[id] ?? 'Netko';
+  String name(String id) => names[id] ?? tr('Netko');
   final events = <TripEvent>[
     for (final poll in trip.polls) ...[
-      TripEvent('poll:${poll.id}', 'Nova anketa: ${poll.title}', 'ankete',
+      TripEvent('poll:${poll.id}', tr('Nova anketa: {0}', [poll.title]), 'ankete',
           from: poll.addedBy),
       if (poll.active)
-        TripEvent('attack:${poll.id}', 'U Planu napada: ${poll.title}', 'napad',
+        TripEvent('attack:${poll.id}', tr('U Planu napada: {0}', [poll.title]), 'napad',
             from: poll.activeBy),
     ],
     for (final stop in trip.stops)
-      TripEvent('stop:${stop.id}', 'Novo u Planu napada: ${stop.title}', 'napad',
+      TripEvent('stop:${stop.id}', tr('Novo u Planu napada: {0}', [stop.title]), 'napad',
           from: stop.addedBy),
     for (final request in trip.requests)
-      TripEvent('request:${request.id}', '${request.name} želi na putovanje', 'plan'),
+      TripEvent('request:${request.id}', tr('{0} želi na putovanje', [request.name]), 'plan'),
   ];
 
   void reactions(Map<String, Set<Reaction>> given, String id, String owner,
@@ -42,7 +43,7 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
     for (final entry in given.entries) {
       for (final reaction in entry.value) {
         events.add(TripEvent('react:$id:${entry.key}:${reaction.name}',
-            '${name(entry.key)} $text', route, from: entry.key, to: owner));
+            tr(text, [name(entry.key)]), route, from: entry.key, to: owner));
       }
     }
   }
@@ -50,7 +51,7 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
   for (final photo in trip.photos) {
     final route = 'foto/${photo.id}';
     reactions(photo.reactions, photo.id, photo.addedBy,
-        'reagira na tvoju fotografiju', route);
+        '{0} reagira na tvoju fotografiju', route);
     for (final comment in photo.comments) {
       String? parentAuthor;
       for (final other in photo.comments) {
@@ -59,14 +60,14 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
       events.add(TripEvent(
         'comment:${comment.id}',
         parentAuthor == null
-            ? '${name(comment.authorId)} komentira tvoju fotografiju'
-            : '${name(comment.authorId)} odgovara na tvoj komentar',
+            ? tr('{0} komentira tvoju fotografiju', [name(comment.authorId)])
+            : tr('{0} odgovara na tvoj komentar', [name(comment.authorId)]),
         route,
         from: comment.authorId,
         to: parentAuthor ?? photo.addedBy,
       ));
       reactions(comment.reactions, comment.id, comment.authorId,
-          'reagira na tvoj komentar', route);
+          '{0} reagira na tvoj komentar', route);
     }
   }
   return [

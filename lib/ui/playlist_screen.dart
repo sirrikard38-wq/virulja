@@ -1,6 +1,7 @@
 import 'package:web/web.dart' as web;
 
 import '../src/domain/format.dart';
+import '../src/domain/i18n.dart';
 import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import 'anthem.dart';
@@ -24,7 +25,7 @@ web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
   picker.onChange.listen((_) async {
     final files = pickedFiles(picker);
     if (files.isEmpty) return;
-    ui.toast('Pripremam himnu...');
+    ui.toast(tr('Pripremam himnu...'));
     try {
       final clip = await ui.anthem.firstSeconds(files.first);
       final id = ui.store.newId();
@@ -35,15 +36,15 @@ web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
         ..anthemTitle = _songName(files.first.name);
       if (old != null) ui.store.removeBlob(old);
       ui.changed();
-      ui.toast('Himna je spremljena.');
+      ui.toast(tr('Himna je spremljena.'));
     } on Object {
-      ui.toast('Tu pjesmu ne mogu pročitati. Probaj mp3 ili m4a.');
+      ui.toast(tr('Tu pjesmu ne mogu pročitati. Probaj mp3 ili m4a.'));
     }
   });
   final title = trip.anthemTitle;
   return el('div', cls: 'anthem card', children: [
-    el('div', cls: 'small', text: 'Himna putovanja'),
-    el('div', cls: 'title', text: title ?? 'Još nema himne',
+    el('div', cls: 'small', text: tr('Himna putovanja')),
+    el('div', cls: 'title', text: title ?? tr('Još nema himne'),
         attrs: {'style': 'font-size:26px;overflow-wrap:anywhere'}),
     el('div', cls: 'gap-top', attrs: {'style': 'display:flex;gap:8px'}, children: [
       if (title != null)
@@ -55,12 +56,12 @@ web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
           },
           children: [
             icon('play', size: 20),
-            web.document.createTextNode('Poslušaj'),
+            web.document.createTextNode(tr('Poslušaj')),
           ],
         ),
       el('label', cls: 'secondary', children: [
         picker,
-        web.document.createTextNode(title == null ? 'Učitaj pjesmu' : 'Promijeni himnu'),
+        web.document.createTextNode(title == null ? tr('Učitaj pjesmu') : tr('Promijeni himnu')),
       ]),
     ]),
   ]);
@@ -76,7 +77,7 @@ web.HTMLElement _addSong(Ui ui, Trip trip) {
     final player = playerFor(address);
     final isList = isYouTubePlaylist(address);
     if (player == null && !isList) {
-      error.textContent = 'Zalijepi link sa Spotifyja, YouTubea ili Apple Musica.';
+      error.textContent = tr('Zalijepi link sa Spotifyja, YouTubea ili Apple Musica.');
       return;
     }
     final name = title.value.trim();
@@ -85,19 +86,19 @@ web.HTMLElement _addSong(Ui ui, Trip trip) {
       title: name.isNotEmpty
           ? name
           : isList
-              ? 'YouTube playlista'
-              : 'Pjesma (${player!.service})',
+              ? tr('YouTube playlista')
+              : tr('Pjesma ({0})', [player!.service]),
       link: address,
       addedBy: ui.meIn(trip),
     ));
     ui.changed();
   }
 
-  return adder('Dodaj pjesmu', [
-    field('Link', link),
-    field('Naziv', title),
+  return adder(tr('Dodaj pjesmu'), [
+    field(tr('Link'), link),
+    field(tr('Naziv'), title),
     error,
-    primaryButton('Dodaj pjesmu', add),
+    primaryButton(tr('Dodaj pjesmu'), add),
   ]);
 }
 
@@ -111,12 +112,12 @@ web.HTMLElement _queue(Ui ui, Trip trip) {
     if (shuffled) links.shuffle();
     final address = youTubeQueue(links);
     if (address == null) {
-      ui.toast('Red radi samo s YouTube pjesmama.');
+      ui.toast(tr('Red radi samo s YouTube pjesmama.'));
       return;
     }
     ui.anthem.stop();
     ui.queueAddress = address;
-    ui.toast('Pritisni play u playeru.');
+    ui.toast(tr('Pritisni play u playeru.'));
     ui.playingSongId = _queueId;
     ui.rerender();
   }
@@ -124,8 +125,8 @@ web.HTMLElement _queue(Ui ui, Trip trip) {
   final address = ui.queueAddress;
   return el('div', attrs: {'style': 'margin-bottom:16px'}, children: [
     el('div', cls: 'two', children: [
-      secondaryButton('Pusti sve', () => start(shuffled: false)),
-      secondaryButton('Nasumično', () => start(shuffled: true)),
+      secondaryButton(tr('Pusti sve'), () => start(shuffled: false)),
+      secondaryButton(tr('Nasumično'), () => start(shuffled: true)),
     ]),
     if (ui.playingSongId == _queueId && address != null)
       _player(SongPlayer('YouTube', address, 200)),
@@ -162,13 +163,13 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
     el('div', cls: 'row', attrs: {'style': 'padding:2px 0'}, children: [
       button(
         cls: 'icon-button',
-        ariaLabel: playing ? 'Zatvori ${song.title}' : 'Pusti ${song.title}',
+        ariaLabel: playing ? tr('Zatvori {0}', [song.title]) : tr('Pusti {0}', [song.title]),
         onTap: toggle,
         children: [icon(playing ? 'minus' : 'play')],
       ),
       el('div', cls: 'grow', attrs: {'style': 'cursor:pointer'}, children: [
         el('div', cls: 'label', text: song.title),
-        el('div', cls: 'small', text: '${isList ? 'YouTube playlista' : player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
+        el('div', cls: 'small', text: '${isList ? tr('YouTube playlista') : player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
       ])
         ..onClick.listen((_) => toggle()),
       removeButton(song.title, () {
@@ -183,13 +184,13 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
 
 web.HTMLElement playlistScreen(Ui ui, Trip trip, void Function(Trip) playAnthem) =>
     el('div', children: [
-      topBar('Playlista'),
+      topBar(tr('Playlista')),
       el('p', cls: 'soft pad', text: '${trip.city} · ${songsCount(trip.songs.length)}',
           attrs: {'style': 'margin-bottom:8px'}),
       _anthemCard(ui, trip, playAnthem),
-      sectionTitle('Pjesme'),
+      sectionTitle(tr('Pjesme')),
       if (trip.songs.isEmpty)
-        el('p', cls: 'soft pad', text: 'Dodajte linkove pjesama koje vas podsjećaju na ovo putovanje.'),
+        el('p', cls: 'soft pad', text: tr('Dodajte linkove pjesama koje vas podsjećaju na ovo putovanje.')),
       if (trip.songs.isNotEmpty) _queue(ui, trip),
       for (final song in trip.songs) _songRow(ui, trip, song),
       _addSong(ui, trip),
