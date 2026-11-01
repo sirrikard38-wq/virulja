@@ -7,7 +7,6 @@ import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'memories_screen.dart';
-import 'polls_section.dart';
 import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
@@ -62,15 +61,6 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
         el('div', cls: 'price', text: '${euros(chosen.pricePerNight)}/noć'),
       ]),
     ],
-    el('div', cls: 'two', children: [
-      secondaryButton('Dodaj fotografije', () => ui.go(ui.tripRoute(trip, 'slike'))),
-      secondaryButton('Dodaj trošak', () => ui.go(ui.tripRoute(trip, 'troskovi'))),
-    ]),
-    el('div', cls: 'two', children: [
-      secondaryButton('Plan puta', () => ui.go(ui.tripRoute(trip, 'put'))),
-      secondaryButton('Hrana i piće', () => ui.go(ui.tripRoute(trip, 'hrana'))),
-    ]),
-    newPollButton(ui, trip),
   ]);
 }
 
