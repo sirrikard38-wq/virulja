@@ -19,6 +19,7 @@ class Ui {
     required this.startAnthem,
     required this.rerender,
     required this.toast,
+    required this.offerUndo,
   });
 
   final AppStore store;
@@ -46,6 +47,9 @@ class Ui {
 
   /// A short message that disappears by itself.
   final void Function(String message) toast;
+
+  /// A short message with a way to take back what was just done.
+  final void Function(String message, void Function() undo) offerUndo;
 
   // What the screens remember while the app is open.
   OfferSort offerSort = OfferSort.price;

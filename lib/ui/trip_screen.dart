@@ -3,10 +3,10 @@ import 'package:web/web.dart' as web;
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
 import '../src/domain/models.dart';
+import 'attack_tab.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
-import '../src/domain/attack.dart';
 import 'memories_screen.dart';
 import 'polls_section.dart';
 import 'requests_section.dart';
@@ -70,36 +70,6 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
         el('div', cls: 'price', text: '${euros(chosen.pricePerNight)}/noć'),
       ]),
     ],
-  ]);
-}
-
-/// What comes next, biggest first, then the rest in order.
-web.HTMLElement _attackTab(Trip trip) {
-  final items = planOfAttack(trip, DateTime.now());
-  String when(NextUp item) => [
-        weekdayAndDate(trip.dayAt(item.dayIndex)),
-        if (item.time.isNotEmpty) item.time,
-      ].join(' · ');
-  if (items.isEmpty) {
-    return el('p', cls: 'soft pad gap-top', text: 'Još nema ničega u planu.');
-  }
-  final first = items.first;
-  return el('div', children: [
-    el('div', cls: 'poll card', children: [
-      el('div', cls: 'small', text: when(first)),
-      el('div', cls: 'title', text: first.title),
-      if (first.detail != null) el('div', cls: 'label', text: first.detail),
-    ]),
-    for (final item in items.skip(1))
-      el('div', cls: 'row', children: [
-        el('div', cls: 'grow', children: [
-          el('div', cls: 'label', text: item.title),
-          el('div', cls: 'small', text: [
-            when(item),
-            if (item.detail != null) item.detail!,
-          ].join(' · ')),
-        ]),
-      ]),
   ]);
 }
 
@@ -169,7 +139,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     else if (tab == 'ankete')
       pollsTab(ui, trip)
     else if (tab == 'napad')
-      _attackTab(trip)
+      attackTab(ui, trip)
     else
       _planTab(ui, trip),
   ]);

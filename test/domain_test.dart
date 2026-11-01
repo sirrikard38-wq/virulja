@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
+import 'package:virulja/src/domain/trip_tree.dart';
+import 'package:virulja/src/domain/tree.dart';
 import 'package:virulja/src/domain/attack.dart';
 import 'package:virulja/src/domain/budget.dart';
 import 'package:virulja/src/domain/exif.dart';
@@ -265,7 +267,7 @@ void main() {
     });
   });
 
-  test('plan of attack skips what passed and shows the winning vote', () {
+  test('plan of attack puts what passed last and shows the winning vote', () {
     final trip = Trip(
       id: 't',
       country: 'Hrvatska',
@@ -286,8 +288,68 @@ void main() {
       ],
     );
     final items = planOfAttack(trip, DateTime(2026, 7, 1, 9));
-    expect(items.map((item) => item.title), ['Plaža', 'Brod']);
+    expect(items.map((item) => item.title), ['Plaža', 'Brod', 'Kava']);
     expect(items.first.time, '11:00');
+    expect(items.map((item) => item.past), [false, false, true]);
+  });
+
+  group('places in the plan of attack', () {
+    Trip trip() => Trip(
+          id: 't',
+          country: 'Hrvatska',
+          city: 'Vis',
+          start: dayOf(2026, 7, 1),
+          end: dayOf(2026, 7, 4),
+          memberIds: [],
+          stops: [Stop(id: 's', dayIndex: 0, title: 'Skok', hiddenInAttack: true)],
+          polls: [
+            Poll(
+              id: 'p',
+              title: 'Konoba',
+              active: true,
+              single: true,
+              options: [PollOption(id: 'o0', time: 'Da', votes: {'x'})],
+              dayVotes: {
+                2: {'x', 'y'},
+                1: {'x'},
+              },
+            ),
+          ],
+        );
+
+    test('a yes or no shows no result and takes the day with most votes', () {
+      final item = planOfAttack(trip(), DateTime(2026, 7, 1, 9)).single;
+      expect(item.detail, isNull);
+      expect(item.dayIndex, 2);
+      expect(item.past, isFalse);
+    });
+
+    test('equal votes take the earliest day, no votes the poll own day', () {
+      final even = trip()..polls.single.dayVotes[1]!.add('y');
+      expect(even.polls.single.plannedDay, 1);
+      final none = trip()..polls.single.dayVotes.clear();
+      expect(none.polls.single.plannedDay, 0);
+    });
+
+    test('it goes grey only once its day has gone by', () {
+      expect(planOfAttack(trip(), DateTime(2026, 7, 3, 23)).single.past, isFalse);
+      expect(planOfAttack(trip(), DateTime(2026, 7, 4, 0, 5)).single.past, isTrue);
+    });
+
+    test('a hidden stop stays out, and only days left can be chosen', () {
+      expect(planOfAttack(trip(), DateTime(2026, 7, 1)).any((i) => i.stop != null), isFalse);
+      expect(remainingDays(trip(), DateTime(2026, 7, 3, 12)), [2, 3]);
+    });
+
+    test('day votes survive the cloud with their days', () {
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip(), (id) => id)))));
+      final back = tripFromTree('t', (tree as Map).cast<String, dynamic>())!.trip;
+      expect(back.polls.single.dayVotes, {
+        1: {'x'},
+        2: {'x', 'y'},
+      });
+      expect(back.stops.single.hiddenInAttack, isTrue);
+    });
   });
 
   group('links', () {

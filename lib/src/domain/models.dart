@@ -51,6 +51,20 @@ class Person {
   Json toJson() => {'id': id, 'name': name, 'phone': phone};
 }
 
+/// Day -> who can go that day. A database key made of plain numbers would turn
+/// the map into a list, so the days are stored as `d0`, `d1`.
+Map<int, Set<String>> dayVotesFrom(Object? raw) {
+  final days = <int, Set<String>>{};
+  (raw as Map<dynamic, dynamic>? ?? const {}).forEach((day, people) {
+    final index = int.tryParse((day as String).substring(1));
+    if (index == null) return;
+    days[index] = people is Map
+        ? people.keys.cast<String>().toSet()
+        : (people as List<dynamic>).cast<String>().toSet();
+  });
+  return days;
+}
+
 /// One time people can vote for.
 class PollOption {
   PollOption({required this.id, required this.time, Set<String>? votes})
@@ -80,7 +94,8 @@ class Poll {
     this.single = false,
     this.addedBy,
     this.activeBy,
-  });
+    Map<int, Set<String>>? dayVotes,
+  }) : dayVotes = dayVotes ?? {};
 
   factory Poll.fromJson(Json json) => Poll(
         id: json['id'] as String,
@@ -91,6 +106,7 @@ class Poll {
         single: json['single'] as bool? ?? false,
         addedBy: json['addedBy'] as String?,
         activeBy: json['activeBy'] as String?,
+        dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
@@ -108,6 +124,23 @@ class Poll {
   /// Who put it in the plan of attack.
   String? activeBy;
 
+  /// For a place from Hrana i piće: the days people can go.
+  Map<int, Set<String>> dayVotes;
+
+  /// The day with the most people, the earliest of equals, or else its own day.
+  int get plannedDay {
+    var best = dayIndex;
+    var most = 0;
+    for (final day in dayVotes.keys.toList()..sort()) {
+      final people = dayVotes[day]!.length;
+      if (people > most) {
+        best = day;
+        most = people;
+      }
+    }
+    return best;
+  }
+
   Json toJson() => {
         'id': id,
         'title': title,
@@ -116,6 +149,10 @@ class Poll {
         'single': single,
         'addedBy': addedBy,
         'activeBy': activeBy,
+        'dayVotes': {
+          for (final entry in dayVotes.entries)
+            'd${entry.key}': entry.value.toList(),
+        },
         'options': [for (final option in options) option.toJson()],
       };
 }
@@ -268,6 +305,7 @@ class Stop {
     this.time = '',
     this.cost = 0,
     this.addedBy,
+    this.hiddenInAttack = false,
   });
 
   factory Stop.fromJson(Json json) => Stop(
@@ -277,6 +315,7 @@ class Stop {
         time: json['time'] as String? ?? '',
         cost: json['cost'] as int? ?? 0,
         addedBy: json['addedBy'] as String?,
+        hiddenInAttack: json['hiddenInAttack'] as bool? ?? false,
       );
 
   final String id;
@@ -288,6 +327,9 @@ class Stop {
   int cost;
   final String? addedBy;
 
+  /// Taken out of the plan of attack; it stays on the day plan.
+  bool hiddenInAttack;
+
   Json toJson() => {
         'id': id,
         'dayIndex': dayIndex,
@@ -295,6 +337,7 @@ class Stop {
         'time': time,
         'cost': cost,
         'addedBy': addedBy,
+        'hiddenInAttack': hiddenInAttack ? true : null,
       };
 }
 

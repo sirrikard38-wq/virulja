@@ -55,10 +55,13 @@ class ViruljaApp {
       startAnthem: _startAnthem,
       rerender: render,
       toast: _showToast,
+      offerUndo: _offerUndo,
     );
     _anthem.onProgress = _showProgress;
     _toast = el('div', cls: 'toast', attrs: {'role': 'status', 'aria-live': 'polite'});
     web.document.body!.appendChild(_toast);
+    _undoBar = el('div', cls: 'undo-bar', attrs: {'role': 'status'});
+    web.document.body!.appendChild(_undoBar);
     web.window.addEventListener(
       'hashchange',
       ((web.Event event) {
@@ -83,13 +86,16 @@ class ViruljaApp {
   final AnthemPlayer _anthem = AnthemPlayer();
   late final Ui _ui;
   late final web.HTMLElement _toast;
+  late final web.HTMLElement _undoBar;
   final List<String> _trail = [];
   web.Element? _ring;
   Timer? _toastTimer;
+  Timer? _undoTimer;
   bool _redrawWaiting = false;
 
   /// Ring length of the speaker: the circumference of its circle.
   static const double _ringLength = 125.7;
+  static const Duration _undoTime = Duration(seconds: 3);
 
   /// Sections that are a trip's main screen rather than a category.
   static const Set<String?> _mainTabs = {
@@ -346,6 +352,23 @@ class ViruljaApp {
         if (hasMenu) _menu(place.page),
       ]),
     );
+  }
+
+  void _offerUndo(String message, void Function() undo) {
+    _undoTimer?.cancel();
+    _undoBar
+      ..textContent = ''
+      ..append(el('span', text: message))
+      ..append(button(
+        text: 'Poništi',
+        onTap: () {
+          _undoTimer?.cancel();
+          _undoBar.classList.remove('show');
+          undo();
+        },
+      ))
+      ..classList.add('show');
+    _undoTimer = Timer(_undoTime, () => _undoBar.classList.remove('show'));
   }
 
   void _showToast(String message) {
