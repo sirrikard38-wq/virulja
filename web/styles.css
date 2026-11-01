@@ -243,6 +243,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 details.adder { margin: 14px 20px 0; border-top: 1px solid var(--line); padding-top: 4px; }
 details.adder summary { display: flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 700; font-size: 15px; color: var(--accent); cursor: pointer; list-style: none; }
 details.adder summary::-webkit-details-marker { display: none; }
+/* Open: the plus loses its upright stroke and becomes a minus. */
+details.adder[open] summary .icon path:first-of-type { display: none; }
 details.adder .field, details.adder .fields, details.adder .checks, details.adder .wide, details.adder .error { margin-left: 0; margin-right: 0; }
 details.adder .wide { width: 100%; }
 
