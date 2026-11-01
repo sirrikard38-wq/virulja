@@ -10,6 +10,7 @@ import 'icons.dart';
 import 'memories_screen.dart';
 import 'polls_section.dart';
 import 'requests_section.dart';
+import 'trip_form.dart';
 import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
@@ -73,6 +74,24 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
   ]);
 }
 
+/// One person of the group. An admin can tap someone to make them an admin too.
+web.HTMLElement _personRow(Ui ui, Trip trip, String id) {
+  final isAdmin = trip.adminIds.contains(id);
+  final canGive = !isAdmin && trip.adminIds.contains(ui.meIn(trip));
+  final row = el('div', cls: 'row', children: [
+    avatar(ui.nameOf(id)),
+    el('div', cls: 'grow', text: ui.nameOf(id)),
+    if (isAdmin) el('div', cls: 'small', text: 'admin'),
+    if (canGive) el('div', cls: 'small', text: 'Dodirni za admina'),
+  ]);
+  if (canGive) {
+    row
+      ..style.cursor = 'pointer'
+      ..onClick.listen((_) => giveAdmin(ui, trip, id));
+  }
+  return row;
+}
+
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final cover = trip.coverId;
   const tabs = {
@@ -119,12 +138,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
       ),
     ]),
     if (ui.showPeople)
-      for (final id in trip.memberIds)
-        el('div', cls: 'row', children: [
-          avatar(ui.nameOf(id)),
-          el('div', cls: 'grow', text: ui.nameOf(id)),
-          if (trip.adminIds.contains(id)) el('div', cls: 'small', text: 'admin'),
-        ]),
+      for (final id in trip.memberIds) _personRow(ui, trip, id),
     for (final request in trip.requests) requestCard(ui, trip, request),
     el('div', cls: 'tabs', children: [
       for (final entry in tabs.entries)

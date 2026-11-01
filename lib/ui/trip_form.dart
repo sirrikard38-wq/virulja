@@ -9,6 +9,14 @@ import 'media.dart';
 import 'range_picker.dart';
 import 'widgets.dart';
 
+/// Asks first, because being an admin cannot be taken back.
+void giveAdmin(Ui ui, Trip trip, String id) {
+  if (web.window.confirm('Dati admina: ${ui.nameOf(id)}?')) {
+    trip.adminIds.add(id);
+    ui.changed();
+  }
+}
+
 /// The group of a trip: nobody is added by hand, people appear when they enter
 /// the code. Admins can remove people and make others admins.
 web.HTMLElement _members(Ui ui, Trip trip) {
@@ -46,12 +54,12 @@ web.HTMLElement _members(Ui ui, Trip trip) {
             if (ui.data.personById(id)?.phone?.isNotEmpty ?? false)
               ui.data.personById(id)!.phone!,
           ].join(' · ')),
-        ]),
-        if (amAdmin && !trip.adminIds.contains(id))
-          chip('Daj admina', () {
-            trip.adminIds.add(id);
-            ui.changed();
+        ])
+          ..onClick.listen((_) {
+            if (amAdmin && !trip.adminIds.contains(id)) giveAdmin(ui, trip, id);
           }),
+        if (amAdmin && !trip.adminIds.contains(id))
+          chip('Daj admina', () => giveAdmin(ui, trip, id)),
         if (amAdmin && id != ui.meIn(trip))
           removeButton(ui.nameOf(id), () async {
             try {

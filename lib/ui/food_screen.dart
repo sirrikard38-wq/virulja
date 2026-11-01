@@ -161,11 +161,11 @@ const double _backGestureEdge = 30;
 /// How far the page follows the finger when there is no next kind.
 const double _resistance = 0.25;
 
-const Duration _slideTime = Duration(milliseconds: 180);
-const String _slide = 'transform 180ms ease-out';
+const Duration _slideTime = Duration(milliseconds: 90);
+const String _slide = 'transform 90ms ease-out';
 
-const Duration _glideTime = Duration(milliseconds: 260);
-const String _glide = 'left 260ms ease, width 260ms ease';
+const Duration _glideTime = Duration(milliseconds: 150);
+const String _glide = 'left 150ms ease, width 150ms ease';
 
 bool get _wantsLessMotion =>
     web.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
