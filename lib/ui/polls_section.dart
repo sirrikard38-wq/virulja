@@ -28,7 +28,17 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
 }
 
 /// Votes on when to do something: "Na plažu" at 10:00 or 11:30.
-web.HTMLElement pollsSection(Ui ui, Trip trip) {
+web.HTMLElement pollsSection(Ui ui, Trip trip) => el('div', children: [
+      for (final poll in trip.polls) _pollCard(ui, trip, poll),
+    ]);
+
+web.HTMLElement newPollButton(Ui ui, Trip trip) => button(
+      cls: 'secondary wide',
+      text: 'Nova anketa',
+      onTap: () => ui.go(ui.tripRoute(trip, 'anketa')),
+    );
+
+web.HTMLElement newPollScreen(Ui ui, Trip trip) {
   final title = input();
   final times = [input(type: 'time'), input(type: 'time'), input(type: 'time')];
   final error = errorLine();
@@ -51,21 +61,19 @@ web.HTMLElement pollsSection(Ui ui, Trip trip) {
           PollOption(id: 'o$i', time: chosen[i]),
       ],
     ));
-    ui.changed();
+    ui.saved();
+    ui.back();
   }
 
   return el('div', children: [
-    sectionTitle('Kada krećemo?'),
-    for (final poll in trip.polls) _pollCard(ui, trip, poll),
-    adder('Nova anketa', [
-      field('Za što', title),
-      el('div', cls: 'fields', children: [
-        field('Vrijeme 1', times[0], tight: true),
-        field('Vrijeme 2', times[1], tight: true),
-      ]),
-      field('Vrijeme 3', times[2]),
-      error,
-      primaryButton('Napravi anketu', add),
+    topBar('Nova anketa'),
+    field('Za što', title),
+    el('div', cls: 'fields', children: [
+      field('Vrijeme 1', times[0], tight: true),
+      field('Vrijeme 2', times[1], tight: true),
     ]),
+    field('Vrijeme 3', times[2]),
+    error,
+    primaryButton('Napravi anketu', add),
   ]);
 }

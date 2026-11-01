@@ -123,6 +123,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       ]),
     _addStop(ui, trip, day),
     pollsSection(ui, trip),
+    newPollButton(ui, trip),
     sectionTitle('Izračun vožnje'),
     _driveForm(ui, trip),
   ]);

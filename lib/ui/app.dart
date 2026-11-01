@@ -16,6 +16,7 @@ import 'icons.dart';
 import 'install.dart';
 import 'memories_screen.dart';
 import 'playlist_screen.dart';
+import 'polls_section.dart';
 import 'route_screen.dart';
 import 'stay_screen.dart';
 import 'store.dart';
@@ -139,7 +140,8 @@ class ViruljaApp {
   /// wherever the person came from.
   void _arrow() {
     final place = _Place(web.window.location.hash);
-    if (place.tripId != null && place.section == null) {
+    const mainTabs = {null, 'plan', 'naputu', 'slike'};
+    if (place.tripId != null && mainTabs.contains(place.section)) {
       _trail.clear();
       _go('#/');
     } else {
@@ -246,6 +248,8 @@ class ViruljaApp {
         return playlistScreen(_ui, trip, _playAnthem);
       case 'uredi':
         return tripForm(_ui, trip: trip);
+      case 'anketa':
+        return newPollScreen(_ui, trip);
       case 'foto':
         for (final photo in trip.photos) {
           if (photo.id == place.photoId) return photoScreen(_ui, trip, photo);
@@ -292,7 +296,9 @@ class ViruljaApp {
     }
 
     final isPhoto = place.section == 'foto';
-    final isForm = place.page == 'novo' || place.section == 'uredi';
+    final isForm = place.page == 'novo' ||
+        place.section == 'uredi' ||
+        place.section == 'anketa';
     final hasMenu = !isPhoto && !isForm && _data.meId != null;
     final hasBack = trip != null || place.page == 'novo';
     final frameClass = isPhoto

@@ -114,6 +114,7 @@ web.HTMLElement _onTheRoadTab(Ui ui, Trip trip) {
       secondaryButton('Plan puta', () => ui.go(ui.tripRoute(trip, 'put'))),
       secondaryButton('Hrana i piće', () => ui.go(ui.tripRoute(trip, 'hrana'))),
     ]),
+    newPollButton(ui, trip),
   ]);
 }
 
