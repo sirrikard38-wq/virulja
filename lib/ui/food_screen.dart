@@ -155,7 +155,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
       el('p', cls: 'soft pad', text: 'Dodajte jela s cijenom s jelovnika.'),
     for (final dish in trip.dishes) _dishRow(ui, trip, dish),
     _addDish(ui, trip),
-    el('div', cls: 'row', attrs: {'style': 'margin-top:12px'}, children: [
+    el('div', cls: 'row stick-bottom', children: [
       el('div', cls: 'grow', text: 'Procjena za hranu i piće'),
       el('div', cls: 'price', text: euros(plannedCost(trip, CostCategory.food))),
     ]),

@@ -263,7 +263,24 @@ class Stop {
       };
 }
 
-/// The drive there: everything the transport estimate needs.
+/// One piece of the journey by any means: a flight, a train, a ferry.
+class Leg {
+  Leg({required this.id, required this.title, this.cost = 0});
+
+  factory Leg.fromJson(Json json) => Leg(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        cost: json['cost'] as int? ?? 0,
+      );
+
+  final String id;
+  String title;
+  int cost;
+
+  Json toJson() => {'id': id, 'title': title, 'cost': cost};
+}
+
+/// The drive there: the part of the transport estimate worked out from fuel.
 class Drive {
   Drive({
     this.route = '',
@@ -587,6 +604,7 @@ class Trip {
     List<Place>? places,
     List<Dish>? dishes,
     List<Stop>? stops,
+    List<Leg>? legs,
     Drive? drive,
     List<Expense>? expenses,
     List<Payment>? payments,
@@ -599,6 +617,7 @@ class Trip {
         places = places ?? [],
         dishes = dishes ?? [],
         stops = stops ?? [],
+        legs = legs ?? [],
         drive = drive ?? Drive(),
         expenses = expenses ?? [],
         payments = payments ?? [],
@@ -625,6 +644,7 @@ class Trip {
         places: _list(json['places'], Place.fromJson),
         dishes: _list(json['dishes'], Dish.fromJson),
         stops: _list(json['stops'], Stop.fromJson),
+        legs: _list(json['legs'], Leg.fromJson),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -665,6 +685,7 @@ class Trip {
   List<Place> places;
   List<Dish> dishes;
   List<Stop> stops;
+  List<Leg> legs;
   Drive drive;
   List<Expense> expenses;
   List<Payment> payments;
@@ -714,6 +735,7 @@ class Trip {
     places = other.places;
     dishes = other.dishes;
     stops = other.stops;
+    legs = other.legs;
     drive = other.drive;
     expenses = other.expenses;
     payments = other.payments;
@@ -740,6 +762,7 @@ class Trip {
         'places': [for (final item in places) item.toJson()],
         'dishes': [for (final item in dishes) item.toJson()],
         'stops': [for (final item in stops) item.toJson()],
+        'legs': [for (final item in legs) item.toJson()],
         'drive': drive.toJson(),
         'expenses': [for (final item in expenses) item.toJson()],
         'payments': [for (final item in payments) item.toJson()],

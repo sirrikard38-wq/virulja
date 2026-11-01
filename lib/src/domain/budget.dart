@@ -45,7 +45,7 @@ class Budget {
 /// The estimate for one [category]:
 ///  * stay: the chosen offer, every night;
 ///  * food: planned places for the whole group, plus the dishes to try;
-///  * transport: the drive;
+///  * transport: the drive and every other leg of the journey;
 ///  * activities: everything with a price on the day plan.
 int plannedCost(Trip trip, CostCategory category) {
   switch (category) {
@@ -58,7 +58,7 @@ int plannedCost(Trip trip, CostCategory category) {
           .fold(0, (sum, dish) => sum + dish.price * dish.servings);
       return places + dishes;
     case CostCategory.transport:
-      return trip.drive.totalCost;
+      return trip.legs.fold(trip.drive.totalCost, (sum, leg) => sum + leg.cost);
     case CostCategory.activities:
       return trip.stops.fold(0, (sum, stop) => sum + stop.cost);
     case CostCategory.other:

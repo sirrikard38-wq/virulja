@@ -45,6 +45,32 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
   ]);
 }
 
+web.HTMLElement _addLeg(Ui ui, Trip trip) {
+  final title = input();
+  final cost = numberInput();
+  final error = errorLine();
+
+  void add() {
+    if (title.value.trim().isEmpty) {
+      error.textContent = 'Upiši kojim prijevozom i kamo.';
+      return;
+    }
+    trip.legs.add(Leg(
+      id: ui.store.newId(),
+      title: title.value.trim(),
+      cost: parseEuros(cost.value) ?? 0,
+    ));
+    ui.changed();
+  }
+
+  return adder('Dodaj prijevoz', [
+    field('Prijevoz i relacija', title),
+    field('Trošak za grupu (€)', cost),
+    error,
+    primaryButton('Dodaj', add),
+  ]);
+}
+
 web.HTMLElement _driveForm(Ui ui, Trip trip) {
   final drive = trip.drive;
   final route = input(value: drive.route);
@@ -69,7 +95,7 @@ web.HTMLElement _driveForm(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  return el('div', children: [
+  return adder('Izračunaj vožnju autom', [
     field('Ruta', route),
     el('div', cls: 'fields', children: [
       field('Kilometara u jednom smjeru', km, tight: true),
@@ -124,7 +150,22 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     _addStop(ui, trip, day),
     pollsSection(ui, trip),
     newPollButton(ui, trip),
-    sectionTitle('Izračun vožnje'),
+    sectionTitle('Prijevoz'),
+    for (final leg in trip.legs)
+      el('div', cls: 'row', children: [
+        el('div', cls: 'grow', text: leg.title),
+        if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
+        removeButton(leg.title, () {
+          trip.legs.remove(leg);
+          ui.changed();
+        }),
+      ]),
+    if (trip.drive.totalCost > 0)
+      el('div', cls: 'row', children: [
+        el('div', cls: 'grow', text: trip.drive.route.isEmpty ? 'Auto' : 'Auto: ${trip.drive.route}'),
+        el('div', cls: 'price', text: euros(trip.drive.totalCost)),
+      ]),
+    _addLeg(ui, trip),
     _driveForm(ui, trip),
   ]);
 }
