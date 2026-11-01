@@ -70,6 +70,7 @@ class ViruljaApp {
         if (_trail.isNotEmpty && _trail.last == web.window.location.hash) {
           _trail.removeLast(); // the phone's back button
         }
+        _ui.showPeople = false;
         web.window.scrollTo(0.toJS, 0);
         render();
       }).toJS,
