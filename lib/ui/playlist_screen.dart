@@ -111,6 +111,7 @@ web.HTMLElement _queue(Ui ui, Trip trip) {
     }
     ui.anthem.stop();
     ui.queueAddress = address;
+    ui.toast('Pritisni play u playeru.');
     ui.playingSongId = _queueId;
     ui.rerender();
   }
@@ -133,6 +134,7 @@ web.HTMLElement _player(SongPlayer player) => el('iframe', cls: 'player', attrs:
       'title': 'Player: ${player.service}',
       'allow': 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',
       'loading': 'lazy',
+      'referrerpolicy': 'strict-origin-when-cross-origin',
     });
 
 web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {

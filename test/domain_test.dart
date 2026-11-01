@@ -354,7 +354,7 @@ void main() {
           'https://open.spotify.com/track/x',
           'https://www.youtube.com/watch?v=bbb',
         ]),
-        'https://www.youtube.com/embed/aaa?autoplay=1&playlist=bbb',
+        'https://www.youtube.com/embed/aaa?playlist=bbb&playsinline=1',
       );
       expect(youTubeQueue(['https://open.spotify.com/track/x']), isNull);
     });

@@ -221,9 +221,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   position: sticky;
   z-index: 3;
   bottom: calc(var(--nav-height) + var(--bottom-safe));
-  margin: 12px 0 0;
-  padding: 9px 20px;
+  margin: 12px 20px 0;
+  padding: 9px 0;
   background: var(--bg);
+  box-shadow: -20px 0 var(--bg), 20px 0 var(--bg);
   border-top: 1px solid var(--line);
 }
 
@@ -250,7 +251,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; background: var(--card); border: 1px solid var(--line); font-size: 15px; }
 .check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
 .file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
-details.adder { margin: 14px 20px 0; border-top: 1px solid var(--line); padding-top: 4px; }
+details.adder { margin: 14px 20px 0; padding-top: 4px; }
+.row:has(+ details.adder) { border-bottom: none; }
 details.adder summary { display: flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 700; font-size: 15px; color: var(--accent); cursor: pointer; list-style: none; }
 details.adder summary::-webkit-details-marker { display: none; }
 /* Open: the plus loses its upright stroke and becomes a minus. */

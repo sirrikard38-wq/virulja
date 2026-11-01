@@ -76,7 +76,7 @@ String? youTubeQueue(List<String> links) {
   ];
   if (ids.isEmpty) return null;
   final rest = ids.skip(1).join(',');
-  return 'https://www.youtube.com/embed/${ids.first}?autoplay=1&playlist=$rest';
+  return 'https://www.youtube.com/embed/${ids.first}?playlist=$rest&playsinline=1';
 }
 
 /// The official player for a song link, or null if the link is not one the app
