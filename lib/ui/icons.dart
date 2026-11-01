@@ -5,6 +5,10 @@ import 'dom.dart';
 /// Line icons in a 24 x 24 drawing.
 const Map<String, List<String>> _icons = {
   'back': ['M19 12H5', 'M11 6l-6 6 6 6'],
+  'tool': [
+    'M13.5 6.5l3-3a1.5 1.5 0 0 1 2 0l2 2a1.5 1.5 0 0 1 0 2l-3 3z',
+    'M14.5 9.5L3 21',
+  ],
   'plus': ['M12 5v14', 'M5 12h14'],
   'close': ['M6 6l12 12', 'M18 6L6 18'],
   'send': ['M5 12h14', 'M13 6l6 6-6 6'],

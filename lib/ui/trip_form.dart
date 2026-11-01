@@ -146,7 +146,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
   }
 
   return el('div', children: [
-    topBar(trip == null ? 'Novo putovanje' : 'Uredi putovanje'),
+    topBar(trip == null ? 'Novo putovanje' : 'Postavke'),
     el('datalist', attrs: {'id': 'drzave'}, children: [
       for (final name in countries) el('option', attrs: {'value': name}),
     ]),

@@ -12,14 +12,7 @@ import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
 String defaultTab(Trip trip) {
-  switch (trip.phaseOn(today())) {
-    case TripPhase.upcoming:
-      return 'plan';
-    case TripPhase.active:
-      return 'naputu';
-    case TripPhase.past:
-      return 'slike';
-  }
+  return trip.phaseOn(today()) == TripPhase.past ? 'slike' : 'plan';
 }
 
 web.HTMLElement _tile(String label, String value, void Function() onTap) =>
@@ -69,43 +62,6 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
         el('div', cls: 'price', text: '${euros(chosen.pricePerNight)}/noć'),
       ]),
     ],
-    if (ui.cloud != null)
-      button(
-        cls: 'secondary wide',
-        onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
-        children: [
-          icon('group', size: 20),
-          web.document.createTextNode('Grupa i šifra'),
-        ],
-      ),
-    el('div', cls: 'pad gap-top', children: [
-      button(
-        cls: 'text-button',
-        text: 'Uredi putovanje',
-        onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
-      ),
-    ]),
-  ]);
-}
-
-/// Today's plan, while the trip is on (before it, the first day).
-web.HTMLElement _onTheRoadTab(Ui ui, Trip trip) {
-  final now = today();
-  final index = trip.phaseOn(now) == TripPhase.active
-      ? now.difference(trip.start).inDays
-      : 0;
-  final stops = trip.stops.where((stop) => stop.dayIndex == index).toList()
-    ..sort((a, b) => a.time.compareTo(b.time));
-  return el('div', children: [
-    sectionTitle('Dan ${index + 1}, ${weekdayAndDate(trip.dayAt(index))}'),
-    if (stops.isEmpty)
-      el('p', cls: 'soft pad', text: 'Za ovaj dan još nema plana.'),
-    for (final stop in stops)
-      el('div', cls: 'row', children: [
-        el('div', cls: 'label', text: stop.time),
-        el('div', cls: 'grow', text: stop.title),
-      ]),
-    pollsSection(ui, trip),
     el('div', cls: 'two', children: [
       secondaryButton('Dodaj fotografije', () => ui.go(ui.tripRoute(trip, 'slike'))),
       secondaryButton('Dodaj trošak', () => ui.go(ui.tripRoute(trip, 'troskovi'))),
@@ -120,7 +76,7 @@ web.HTMLElement _onTheRoadTab(Ui ui, Trip trip) {
 
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final cover = trip.coverId;
-  const tabs = {'plan': 'Plan', 'naputu': 'Na putu', 'slike': 'Uspomene'};
+  const tabs = {'plan': 'Plan', 'slike': 'Uspomene'};
   return el('div', children: [
     el('div', cls: 'hero', children: [
       if (cover != null)
@@ -130,7 +86,15 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     ]),
     el('div', cls: 'head-row', children: [
       el('div', children: [
-        el('h1', cls: 'title big', text: trip.city),
+        el('div', attrs: {'style': 'display:flex;align-items:center;gap:4px'}, children: [
+          el('h1', cls: 'title big', text: trip.city),
+          button(
+            cls: 'icon-button',
+            ariaLabel: 'Postavke',
+            onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
+            children: [icon('tool', size: 20)],
+          ),
+        ]),
         el('p', cls: 'soft', text: '${dateRange(trip.start, trip.end)} · '
             '${peopleCount(trip.people)}', attrs: {'style': 'margin-top:4px;font-size:15px'}),
       ]),
@@ -147,8 +111,6 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
           onTap: () => ui.go(ui.tripRoute(trip, entry.key)),
         ),
     ]),
-    if (tab == 'plan') _planTab(ui, trip),
-    if (tab == 'naputu') _onTheRoadTab(ui, trip),
-    if (tab == 'slike') galleryTab(ui, trip),
+    if (tab == 'slike') galleryTab(ui, trip) else _planTab(ui, trip),
   ]);
 }
