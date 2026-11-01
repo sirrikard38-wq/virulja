@@ -49,6 +49,21 @@ void main() {
     });
   });
 
+  test('categories the group made survive the cloud', () {
+    final trip = _trip(['a'])
+      ..customKinds = [CustomKind(id: 'k1', label: 'Pizzerije')]
+      ..places = [
+        Place(id: 'p1', kind: PlaceKind.restaurant, name: 'Mare', customKindId: 'k1'),
+      ];
+    final tree = unflatten(flatten(tripToTree(trip, (id) => id)));
+    final back = tripFromTree(trip.id, jsonDecode(jsonEncode(tree)) as Tree)!.trip;
+    expect(back.customKinds.single.label, 'Pizzerije');
+    expect(back.places.single.customKindId, 'k1');
+    final copy = Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json);
+    expect(copy.customKinds.single.id, 'k1');
+    expect(copy.places.single.customKindId, 'k1');
+  });
+
   group('joining', () {
     test('one member lets people straight in, more need two approvals', () {
       expect(_trip(['a']).approvalsNeeded, 0);

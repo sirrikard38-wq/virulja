@@ -24,10 +24,13 @@ Uri airbnbSearch(Trip trip) => Uri.https(
 String _slug(String text) => text.trim().replaceAll(RegExp(r'\s+'), '-');
 
 /// Google Maps search for places of one kind in the trip's city.
-Uri mapsSearch(PlaceKind kind, Trip trip) =>
+Uri mapsSearch(PlaceKind kind, Trip trip) => mapsSearchFor(kind.searchWord, trip);
+
+/// Google Maps search for [word] in the trip's city.
+Uri mapsSearchFor(String word, Trip trip) =>
     Uri.https('www.google.com', '/maps/search/', {
       'api': '1',
-      'query': '${kind.searchWord} ${trip.city} ${trip.country}',
+      'query': '$word ${trip.city} ${trip.country}',
     });
 
 /// How a song link plays inside the app.

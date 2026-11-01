@@ -9,6 +9,7 @@ import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 import 'polls_section.dart';
 import 'widgets.dart';
 
@@ -50,7 +51,7 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
   ]);
 }
 
-web.HTMLElement _addPlace(Ui ui, Trip trip) {
+web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
   final name = input();
   final rating = numberInput();
   final price = numberInput();
@@ -72,6 +73,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
     trip.places.add(Place(
       id: ui.store.newId(),
       kind: ui.placeKind,
+      customKindId: custom?.id,
       name: name.value.trim(),
       rating: double.tryParse(rating.value.trim().replaceAll(',', '.')),
       pricePerPerson: parseEuros(price.value),
@@ -171,8 +173,9 @@ bool get _wantsLessMotion =>
     web.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /// Lets [sliding] follow the finger across [page]. Past the swipe length [move]
-/// is called at once, with +1 for the next kind, -1 for the one before. Lists of chips scroll by themselves, and an open form would lose what
-/// was typed in it, so those are left alone.
+/// is called at once, with +1 for the next kind, -1 for the one before. Lists of
+/// chips scroll by themselves, and an open form would lose what was typed in it,
+/// so those are left alone.
 void _followSwipes(
   web.HTMLElement page,
   web.HTMLElement sliding,
@@ -186,7 +189,7 @@ void _followSwipes(
   page.onTouchStart.listen((event) {
     final touch = event.changedTouches.item(0)!;
     final inChips = (event.target as web.Element).closest('.chips') != null;
-    final formOpen = web.document.querySelector('details[open]') != null;
+    final formOpen = web.document.querySelector('details[open], .new-kind') != null;
     final usable = event.touches.length == 1 &&
         touch.clientX >= _backGestureEdge &&
         !inChips &&
@@ -255,6 +258,9 @@ web.HTMLElement? get _chipRow => web.document.querySelector('.chips') as web.HTM
 
 web.HTMLElement? get _chosenChip => _chipRow?.querySelector('.chip.on') as web.HTMLElement?;
 
+double _centredLeft(web.HTMLElement row, web.HTMLElement chosen) =>
+    chosen.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2;
+
 /// Where the green of the chosen chip is, to start gliding from after a redraw.
 ({double left, double width, double scroll})? _chipPlace() {
   final row = _chipRow, chosen = _chosenChip;
@@ -272,7 +278,7 @@ web.HTMLElement? get _chosenChip => _chipRow?.querySelector('.chip.on') as web.H
 void _glideToChosenChip(({double left, double width, double scroll}) from) {
   final row = _chipRow, chosen = _chosenChip;
   if (row == null || chosen == null) return;
-  final centred = chosen.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2;
+  final centred = _centredLeft(row, chosen);
   if (_wantsLessMotion) {
     row.scrollLeft = centred;
     return;
@@ -301,27 +307,97 @@ void _glideToChosenChip(({double left, double width, double scroll}) from) {
   });
 }
 
-web.HTMLElement foodScreen(Ui ui, Trip trip) {
-  final kind = ui.placeKind;
-  final places = trip.places.where((place) => place.kind == kind).toList();
+/// One category of the screen: a fixed kind, or one the group made.
+class _Tab {
+  const _Tab(this.label, this.searchWord, {this.kind, this.custom});
 
-  void show(PlaceKind item) {
-    if (item == kind) return;
-    final from = _chipPlace();
-    ui.placeKind = item;
-    ui.rerender();
-    if (from != null) _glideToChosenChip(from);
-    _slideIn(item.index > kind.index ? 1 : -1);
+  final String label;
+  final String searchWord;
+  final PlaceKind? kind;
+  final CustomKind? custom;
+
+  bool holds(Place place) => custom != null
+      ? place.customKindId == custom!.id
+      : place.customKindId == null && place.kind == kind;
+}
+
+/// The field for a new category, under the row of categories.
+web.HTMLElement _newKind(Ui ui, void Function(String label) add) {
+  final name = input();
+  return el('div', cls: 'new-kind', children: [
+    field('Nova kategorija', name),
+    primaryButton('Dodaj kategoriju', () => add(name.value.trim())),
+  ]);
+}
+
+web.HTMLElement foodScreen(Ui ui, Trip trip) {
+  final tabs = [
+    for (final kind in PlaceKind.values) _Tab(kind.label, kind.searchWord, kind: kind),
+    for (final custom in trip.customKinds)
+      _Tab(custom.label, custom.label, custom: custom),
+  ];
+  final customAt = tabs.indexWhere(
+      (tab) => tab.custom != null && tab.custom!.id == ui.customKindId);
+  final index = customAt >= 0
+      ? customAt
+      : tabs.indexWhere((tab) => tab.kind == ui.placeKind);
+  final tab = tabs[index];
+  final places = trip.places.where(tab.holds).toList();
+
+  void choose(_Tab item) {
+    ui.customKindId = item.custom?.id;
+    ui.placeKind = item.kind ?? ui.placeKind;
   }
 
+  void show(_Tab item) {
+    if (identical(item, tab)) return;
+    final from = _chipPlace();
+    choose(item);
+    ui.rerender();
+    if (from != null) _glideToChosenChip(from);
+    _slideIn(tabs.indexOf(item) > index ? 1 : -1);
+  }
+
+  void addKind(String label) {
+    ui.addingKind = false;
+    if (label.isNotEmpty) {
+      final same = tabs.where((item) => item.label.toLowerCase() == label.toLowerCase());
+      if (same.isNotEmpty) {
+        choose(same.first);
+      } else {
+        final custom = CustomKind(id: ui.store.newId(), label: label);
+        trip.customKinds.add(custom);
+        ui.customKindId = custom.id;
+      }
+    }
+    ui.changed();
+  }
+
+  void removeKind(CustomKind custom) {
+    if (!web.window.confirm('Obrisati kategoriju ${custom.label} i mjesta u njoj?')) return;
+    trip.places.removeWhere(tab.holds);
+    trip.customKinds.remove(custom);
+    ui.customKindId = null;
+    ui.changed();
+  }
+
+  final custom = tab.custom;
   final sliding = el('div', cls: 'slide-page', children: [
     el('div', cls: 'pad gap-top', children: [
-      outLink('Traži: ${kind.label} u mjestu ${trip.city}', mapsSearch(kind, trip)),
+      outLink('Traži: ${tab.label} u mjestu ${trip.city}', mapsSearchFor(tab.searchWord, trip)),
     ]),
     if (places.isEmpty)
       el('p', cls: 'soft pad gap-top', text: 'Još nema spremljenih mjesta.'),
     for (final place in places) _placeRow(ui, trip, place),
-    _addPlace(ui, trip),
+    _addPlace(ui, trip, custom),
+    if (custom != null)
+      el('div', cls: 'pad gap-top', children: [
+        button(
+          cls: 'text-button',
+          text: 'Obriši kategoriju',
+          onTap: () => removeKind(custom),
+        ),
+      ]),
     sectionTitle('Jela koja želimo probati'),
     if (trip.dishes.isEmpty)
       el('p', cls: 'soft pad', text: 'Dodajte jela s cijenom s jelovnika.'),
@@ -331,9 +407,20 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   final page = el('div', cls: 'swipe-area', children: [
     topBar('Hrana i piće'),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
-      for (final item in PlaceKind.values)
-        chip(item.label, () => show(item), on: item == kind),
+      for (final item in tabs)
+        chip(item.label, () => show(item), on: identical(item, tab)),
+      button(
+        cls: ui.addingKind ? 'chip on-outline' : 'chip',
+        ariaLabel: 'Nova kategorija',
+        onTap: () {
+          ui.addingKind = !ui.addingKind;
+          ui.rerender();
+          (web.document.querySelector('.new-kind input') as web.HTMLElement?)?.focus();
+        },
+        children: [icon(ui.addingKind ? 'minus' : 'plus', size: 18)],
+      ),
     ]),
+    if (ui.addingKind) _newKind(ui, addKind),
     el('div', cls: 'slide-clip', children: [sliding]),
     el('div', cls: 'row stick-bottom', children: [
       el('div', cls: 'grow', text: 'Procjena za hranu i piće'),
@@ -341,12 +428,16 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     ]),
   ]);
   bool canMove(int step) {
-    final next = kind.index + step;
-    return next >= 0 && next < PlaceKind.values.length;
+    final next = index + step;
+    return next >= 0 && next < tabs.length;
   }
 
-  _followSwipes(page, sliding, canMove, (step) {
-    show(PlaceKind.values[kind.index + step]);
+  _followSwipes(page, sliding, canMove, (step) => show(tabs[index + step]));
+  // A redraw starts the row of categories from the left again.
+  scheduleMicrotask(() {
+    final row = _chipRow, chosen = _chosenChip;
+    if (row == null || chosen == null || row.classList.contains('gliding')) return;
+    row.scrollLeft = ui.addingKind ? row.scrollWidth : _centredLeft(row, chosen);
   });
   return page;
 }

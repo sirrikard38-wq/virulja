@@ -202,6 +202,19 @@ class Offer {
       };
 }
 
+/// A category of food and drink the group made itself.
+class CustomKind {
+  CustomKind({required this.id, required this.label});
+
+  factory CustomKind.fromJson(Json json) =>
+      CustomKind(id: json['id'] as String, label: json['label'] as String);
+
+  final String id;
+  final String label;
+
+  Json toJson() => {'id': id, 'label': label};
+}
+
 enum PlaceKind {
   restaurant('Restorani', 'restorani'),
   cafe('Kafići', 'kafići'),
@@ -229,11 +242,13 @@ class Place {
     this.note,
     this.link,
     this.planned = false,
+    this.customKindId,
   });
 
   factory Place.fromJson(Json json) => Place(
         id: json['id'] as String,
         kind: PlaceKind.values.byName(json['kind'] as String),
+        customKindId: json['customKindId'] as String?,
         name: json['name'] as String,
         rating: (json['rating'] as num?)?.toDouble(),
         pricePerPerson: json['pricePerPerson'] as int?,
@@ -244,6 +259,9 @@ class Place {
 
   final String id;
   PlaceKind kind;
+
+  /// The group's own category, when it is in one instead of [kind].
+  final String? customKindId;
   String name;
   double? rating;
   int? pricePerPerson;
@@ -254,6 +272,7 @@ class Place {
   Json toJson() => {
         'id': id,
         'kind': kind.name,
+        'customKindId': customKindId,
         'name': name,
         'rating': rating,
         'pricePerPerson': pricePerPerson,
@@ -684,6 +703,7 @@ class Trip {
     List<Stop>? stops,
     List<Leg>? legs,
     List<JoinRequest>? requests,
+    List<CustomKind>? customKinds,
     Drive? drive,
     List<Expense>? expenses,
     List<Payment>? payments,
@@ -698,6 +718,7 @@ class Trip {
         stops = stops ?? [],
         legs = legs ?? [],
         requests = requests ?? [],
+        customKinds = customKinds ?? [],
         drive = drive ?? Drive(),
         expenses = expenses ?? [],
         payments = payments ?? [],
@@ -726,6 +747,7 @@ class Trip {
         stops: _list(json['stops'], Stop.fromJson),
         legs: _list(json['legs'], Leg.fromJson),
         requests: _list(json['requests'], JoinRequest.fromJson),
+        customKinds: _list(json['customKinds'], CustomKind.fromJson),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -768,6 +790,7 @@ class Trip {
   List<Stop> stops;
   List<Leg> legs;
   List<JoinRequest> requests;
+  List<CustomKind> customKinds;
   Drive drive;
   List<Expense> expenses;
   List<Payment> payments;
@@ -823,6 +846,7 @@ class Trip {
     stops = other.stops;
     legs = other.legs;
     requests = other.requests;
+    customKinds = other.customKinds;
     drive = other.drive;
     expenses = other.expenses;
     payments = other.payments;
@@ -851,6 +875,7 @@ class Trip {
         'stops': [for (final item in stops) item.toJson()],
         'legs': [for (final item in legs) item.toJson()],
         'requests': [for (final item in requests) item.toJson()],
+        'customKinds': [for (final item in customKinds) item.toJson()],
         'drive': drive.toJson(),
         'expenses': [for (final item in expenses) item.toJson()],
         'payments': [for (final item in payments) item.toJson()],

@@ -6,21 +6,13 @@ import 'context.dart';
 import 'dom.dart';
 import 'join_screen.dart';
 import 'media.dart';
+import 'people_section.dart';
 import 'range_picker.dart';
 import 'widgets.dart';
 
-/// Asks first, because being an admin cannot be taken back.
-void giveAdmin(Ui ui, Trip trip, String id) {
-  if (web.window.confirm('Dati admina: ${ui.nameOf(id)}?')) {
-    trip.adminIds.add(id);
-    ui.changed();
-  }
-}
-
 /// The group of a trip: nobody is added by hand, people appear when they enter
-/// the code. Admins can remove people and make others admins.
+/// the code.
 web.HTMLElement _members(Ui ui, Trip trip) {
-  final amAdmin = trip.adminIds.contains(ui.meIn(trip));
   return el('div', children: [
     sectionTitle('Šifra putovanja'),
     el('div', cls: 'row', children: [
@@ -44,32 +36,7 @@ web.HTMLElement _members(Ui ui, Trip trip) {
       }),
     ]),
     sectionTitle('Grupa'),
-    for (final id in trip.memberIds)
-      el('div', cls: 'row', children: [
-        avatar(ui.nameOf(id)),
-        el('div', cls: 'grow', children: [
-          el('div', text: ui.nameOf(id)),
-          el('div', cls: 'small', text: [
-            if (trip.adminIds.contains(id)) 'admin',
-            if (ui.data.personById(id)?.phone?.isNotEmpty ?? false)
-              ui.data.personById(id)!.phone!,
-          ].join(' · ')),
-        ])
-          ..onClick.listen((_) {
-            if (amAdmin && !trip.adminIds.contains(id)) giveAdmin(ui, trip, id);
-          }),
-        if (amAdmin && !trip.adminIds.contains(id))
-          chip('Daj admina', () => giveAdmin(ui, trip, id)),
-        if (amAdmin && id != ui.meIn(trip))
-          removeButton(ui.nameOf(id), () async {
-            try {
-              await ui.cloud?.removeMember(trip, id);
-            } on Object {
-              ui.toast('Nema veze. Pokušaj ponovno.');
-            }
-            ui.rerender();
-          }),
-      ]),
+    for (final id in trip.memberIds) memberRow(ui, trip, id),
   ]);
 }
 

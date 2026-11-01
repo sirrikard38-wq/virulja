@@ -86,6 +86,9 @@ Tree tripToTree(
       'legs': {
         for (final leg in trip.legs) leg.id: _withoutId(leg.toJson()),
       },
+      'customKinds': {
+        for (final kind in trip.customKinds) kind.id: _withoutId(kind.toJson()),
+      },
       'requests': {
         for (final request in trip.requests)
           request.id: {
@@ -194,6 +197,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       dishes: _items(tree, 'dishes', Dish.fromJson),
       stops: _items(tree, 'stops', Stop.fromJson),
       legs: _items(tree, 'legs', Leg.fromJson),
+      customKinds: _items(tree, 'customKinds', CustomKind.fromJson),
       requests: _items(
           tree,
           'requests',

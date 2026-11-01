@@ -54,6 +54,10 @@ class Ui {
   // What the screens remember while the app is open.
   OfferSort offerSort = OfferSort.price;
   PlaceKind placeKind = PlaceKind.restaurant;
+
+  /// The group's own category that is open, instead of [placeKind].
+  String? customKindId;
+  bool addingKind = false;
   int routeDay = 0;
   String? playingSongId;
   String? queueAddress;
