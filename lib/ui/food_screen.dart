@@ -6,6 +6,7 @@ import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'polls_section.dart';
 import 'widgets.dart';
 
 String _placeFacts(Place place) => [
@@ -45,7 +46,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
     if (found != null && name.value.trim().isEmpty) name.value = found;
   });
 
-  void add() {
+  void add({bool vote = false}) {
     if (name.value.trim().isEmpty) {
       error.textContent = 'Upiši naziv mjesta.';
       return;
@@ -61,6 +62,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
       note: remark.isEmpty ? null : remark,
       link: address.isEmpty ? null : address,
     ));
+    if (vote) addYesNoPoll(ui, trip, name.value.trim());
     ui.changed();
   }
 
@@ -74,6 +76,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
     field('Bilješka', note),
     error,
     primaryButton('Dodaj mjesto', add),
+    secondaryButton('Glasaj', () => add(vote: true)),
   ]);
 }
 
@@ -102,7 +105,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   final place = input();
   final error = errorLine();
 
-  void add() {
+  void add({bool vote = false}) {
     final cents = parseEuros(price.value);
     if (name.value.trim().isEmpty || cents == null) {
       error.textContent = 'Upiši jelo i cijenu.';
@@ -116,6 +119,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
       servings: int.tryParse(servings.value.trim()) ?? 1,
       placeName: where.isEmpty ? null : where,
     ));
+    if (vote) addYesNoPoll(ui, trip, name.value.trim());
     ui.changed();
   }
 
@@ -128,6 +132,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
     field('Gdje', place),
     error,
     primaryButton('Dodaj jelo', add),
+    secondaryButton('Glasaj', () => add(vote: true)),
   ]);
 }
 

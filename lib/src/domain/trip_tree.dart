@@ -39,6 +39,7 @@ Tree tripToTree(
             'title': poll.title,
             'dayIndex': poll.dayIndex,
             'active': poll.active,
+            'single': poll.single,
             'options': {
               for (final option in poll.options)
                 option.id: {'time': option.time, 'votes': _set(option.votes)},
@@ -162,7 +163,8 @@ CloudTrip? tripFromTree(String id, Tree tree) {
             title: json['title'] as String,
             options: options,
             dayIndex: json['dayIndex'] as int? ?? 0,
-            active: json['active'] as bool? ?? false);
+            active: json['active'] as bool? ?? false,
+            single: json['single'] as bool? ?? false);
       }),
       coverId: tree['coverId'] as String?,
       chosenOfferId: tree['chosenOfferId'] as String?,

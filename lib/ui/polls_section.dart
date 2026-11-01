@@ -19,9 +19,15 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)
         chip('${option.time} · ${option.votes.length}', () {
-          option.votes.contains(me)
-              ? option.votes.remove(me)
-              : option.votes.add(me);
+          final had = option.votes.contains(me);
+          if (poll.single) {
+            for (final other in poll.options) {
+              other.votes.remove(me);
+            }
+          } else {
+            option.votes.remove(me);
+          }
+          if (!had) option.votes.add(me);
           ui.changed();
         }, on: option.votes.contains(me)),
     ]),
@@ -52,6 +58,22 @@ web.HTMLElement pollsTab(Ui ui, Trip trip) {
     for (final poll in polls) _pollCard(ui, trip, poll),
     _newPoll(ui, trip, day),
   ]);
+}
+
+/// A yes, no or maybe poll on [title], one answer per person.
+void addYesNoPoll(Ui ui, Trip trip, String title) {
+  const answers = ['Da', 'Ne', 'Možda'];
+  trip.polls.add(Poll(
+    id: ui.store.newId(),
+    title: title,
+    dayIndex: ui.routeDay.clamp(0, trip.dayCount - 1),
+    single: true,
+    options: [
+      for (var i = 0; i < answers.length; i++)
+        PollOption(id: 'o$i', time: answers[i]),
+    ],
+  ));
+  ui.toast('Dodano u Ankete.');
 }
 
 /// A new poll: the choices are times, price ranges or locations, as many as

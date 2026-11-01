@@ -77,6 +77,7 @@ class Poll {
     required this.options,
     this.dayIndex = 0,
     this.active = false,
+    this.single = false,
   });
 
   factory Poll.fromJson(Json json) => Poll(
@@ -85,6 +86,7 @@ class Poll {
         options: _list(json['options'], PollOption.fromJson),
         dayIndex: json['dayIndex'] as int? ?? 0,
         active: json['active'] as bool? ?? false,
+        single: json['single'] as bool? ?? false,
       );
 
   final String id;
@@ -95,11 +97,15 @@ class Poll {
   /// Whether its result shows in the plan of attack.
   bool active;
 
+  /// Whether each person may pick only one option.
+  final bool single;
+
   Json toJson() => {
         'id': id,
         'title': title,
         'dayIndex': dayIndex,
         'active': active,
+        'single': single,
         'options': [for (final option in options) option.toJson()],
       };
 }

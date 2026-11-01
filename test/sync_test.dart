@@ -184,6 +184,7 @@ void main() {
       expect(back.chosenOffer?.name, 'Kuća');
       expect(back.places.single.kind, PlaceKind.winery);
       expect(back.drive.cars, 2);
+      expect(back.polls.every((poll) => !poll.single), isTrue);
       expect(back.expenses.single.sharedBy, ['ana', 'marko']);
       expect(back.payments.single.amount, 4500);
       expect(back.photos.single.reactions['marko'], {Reaction.heart, Reaction.sun});
