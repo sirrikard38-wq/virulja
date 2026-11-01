@@ -95,7 +95,7 @@ web.HTMLElement _driveForm(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  return adder('Izračunaj vožnju autom', [
+  return adder('Dodaj prijevoz autom', [
     field('Ruta', route),
     el('div', cls: 'fields', children: [
       field('Kilometara u jednom smjeru', km, tight: true),
@@ -165,7 +165,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
         el('div', cls: 'grow', text: trip.drive.route.isEmpty ? 'Auto' : 'Auto: ${trip.drive.route}'),
         el('div', cls: 'price', text: euros(trip.drive.totalCost)),
       ]),
-    _addLeg(ui, trip),
     _driveForm(ui, trip),
+    _addLeg(ui, trip),
   ]);
 }
