@@ -94,4 +94,14 @@ void main() {
     expect(PlaceKind.cafe.label, 'Cafés');
     expect(CostCategory.values.first.label, 'Stay');
   });
+
+  test('every kind of place has its estimate in each language', () {
+    expect(PlaceKind.beachBar.estimateTitle, 'Procjena za beach bar');
+    for (final other in [Language.en, Language.tr]) {
+      language = other;
+      for (final kind in PlaceKind.values) {
+        expect(kind.estimateTitle, isNot(contains('Procjena')));
+      }
+    }
+  });
 }

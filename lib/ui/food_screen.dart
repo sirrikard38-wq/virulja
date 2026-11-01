@@ -249,6 +249,12 @@ class _Tab {
 
   bool get isDishes => kind == null && custom == null;
 
+  /// What stands over the sum of this category.
+  String get estimateTitle {
+    if (custom != null) return tr('Procjena za {0}', [custom!.label.toLowerCase()]);
+    return kind?.estimateTitle ?? tr('Procjena za hranu');
+  }
+
   /// What this person's order of the categories calls it.
   String get key => custom?.id ?? kind?.name ?? _dishesKey;
 
@@ -400,7 +406,7 @@ web.HTMLElement _newKind(Ui ui, void Function(String label) add) {
 
 web.HTMLElement foodScreen(Ui ui, Trip trip) {
   final tabs = _inOrder([
-    _Tab(tr('Hrana i piće'), ''),
+    _Tab(tr('Hrana'), ''),
     for (final kind in PlaceKind.values) _Tab(kind.label, kind.searchWord, kind: kind),
     for (final custom in trip.customKinds)
       _Tab(custom.label, custom.label, custom: custom),
@@ -503,8 +509,9 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     if (ui.addingKind) _newKind(ui, addKind),
     el('div', cls: 'slide-clip', children: [sliding]),
     el('div', cls: 'row stick-bottom', children: [
-      el('div', cls: 'grow', text: tr('Procjena za hranu i piće')),
-      el('div', cls: 'price', text: euros(plannedCost(trip, CostCategory.food))),
+      el('div', cls: 'grow', text: tab.estimateTitle),
+      el('div', cls: 'price',
+          text: euros(tab.isDishes ? dishesCost(trip) : plannedPlacesCost(trip, places))),
     ]),
   ]);
   bool canMove(int step) {

@@ -42,6 +42,15 @@ class Budget {
       lines.firstWhere((line) => line.category == category);
 }
 
+/// What the planned ones of [places] cost the whole group.
+int plannedPlacesCost(Trip trip, Iterable<Place> places) => places
+    .where((place) => place.planned)
+    .fold(0, (sum, place) => sum + (place.pricePerPerson ?? 0) * trip.people);
+
+/// What the dishes to try cost.
+int dishesCost(Trip trip) =>
+    trip.dishes.fold(0, (sum, dish) => sum + dish.price * dish.servings);
+
 /// The estimate for one [category]:
 ///  * stay: the chosen offer, every night;
 ///  * food: planned places for the whole group, plus the dishes to try;
@@ -52,11 +61,7 @@ int plannedCost(Trip trip, CostCategory category) {
     case CostCategory.stay:
       return (trip.chosenOffer?.pricePerNight ?? 0) * trip.nights;
     case CostCategory.food:
-      final places = trip.places.where((place) => place.planned).fold(
-          0, (sum, place) => sum + (place.pricePerPerson ?? 0) * trip.people);
-      final dishes = trip.dishes
-          .fold(0, (sum, dish) => sum + dish.price * dish.servings);
-      return places + dishes;
+      return plannedPlacesCost(trip, trip.places) + dishesCost(trip);
     case CostCategory.transport:
       return trip.legs.fold(trip.drive.totalCost, (sum, leg) => sum + leg.cost);
     case CostCategory.activities:

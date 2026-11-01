@@ -82,6 +82,7 @@ const Map<String, List<String>> _texts = {
   'vinarija': ['winery', 'şaraphane'],
   'Smještaj': ['Stay', 'Konaklama'],
   'Hrana i piće': ['Food and drink', 'Yeme içme'],
+  'Hrana': ['Food', 'Yemek'],
   'Prijevoz': ['Transport', 'Ulaşım'],
   'Izleti i vino': ['Trips and wine', 'Geziler ve şarap'],
   'Ostalo': ['Other', 'Diğer'],
@@ -176,7 +177,14 @@ const Map<String, List<String>> _texts = {
   'Obriši kategoriju': ['Delete category', 'Kategoriyi sil'],
   'Jela koja želimo probati': ['Dishes we want to try', 'Denemek istediğimiz yemekler'],
   'Dodajte jela s cijenom s jelovnika.': ['Add dishes with their price from the menu.', 'Menüdeki yemekleri fiyatlarıyla ekleyin.'],
-  'Procjena za hranu i piće': ['Food and drink estimate', 'Yeme içme tahmini'],
+  'Procjena za hranu': ['Food estimate', 'Yemek tahmini'],
+  'Procjena za restoran': ['Restaurant estimate', 'Restoran tahmini'],
+  'Procjena za kafić': ['Café estimate', 'Kafe tahmini'],
+  'Procjena za klub': ['Club estimate', 'Kulüp tahmini'],
+  'Procjena za beach bar': ['Beach bar estimate', 'Plaj barı tahmini'],
+  'Procjena za vinoteku': ['Wine shop estimate', 'Şarap dükkanı tahmini'],
+  'Procjena za vinariju': ['Winery estimate', 'Şaraphane tahmini'],
+  'Procjena za {0}': ['Estimate for {0}', 'Tahmin: {0}'],
   '{0} po osobi': ['{0} per person', 'kişi başı {0}'],
 
   // Settings

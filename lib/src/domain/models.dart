@@ -225,19 +225,23 @@ class CustomKind {
 }
 
 enum PlaceKind {
-  restaurant('Restorani', 'restorani'),
-  cafe('Kafići', 'kafići'),
-  club('Klubovi', 'klub'),
-  beachBar('Beach barovi', 'beach bar'),
-  wineShop('Vinoteke', 'vinoteka'),
-  winery('Vinarije', 'vinarija');
+  restaurant('Restorani', 'restorani', 'Procjena za restoran'),
+  cafe('Kafići', 'kafići', 'Procjena za kafić'),
+  club('Klubovi', 'klub', 'Procjena za klub'),
+  beachBar('Beach barovi', 'beach bar', 'Procjena za beach bar'),
+  wineShop('Vinoteke', 'vinoteka', 'Procjena za vinoteku'),
+  winery('Vinarije', 'vinarija', 'Procjena za vinariju');
 
-  const PlaceKind(this._label, this._searchWord);
+  const PlaceKind(this._label, this._searchWord, this._estimateTitle);
 
   final String _label;
   final String _searchWord;
+  final String _estimateTitle;
 
   String get label => tr(_label);
+
+  /// What stands over the sum of this kind.
+  String get estimateTitle => tr(_estimateTitle);
 
   /// What to look for on Google Maps.
   String get searchWord => tr(_searchWord);

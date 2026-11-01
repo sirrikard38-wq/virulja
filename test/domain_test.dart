@@ -177,6 +177,27 @@ void main() {
       expect(budget.plannedPerPerson, 22800);
     });
 
+    test('a category counts only its own planned places', () {
+      Place place(PlaceKind kind, int price, {bool planned = true}) => Place(
+            id: '$kind$price',
+            kind: kind,
+            name: 'Mjesto',
+            pricePerPerson: price,
+            planned: planned,
+          );
+      final trip = visTrip()
+        ..places.add(place(PlaceKind.beachBar, 2000))
+        ..places.add(place(PlaceKind.beachBar, 1000))
+        ..places.add(place(PlaceKind.beachBar, 5000, planned: false))
+        ..places.add(place(PlaceKind.cafe, 700))
+        ..dishes.add(Dish(id: 'd', name: 'Peka', price: 2800, servings: 2));
+
+      final bars = trip.places.where((place) => place.kind == PlaceKind.beachBar);
+      expect(plannedPlacesCost(trip, bars), 3000 * trip.people);
+      expect(dishesCost(trip), 5600);
+      expect(plannedCost(trip, CostCategory.food), 3700 * trip.people + 5600);
+    });
+
     test('with no offer chosen the stay costs nothing yet', () {
       expect(plannedCost(visTrip(), CostCategory.stay), 0);
     });
