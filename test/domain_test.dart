@@ -81,7 +81,7 @@ void main() {
           id: 'f1',
           takenAt: DateTime.utc(2027, 6, 12, 20, 41),
           addedBy: 'ana',
-          reactions: {'marko': Reaction.cheers},
+          reactions: {'marko': {Reaction.cheers}},
           comments: [
             Comment(
               id: 'c1',
@@ -110,7 +110,7 @@ void main() {
 
       expect(jsonEncode(back.toJson()), text);
       final photo = back.trips.single.photos.single;
-      expect(photo.reactions['marko'], Reaction.cheers);
+      expect(photo.reactions['marko'], {Reaction.cheers});
       expect(photo.comments.single.text, 'Lijepo');
       expect(back.trips.single.chosenOffer?.name, 'Kuća Mare');
       expect(back.theme, ThemeChoice.dark);

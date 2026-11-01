@@ -44,6 +44,7 @@ class Ui {
   PlaceKind placeKind = PlaceKind.restaurant;
   int routeDay = 0;
   String? playingSongId;
+  String? replyingTo;
 
   AppData get data => store.data;
 

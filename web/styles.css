@@ -358,6 +358,10 @@ label:focus-within { outline: none; }
 .calendar-days button.edge { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 .calendar-days button.inside { background: var(--line); }
 .poll { margin: 10px 20px 0; padding: 12px; }
+.comment.reply { padding-left: 62px; }
+.comment-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-top: 2px; }
+.tiny { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 40px; min-height: 40px; padding: 0 6px; border-radius: 10px; color: var(--soft); font-size: 13px; }
+.tiny.on { color: var(--accent); background: var(--line); font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }

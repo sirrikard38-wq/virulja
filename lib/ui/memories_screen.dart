@@ -57,7 +57,8 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) => button(
         storedImage(ui, trip, thumbId(photo.id), cls: ''),
         el('span', cls: 'counts', children: [
           icon('heart', size: 12),
-          web.document.createTextNode('${photo.reactions.length}'),
+          web.document.createTextNode(
+              '${photo.reactions.values.fold(0, (sum, given) => sum + given.length)}'),
           icon('comment', size: 12),
           web.document.createTextNode('${photo.comments.length}'),
         ]),
@@ -98,9 +99,56 @@ String _dayTitle(Trip trip, DateTime day) {
 String _clock(DateTime at) => '${at.hour.toString().padLeft(2, '0')}:'
     '${at.minute.toString().padLeft(2, '0')}';
 
+/// One comment with its reactions. Answers all sit under the first comment
+/// ([threadId]), so a conversation stays one level deep and easy to read.
+web.HTMLElement _commentRow(
+  Ui ui,
+  Comment comment,
+  String me,
+  String threadId, {
+  bool isReply = false,
+}) {
+  final mine = comment.reactions[me] ?? const <Reaction>{};
+  return el('div', cls: isReply ? 'comment reply' : 'comment', children: [
+    avatar(ui.nameOf(comment.authorId)),
+    el('div', cls: 'grow', children: [
+      el('div', cls: 'small', children: [
+        el('span', cls: 'strong', text: ui.nameOf(comment.authorId)),
+        web.document.createTextNode(' · ${ago(comment.at, DateTime.now().toUtc())}'),
+      ]),
+      el('p', text: comment.text),
+      el('div', cls: 'comment-actions', children: [
+        for (final reaction in Reaction.values)
+          button(
+            cls: mine.contains(reaction) ? 'tiny on' : 'tiny',
+            ariaLabel: '${reaction.label}, ${reactionCount(comment.reactions, reaction)}',
+            onTap: () {
+              toggleReaction(comment.reactions, me, reaction);
+              ui.changed();
+            },
+            children: [
+              icon(_reactionIcons[reaction]!, size: 16),
+              if (reactionCount(comment.reactions, reaction) > 0)
+                web.document.createTextNode(
+                    '${reactionCount(comment.reactions, reaction)}'),
+            ],
+          ),
+        button(
+          cls: 'tiny',
+          text: 'Odgovori',
+          onTap: () {
+            ui.replyingTo = threadId;
+            ui.rerender();
+          },
+        ),
+      ]),
+    ]),
+  ]);
+}
+
 web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
   final me = ui.meIn(trip);
-  final mine = photo.reactions[me];
+  final mine = photo.reactions[me] ?? const <Reaction>{};
   final onCard = trip.coverId == photo.id;
   final message = input(placeholder: 'Napiši komentar');
 
@@ -112,7 +160,9 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
       authorId: me,
       text: text,
       at: DateTime.now().toUtc(),
+      replyTo: ui.replyingTo,
     ));
+    ui.replyingTo = null;
     ui.changed();
   }
 
@@ -143,21 +193,17 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
     el('div', cls: 'reactions', children: [
       for (final reaction in Reaction.values)
         button(
-          cls: mine == reaction ? 'reaction on' : 'reaction',
+          cls: mine.contains(reaction) ? 'reaction on' : 'reaction',
           ariaLabel: '${reaction.label}, '
-              '${photo.reactions.values.where((r) => r == reaction).length}',
+              '${reactionCount(photo.reactions, reaction)}',
           onTap: () {
-            if (mine == reaction) {
-              photo.reactions.remove(me);
-            } else {
-              photo.reactions[me] = reaction;
-            }
+            toggleReaction(photo.reactions, me, reaction);
             ui.changed();
           },
           children: [
             el('span', children: [icon(_reactionIcons[reaction]!, size: 26)]),
             web.document.createTextNode(
-                '${photo.reactions.values.where((r) => r == reaction).length}'),
+                '${reactionCount(photo.reactions, reaction)}'),
           ],
         ),
     ]),
@@ -179,16 +225,18 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
     sectionTitle('Komentari'),
     if (photo.comments.isEmpty)
       el('p', cls: 'soft pad', text: 'Budi prvi koji će nešto napisati.'),
-    for (final comment in photo.comments)
-      el('div', cls: 'comment', children: [
-        avatar(ui.nameOf(comment.authorId)),
-        el('div', cls: 'grow', children: [
-          el('div', cls: 'small', children: [
-            el('span', cls: 'strong', text: ui.nameOf(comment.authorId)),
-            web.document.createTextNode(' · ${ago(comment.at, DateTime.now().toUtc())}'),
-          ]),
-          el('p', text: comment.text),
-        ]),
+    for (final comment in photo.comments.where((c) => c.replyTo == null)) ...[
+      _commentRow(ui, comment, me, comment.id),
+      for (final reply in photo.comments.where((c) => c.replyTo == comment.id))
+        _commentRow(ui, reply, me, comment.id, isReply: true),
+    ],
+    if (ui.replyingTo != null)
+      el('div', cls: 'row', children: [
+        el('div', cls: 'grow small', text: 'Pišeš odgovor'),
+        chip('Odustani', () {
+          ui.replyingTo = null;
+          ui.rerender();
+        }),
       ]),
     el('div', cls: 'composer', children: [
       el('label', attrs: {'style': 'display:contents'}, children: [message]),

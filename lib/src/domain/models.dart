@@ -411,19 +411,53 @@ enum Reaction {
   final String label;
 }
 
+/// Person -> their reactions. Older saves hold one reaction name per person.
+Map<String, Set<Reaction>> _reactionsFrom(Object? raw) {
+  final reactions = <String, Set<Reaction>>{};
+  (raw as Json? ?? const <String, dynamic>{}).forEach((person, value) {
+    final names = value is String ? [value] : (value as Map).keys.cast<String>();
+    reactions[person] = {for (final name in names) Reaction.values.byName(name)};
+  });
+  return reactions;
+}
+
+Json _reactionsToJson(Map<String, Set<Reaction>> reactions) => {
+      for (final entry in reactions.entries)
+        entry.key: {for (final reaction in entry.value) reaction.name: true},
+    };
+
+/// How many people gave [reaction].
+int reactionCount(Map<String, Set<Reaction>> reactions, Reaction reaction) =>
+    reactions.values.where((given) => given.contains(reaction)).length;
+
+/// Adds [reaction] of [person], or takes it away if it is already there.
+void toggleReaction(
+  Map<String, Set<Reaction>> reactions,
+  String person,
+  Reaction reaction,
+) {
+  final given = reactions[person] ??= {};
+  if (!given.remove(reaction)) given.add(reaction);
+  if (given.isEmpty) reactions.remove(person);
+}
+
 class Comment {
   Comment({
     required this.id,
     required this.authorId,
     required this.text,
     required this.at,
-  });
+    this.replyTo,
+    Map<String, Set<Reaction>>? reactions,
+  }) : reactions = reactions ?? {};
 
   factory Comment.fromJson(Json json) => Comment(
         id: json['id'] as String,
         authorId: json['authorId'] as String,
         text: json['text'] as String,
         at: DateTime.parse(json['at'] as String),
+        replyTo: json['replyTo'] as String?,
+        reactions: _reactionsFrom(json['reactions']),
       );
 
   final String id;
@@ -431,11 +465,17 @@ class Comment {
   final String text;
   final DateTime at;
 
+  /// The comment this one answers.
+  final String? replyTo;
+  Map<String, Set<Reaction>> reactions;
+
   Json toJson() => {
         'id': id,
         'authorId': authorId,
         'text': text,
         'at': at.toIso8601String(),
+        'replyTo': replyTo,
+        'reactions': _reactionsToJson(reactions),
       };
 }
 
@@ -451,7 +491,7 @@ class Photo {
     this.latitude,
     this.longitude,
     this.stored = false,
-    Map<String, Reaction>? reactions,
+    Map<String, Set<Reaction>>? reactions,
     List<Comment>? comments,
   })  : reactions = reactions ?? {},
         comments = comments ?? [];
@@ -463,12 +503,7 @@ class Photo {
         latitude: (json['latitude'] as num?)?.toDouble(),
         longitude: (json['longitude'] as num?)?.toDouble(),
         stored: json['stored'] as bool? ?? false,
-        reactions: {
-          for (final entry
-              in (json['reactions'] as Json? ?? const <String, dynamic>{})
-                  .entries)
-            entry.key: Reaction.values.byName(entry.value as String),
-        },
+        reactions: _reactionsFrom(json['reactions']),
         comments: _list(json['comments'], Comment.fromJson),
       );
 
@@ -483,8 +518,8 @@ class Photo {
   /// True once the picture is in the cloud, for the rest of the group to see.
   bool stored;
 
-  /// One reaction per person.
-  Map<String, Reaction> reactions;
+  /// Anyone can give several reactions.
+  Map<String, Set<Reaction>> reactions;
   List<Comment> comments;
 
   DateTime get day => dayOf(takenAt.year, takenAt.month, takenAt.day);
@@ -496,9 +531,7 @@ class Photo {
         'latitude': latitude,
         'longitude': longitude,
         'stored': stored,
-        'reactions': {
-          for (final entry in reactions.entries) entry.key: entry.value.name,
-        },
+        'reactions': _reactionsToJson(reactions),
         'comments': [for (final comment in comments) comment.toJson()],
       };
 }

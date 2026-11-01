@@ -165,7 +165,7 @@ void main() {
           takenAt: DateTime.utc(2027, 6, 12, 20, 41),
           addedBy: 'ana',
           stored: true,
-          reactions: {'marko': Reaction.heart},
+          reactions: {'marko': {Reaction.heart, Reaction.sun}},
           comments: [
             Comment(id: 'c2', authorId: 'ana', text: 'Drugi', at: DateTime.utc(2027, 6, 13, 2)),
             Comment(id: 'c1', authorId: 'marko', text: 'Prvi', at: DateTime.utc(2027, 6, 13, 1)),
@@ -186,7 +186,7 @@ void main() {
       expect(back.drive.cars, 2);
       expect(back.expenses.single.sharedBy, ['ana', 'marko']);
       expect(back.payments.single.amount, 4500);
-      expect(back.photos.single.reactions['marko'], Reaction.heart);
+      expect(back.photos.single.reactions['marko'], {Reaction.heart, Reaction.sun});
       expect(back.photos.single.comments.map((c) => c.text), ['Prvi', 'Drugi']);
       expect(back.photos.single.stored, isTrue);
       expect(flatOf(back), flatOf(trip));
@@ -257,16 +257,18 @@ void main() {
       ana.push(cloud);
       marko.pull(cloud);
       ana.trip.photos.single
-        ..reactions['ana'] = Reaction.heart
+        ..reactions['ana'] = {Reaction.heart}
         ..comments.add(Comment(id: 'c1', authorId: 'ana', text: 'A', at: DateTime.utc(2027, 1, 2)));
       marko.trip.photos.single
-        ..reactions['marko'] = Reaction.sun
-        ..comments.add(Comment(id: 'c2', authorId: 'marko', text: 'M', at: DateTime.utc(2027, 1, 3)));
+        ..reactions['marko'] = {Reaction.sun}
+        ..comments.add(Comment(id: 'c2', authorId: 'marko', text: 'M', replyTo: 'c1', at: DateTime.utc(2027, 1, 3), reactions: {'ana': {Reaction.star}}));
       ana.push(cloud);
       marko.push(cloud);
       ana.pull(cloud);
       final photo = ana.trip.photos.single;
-      expect(photo.reactions, {'ana': Reaction.heart, 'marko': Reaction.sun});
+      expect(photo.reactions, {'ana': {Reaction.heart}, 'marko': {Reaction.sun}});
+      expect(photo.comments.last.replyTo, 'c1');
+      expect(photo.comments.last.reactions['ana'], {Reaction.star});
       expect(photo.comments.map((c) => c.text), ['A', 'M']);
     });
 
