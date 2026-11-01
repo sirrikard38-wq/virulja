@@ -253,7 +253,7 @@ class ViruljaApp {
     );
   }
 
-  /// In the corner of the screens that are not about one trip or its memories.
+  /// At the top of the screens that are not about one trip or its memories.
   List<web.HTMLElement> _languageCorner() => [
         button(
           cls: 'round right lang-button',

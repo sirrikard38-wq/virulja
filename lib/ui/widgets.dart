@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:web/web.dart' as web;
 
+import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
@@ -173,49 +176,67 @@ String offerFacts(Offer offer) => [
       tr(offer.source),
     ].join(' · ');
 
-/// The perforated stamp on a postcard.
-web.Element stamp(String place, int year) {
-  final mask = 'stamp-$year-${place.hashCode}';
-  return svg('svg', cls: 'stamp', attrs: {
-    'viewBox': '0 0 60 74',
-    'width': '60',
-    'height': '74',
+/// About how wide [line] is in the display font, in font sizes.
+double _lettersWide(String line) => line.split('').fold(
+    0, (width, letter) => width + (letter == letter.toLowerCase() ? .44 : .72));
+
+/// The round seal on a postcard: the place and, under it, the year.
+web.Element seal(String place, int year) {
+  final lines = sealLines(place);
+  final size = min(lines.length == 1 ? 29.0 : 19.0, 66 / lines.map(_lettersWide).reduce(max));
+  final lead = lines.length == 1 ? 0.0 : 1.08 * size;
+  // The name, the rule and the year stand together in the middle of the circle.
+  final first = 40 + (.63 * size - lead) / 2;
+  final rule = first + lead + 7;
+
+  web.Element ring(double radius, double width, {String? dots}) => svg('circle', attrs: {
+        'cx': '50',
+        'cy': '50',
+        'r': '$radius',
+        'stroke-width': '$width',
+        if (dots != null) 'stroke-linecap': 'round',
+        if (dots != null) 'stroke-dasharray': dots,
+        'style': 'fill:none;stroke:var(--accent)',
+      });
+
+  return svg('svg', cls: 'seal', attrs: {
+    'viewBox': '0 0 100 100',
+    'width': '96',
+    'height': '96',
     'aria-hidden': 'true',
   }, children: [
-    svg('mask', attrs: {'id': mask}, children: [
-      svg('rect', attrs: {'width': '60', 'height': '74', 'fill': '#fff'}),
-      svg('rect', attrs: {
-        'x': '2',
-        'y': '2',
-        'width': '56',
-        'height': '70',
-        'fill': 'none',
-        'stroke': '#000',
-        'stroke-width': '4',
-        'stroke-linecap': 'round',
-        'stroke-dasharray': '0.01 6.99',
-      }),
-    ]),
-    svg('rect', attrs: {
-      'x': '1',
-      'y': '1',
-      'width': '58',
-      'height': '72',
-      'mask': 'url(#$mask)',
+    svg('circle', attrs: {
+      'cx': '50',
+      'cy': '50',
+      'r': '49',
+      'fill-opacity': '.9',
       'style': 'fill:var(--card)',
     }),
-    svg('text', text: place.length > 5 ? place.substring(0, 5) : place, attrs: {
-      'x': '30',
-      'y': '36',
-      'text-anchor': 'middle',
-      'style': 'fill:var(--accent);font-family:var(--display);'
-          'font-weight:700;font-size:20px',
+    ring(47, 2),
+    ring(43.5, 1.3, dots: '.01 3.027'),
+    ring(40.5, .7),
+    for (var i = 0; i < lines.length; i++)
+      svg('text', text: lines[i], attrs: {
+        'x': '50',
+        'y': '${first + i * lead}',
+        'text-anchor': 'middle',
+        'style': 'fill:var(--accent);font-family:var(--display);'
+            'font-weight:700;font-size:${size}px',
+      }),
+    svg('line', attrs: {
+      'x1': '32',
+      'x2': '68',
+      'y1': '$rule',
+      'y2': '$rule',
+      'stroke-width': '.8',
+      'style': 'stroke:var(--accent)',
     }),
     svg('text', text: '$year', attrs: {
-      'x': '30',
-      'y': '54',
+      'x': '50',
+      'y': '${rule + 13}',
       'text-anchor': 'middle',
-      'style': 'fill:var(--accent);font-family:var(--body);font-size:11px',
+      'style': 'fill:var(--accent);font-family:var(--body);'
+          'font-weight:700;font-size:11px;letter-spacing:.16em',
     }),
   ]);
 }

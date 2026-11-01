@@ -61,7 +61,7 @@ web.HTMLElement _bigPostcard(Ui ui, Trip trip, String when) {
           storedImage(ui, trip, cover, cls: 'postcard-photo', alt: trip.city)
         else
           el('span', cls: 'postcard-blank', text: trip.city),
-        stamp(trip.city, trip.start.year),
+        seal(trip.city, trip.start.year),
         el('span', cls: 'title', text: trip.city),
         el('span', cls: 'soft', text: '${trip.country} · '
             '${dateRange(trip.start, trip.end)} · ${peopleCount(trip.people)}'),

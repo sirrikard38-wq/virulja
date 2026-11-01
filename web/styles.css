@@ -303,7 +303,7 @@ details.adder .wide { width: 100%; }
   font-size: 56px;
   overflow: hidden;
 }
-.stamp { position: absolute; top: 20px; right: 20px; }
+.seal { position: absolute; top: 18px; right: 18px; transform: rotate(-8deg); }
 .postcard .title { display: block; margin-top: 12px; font-size: 38px; line-height: 1; }
 .postcard .soft { display: block; margin-top: 4px; font-size: 15px; }
 .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 20px; }
@@ -389,9 +389,10 @@ details.adder .wide { width: 100%; }
 }
 .toast.show { opacity: 1; }
 
-.round.lang-button { font-size: 13px; font-weight: 700; }
+/* At the very top of the page: unlike the other round buttons, it leaves with the page. */
+.round.lang-button { position: absolute; font-size: 13px; font-weight: 700; }
 .lang-menu {
-  position: fixed;
+  position: absolute;
   z-index: 6;
   top: calc(var(--top-safe) + 60px);
   right: max(14px, calc(50% - 226px));

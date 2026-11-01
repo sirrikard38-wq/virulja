@@ -499,6 +499,19 @@ void main() {
     });
   });
 
+  group('the seal on a postcard', () {
+    test('keeps a short place on one line', () {
+      expect(sealLines('Vis'), ['Vis']);
+      expect(sealLines('Novi Sad'), ['Novi Sad']);
+      expect(sealLines('Aberystwyth'), ['Aberystwyth']);
+    });
+
+    test('breaks a long place where the longer line is shortest', () {
+      expect(sealLines('Rio de Janeiro'), ['Rio de', 'Janeiro']);
+      expect(sealLines('Sveti Filip i Jakov'), ['Sveti Filip', 'i Jakov']);
+    });
+  });
+
   group('photo facts', () {
     test('reads the date and position of a JPEG', () {
       final info = readExif(sampleJpeg(littleEndian: true));
