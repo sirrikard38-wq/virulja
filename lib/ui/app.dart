@@ -89,6 +89,9 @@ class ViruljaApp {
 
   /// Ring length of the speaker: the circumference of its circle.
   static const double _ringLength = 125.7;
+
+  /// Sections that are a trip's main screen rather than a category.
+  static const Set<String?> _mainTabs = {null, 'plan', 'naputu', 'slike'};
   static const Duration _redrawCheck = Duration(seconds: 2);
 
   /// True while a redraw would get in the way: someone is typing, a form is
@@ -141,9 +144,8 @@ class ViruljaApp {
   /// wherever the person came from.
   void _arrow() {
     final place = _Place(web.window.location.hash);
-    const mainTabs = {null, 'plan', 'naputu', 'slike'};
     if (place.tripId != null &&
-        mainTabs.contains(place.section) &&
+        _mainTabs.contains(place.section) &&
         _trail.isEmpty) {
       _go('#/');
     } else {
@@ -321,6 +323,13 @@ class ViruljaApp {
         page,
         if (hasBack) _backButton(),
         if (trip != null && trip.anthemClipId != null) _speaker(trip),
+        if (trip != null && _mainTabs.contains(place.section))
+          button(
+            cls: trip.anthemClipId != null ? 'round right second' : 'round right',
+            ariaLabel: 'Postavke',
+            onTap: () => _go('#/p/${trip.id}/uredi'),
+            children: [icon('tool', size: 22)],
+          ),
         if (hasMenu) _menu(place.page),
       ]),
     );

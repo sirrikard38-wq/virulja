@@ -76,15 +76,11 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     ]),
     el('div', cls: 'head-row', children: [
       el('div', children: [
-        el('div', attrs: {'style': 'display:flex;align-items:center;gap:4px'}, children: [
-          el('h1', cls: 'title big', text: trip.city),
-          button(
-            cls: 'icon-button',
-            ariaLabel: 'Postavke',
-            onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
-            children: [icon('tool', size: 20)],
-          ),
-        ]),
+        button(
+          cls: 'title-link',
+          onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
+          children: [el('h1', cls: 'title big', text: trip.city)],
+        ),
         el('p', cls: 'soft', text: '${dateRange(trip.start, trip.end)} · '
             '${peopleCount(trip.people)}', attrs: {'style': 'margin-top:4px;font-size:15px'}),
       ]),
