@@ -95,10 +95,25 @@ class CloudSync {
 
   String _meIn(Trip trip) => _data.identities[trip.id] ?? _data.meId!;
 
-  /// Ten random digits.
+  /// Ten characters with at least one capital, small letter, digit and sign.
+  /// Look-alikes are left out; the signs are safe in a database key and an
+  /// address, and the length matches the database rules.
   String newCode() {
+    const capitals = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const smalls = 'abcdefghijkmnpqrstuvwxyz';
+    const digits = '23456789';
+    const signs = '!-_';
+    const every = capitals + smalls + digits + signs;
     final random = Random.secure();
-    return [for (var i = 0; i < 10; i++) random.nextInt(10)].join();
+    String pick(String from) => from[random.nextInt(from.length)];
+    return ([
+      pick(capitals),
+      pick(smalls),
+      pick(digits),
+      pick(signs),
+      for (var i = 0; i < 6; i++) pick(every),
+    ]..shuffle(random))
+        .join();
   }
 
   /// Gives a trip what sharing needs: a code, an admin, and this phone's id.

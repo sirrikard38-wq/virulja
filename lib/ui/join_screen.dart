@@ -70,17 +70,19 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
 }
 
 web.HTMLElement codeField(Ui ui) {
-  final code = input(inputMode: 'numeric');
+  final code = input()
+    ..setAttribute('autocapitalize', 'none')
+    ..setAttribute('autocorrect', 'off');
   final error = errorLine();
   return el('div', children: [
     field('Šifra putovanja', code),
     error,
     primaryButton('Uđi na putovanje', () {
-      final digits = code.value.replaceAll(RegExp(r'\D'), '');
-      if (digits.length != 10) {
-        error.textContent = 'Šifra ima 10 znamenki.';
+      final typed = code.value.trim();
+      if (typed.length != 10) {
+        error.textContent = 'Šifra ima 10 znakova.';
       } else {
-        joinByCode(ui, digits, error);
+        joinByCode(ui, typed, error);
       }
     }),
   ]);

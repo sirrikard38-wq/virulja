@@ -69,7 +69,7 @@ on the phone. Realtime Database in europe-west1, used through its web interface 
 with anonymous sign-in. Rules are in `firebase/database.rules.json`; a change there must
 also be pasted into the Firebase console.
 
-- Each trip has a 10-digit code in `/codes/<code>`; entering it once joins that device.
+- Each trip has a code of 10 mixed characters (older trips: 10 digits) in `/codes/<code>`; entering it once joins that device.
   Nobody is added by hand. Changing the code keeps the members. Admins remove people and
   name admins; `/banned/<trip>/<uid>` locks a removed person out. Names and phone numbers
   are entered once per device and changed in Postavke. The WhatsApp button is one tap
