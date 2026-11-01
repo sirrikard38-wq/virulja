@@ -145,7 +145,7 @@ web.HTMLElement avatar(String name, {bool big = false}) => el(
 /// is one.
 web.HTMLElement personAvatar(Ui ui, Trip trip, String id, {bool big = false}) {
   final circle = avatar(ui.nameOf(id), big: big);
-  final photo = ui.data.personById(id == ui.meIn(trip) ? ui.meId : id)?.photoId;
+  final photo = ui.photoIn(trip, id);
   if (photo != null) circle.append(storedImage(ui, trip, photo, cls: 'avatar-photo'));
   return circle;
 }

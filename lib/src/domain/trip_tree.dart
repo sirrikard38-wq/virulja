@@ -169,8 +169,14 @@ CloudTrip? tripFromTree(String id, Tree tree) {
             .compareTo((people[b] as Map)['order'] as num? ?? 0);
         return byOrder != 0 ? byOrder : a.compareTo(b);
       });
+    final photos = {
+      for (final person in order)
+        if ((people[person] as Map)['photo'] != null)
+          person: (people[person] as Map)['photo'] as String,
+    };
     final trip = Trip(
       id: id,
+      memberPhotos: photos,
       country: tree['country'] as String,
       city: tree['city'] as String,
       start: parseDay(tree['start'] as String),
@@ -241,11 +247,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       for (final person in order)
         if ((people[person] as Map)['phone'] != null)
           person: (people[person] as Map)['phone'] as String,
-    }, {
-      for (final person in order)
-        if ((people[person] as Map)['photo'] != null)
-          person: (people[person] as Map)['photo'] as String,
-    });
+    }, photos);
   } on Object {
     return null;
   }

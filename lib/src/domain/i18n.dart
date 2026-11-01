@@ -181,6 +181,8 @@ const Map<String, List<String>> _texts = {
 
   // Settings
   'Profilna fotografija': ['Profile photo', 'Profil fotoğrafı'],
+  'Profilna fotografija za ovo putovanje': ['Profile photo for this trip', 'Bu gezi için profil fotoğrafı'],
+  'Koristi opću fotografiju': ['Use the general photo', 'Genel fotoğrafı kullan'],
   'Dodaj fotografiju': ['Add a photo', 'Fotoğraf ekle'],
   'Promijeni fotografiju': ['Change photo', 'Fotoğrafı değiştir'],
   'Makni fotografiju': ['Remove photo', 'Fotoğrafı kaldır'],

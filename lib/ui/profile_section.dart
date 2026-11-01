@@ -1,16 +1,19 @@
 import 'package:web/web.dart' as web;
 
 import '../src/domain/i18n.dart';
+import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'media.dart';
 import 'widgets.dart';
 
-/// The person's own photo, kept on this phone and sent with the trips. It stands
-/// at the top of both settings screens, the app's and a trip's.
-web.HTMLElement profilePhoto(Ui ui) {
+/// The person's own photo, kept on this phone and sent with the trips. The app's
+/// settings hold the general one; a [trip]'s settings hold one for that trip only,
+/// which goes back to the general one when removed.
+web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
   final me = ui.data.personById(ui.meId)!;
-  final photo = me.photoId;
+  final own = trip == null ? me.photoId : ui.data.tripPhotos[trip.id];
+  final photo = own ?? me.photoId;
   final circle = el('div', cls: 'avatar big profile', text: initials(me.name),
       attrs: {'aria-hidden': 'true'});
   if (photo != null) {
@@ -22,10 +25,20 @@ web.HTMLElement profilePhoto(Ui ui) {
   }
 
   void replace(String? id) {
-    me.photoId = id;
-    if (photo != null) {
-      ui.store.removeBlob(photo);
-      ui.cloud?.removeProfilePhoto(photo);
+    if (trip == null) {
+      me.photoId = id;
+    } else if (id == null) {
+      ui.data.tripPhotos.remove(trip.id);
+    } else {
+      ui.data.tripPhotos[trip.id] = id;
+    }
+    if (own != null) {
+      ui.store.removeBlob(own);
+      if (trip == null) {
+        ui.cloud?.removeProfilePhoto(own);
+      } else {
+        ui.cloud?.removeBlob(trip, own);
+      }
     }
     ui.changed();
   }
@@ -48,14 +61,19 @@ web.HTMLElement profilePhoto(Ui ui) {
   return el('div', cls: 'row', attrs: {'style': 'border:0'}, children: [
     circle,
     el('div', cls: 'grow', children: [
-      el('div', cls: 'small', text: tr('Profilna fotografija')),
+      el('div', cls: 'small',
+          text: trip == null ? tr('Profilna fotografija') : tr('Profilna fotografija za ovo putovanje')),
       el('label', cls: 'secondary profile-button', children: [
         picker,
         web.document.createTextNode(photo == null ? tr('Dodaj fotografiju') : tr('Promijeni fotografiju')),
       ]),
-      if (photo != null)
+      if (own != null)
         el('div', children: [
-          button(cls: 'text-button', text: tr('Makni fotografiju'), onTap: () => replace(null)),
+          button(
+            cls: 'text-button',
+            text: trip == null ? tr('Makni fotografiju') : tr('Koristi opću fotografiju'),
+            onTap: () => replace(null),
+          ),
         ]),
     ]),
   ]);

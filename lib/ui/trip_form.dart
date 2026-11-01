@@ -123,7 +123,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
 
   return el('div', children: [
     topBar(trip == null ? tr('Novo putovanje') : tr('Postavke')),
-    if (trip != null) profilePhoto(ui),
+    if (trip != null) profilePhoto(ui, trip: trip),
     el('datalist', attrs: {'id': 'drzave'}, children: [
       for (final name in countryNames()) el('option', attrs: {'value': name}),
     ]),

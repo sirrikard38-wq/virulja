@@ -100,9 +100,10 @@ class CloudSync {
       tripToTree(trip, _nameOf, (id) => _data.personById(id)?.phone,
           (id) => _photoOf(trip, id)));
 
-  /// This phone may be someone else's person on a trip it joined by name.
-  String? _photoOf(Trip trip, String id) =>
-      _data.personById(id == _meIn(trip) ? _data.meId! : id)?.photoId;
+  /// This person's photo for a trip, or the general one; others' as the trip says.
+  String? _photoOf(Trip trip, String id) => id == _meIn(trip)
+      ? _data.tripPhotos[trip.id] ?? _data.personById(_data.meId!)?.photoId
+      : trip.memberPhotos[id];
 
   /// Null while notifications are not set up.
   String? get pushKey => _config.pushKey;
@@ -218,6 +219,7 @@ class CloudSync {
       'blobs/$tripId/${id.replaceAll('.', '_')}';
 
   void start() {
+    _movePhotosIntoTrips();
     web.document.addEventListener(
       'visibilitychange',
       ((web.Event event) {
@@ -424,13 +426,22 @@ class CloudSync {
     onChange?.call();
   }
 
-  /// Everything the group says about its people, except this phone's own photo:
-  /// a photo that is gone from the cloud has been removed.
+  /// Everything the group says about its people. Their photos are in the trip.
   void _learnPeople(Trip trip, CloudTrip cloud) {
     _learnNames(cloud.names);
     cloud.phones.forEach((id, phone) => _data.personById(id)?.phone = phone);
-    for (final id in cloud.names.keys) {
-      if (id != _meIn(trip)) _data.personById(id)?.photoId = cloud.photos[id];
+  }
+
+  /// Others' photos used to be kept with their names, one for all trips.
+  void _movePhotosIntoTrips() {
+    for (final trip in _data.trips) {
+      for (final id in trip.memberIds) {
+        final photo = _data.personById(id)?.photoId;
+        if (photo != null && id != _meIn(trip)) trip.memberPhotos[id] ??= photo;
+      }
+    }
+    for (final person in _data.people) {
+      if (person.id != _data.meId) person.photoId = null;
     }
   }
 

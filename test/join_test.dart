@@ -54,6 +54,9 @@ void main() {
         tripToTree(_trip(['a', 'b']), (id) => id, null, (id) => id == 'a' ? 'pic' : null)));
     final back = tripFromTree('tttttttttttttttt', jsonDecode(jsonEncode(tree)) as Tree)!;
     expect(back.photos, {'a': 'pic'});
+    expect(back.trip.memberPhotos, {'a': 'pic'});
+    final copy = Trip.fromJson(jsonDecode(jsonEncode(back.trip.toJson())) as Json);
+    expect(copy.memberPhotos, {'a': 'pic'});
     final person = Person.fromJson(Person(id: 'a', name: 'A', photoId: 'pic').toJson());
     expect(person.photoId, 'pic');
   });

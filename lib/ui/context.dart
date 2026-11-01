@@ -76,6 +76,11 @@ class Ui {
   /// Who this phone is on [trip].
   String meIn(Trip trip) => data.identities[trip.id] ?? meId;
 
+  /// The profile photo of [id] on [trip].
+  String? photoIn(Trip trip, String id) => id == meIn(trip)
+      ? data.tripPhotos[trip.id] ?? data.personById(meId)?.photoId
+      : trip.memberPhotos[id];
+
   String nameOf(String id) => data.personById(id)?.name ?? tr('Netko');
 
   /// Saves a change and passes it on to the group.

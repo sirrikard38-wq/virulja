@@ -53,7 +53,8 @@ class Person {
   String name;
   String? phone;
 
-  /// The profile photo, stored like the pictures of a trip.
+  /// This person's general profile photo, stored like the pictures of a trip.
+  /// On a trip, [Trip.memberPhotos] says what everyone uses.
   String? photoId;
 
   Json toJson() => {'id': id, 'name': name, 'phone': phone, 'photoId': photoId};
@@ -720,6 +721,7 @@ class Trip {
     List<JoinRequest>? requests,
     List<CustomKind>? customKinds,
     Map<String, Set<String>>? kickVotes,
+    Map<String, String>? memberPhotos,
     Drive? drive,
     List<Expense>? expenses,
     List<Payment>? payments,
@@ -736,6 +738,7 @@ class Trip {
         requests = requests ?? [],
         customKinds = customKinds ?? [],
         kickVotes = kickVotes ?? {},
+        memberPhotos = memberPhotos ?? {},
         drive = drive ?? Drive(),
         expenses = expenses ?? [],
         payments = payments ?? [],
@@ -767,6 +770,8 @@ class Trip {
         customKinds: _list(json['customKinds'], CustomKind.fromJson),
         kickVotes: (json['kickVotes'] as Json? ?? const <String, dynamic>{})
             .map((person, voters) => MapEntry(person, _strings(voters).toSet())),
+        memberPhotos: (json['memberPhotos'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>(),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -813,6 +818,9 @@ class Trip {
 
   /// Person -> who voted to put them out of the group.
   Map<String, Set<String>> kickVotes;
+
+  /// Person -> the profile photo they use on this trip.
+  Map<String, String> memberPhotos;
   Drive drive;
   List<Expense> expenses;
   List<Payment> payments;
@@ -878,6 +886,7 @@ class Trip {
     requests = other.requests;
     customKinds = other.customKinds;
     kickVotes = other.kickVotes;
+    memberPhotos = other.memberPhotos;
     drive = other.drive;
     expenses = other.expenses;
     payments = other.payments;
@@ -910,6 +919,7 @@ class Trip {
         'kickVotes': {
           for (final entry in kickVotes.entries) entry.key: entry.value.toList(),
         },
+        'memberPhotos': memberPhotos,
         'drive': drive.toJson(),
         'expenses': [for (final item in expenses) item.toJson()],
         'payments': [for (final item in payments) item.toJson()],
@@ -979,8 +989,10 @@ class AppData {
     Map<String, String>? identities,
     Map<String, String>? waiting,
     Map<String, List<String>>? kindOrder,
+    Map<String, String>? tripPhotos,
     this.chosenLanguage = Language.hr,
   })  : kindOrder = kindOrder ?? {},
+        tripPhotos = tripPhotos ?? {},
         people = people ?? [],
         trips = trips ?? [],
         identities = identities ?? {},
@@ -993,6 +1005,8 @@ class AppData {
         identities: (json['identities'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
         waiting: (json['waiting'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>(),
+        tripPhotos: (json['tripPhotos'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
         kindOrder: (json['kindOrder'] as Json? ?? const <String, dynamic>{})
             .map((trip, order) => MapEntry(trip, _strings(order))),
@@ -1023,6 +1037,9 @@ class AppData {
   /// Trip id -> this person's order of the categories of food and drink.
   Map<String, List<String>> kindOrder;
 
+  /// Trip id -> the photo this person uses there instead of the general one.
+  Map<String, String> tripPhotos;
+
   Language chosenLanguage;
 
   Person? personById(String id) {
@@ -1048,6 +1065,7 @@ class AppData {
         'identities': identities,
         'waiting': waiting,
         'kindOrder': kindOrder,
+        'tripPhotos': tripPhotos,
         'language': chosenLanguage.name,
       };
 }

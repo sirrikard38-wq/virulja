@@ -91,6 +91,8 @@ also be pasted into the Firebase console.
   app opens or returns to the screen. A redraw waits while someone types, has a form open
   or plays a song, because it would wipe them.
 - Removing a trip only takes it off that phone, so nobody can wipe it for the group.
+- A person has a general profile photo (`Person.photoId`, global settings) and may set another
+  for one trip in that trip's settings (`AppData.tripPhotos`). The group sees `Trip.memberPhotos`.
 - Pictures and the anthem are base64 strings in `/blobs/<trip>/<id>`, because Cloud
   Storage needs the Blaze plan and a card. A photo takes about 270 KB, so the free 1 GB
   holds about 3,500 photos, and the free 10 GB a month of downloads is shared by the
