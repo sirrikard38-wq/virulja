@@ -15,18 +15,31 @@ String _placeFacts(Place place) => [
       if (place.note != null) place.note!,
     ].join(' · ');
 
+/// Puts [name] up for a vote, once; a second tap takes the poll back.
+web.HTMLElement _voteChip(Ui ui, Trip trip, String name) {
+  bool same(Poll poll) => poll.single && poll.title == name;
+  final polled = trip.polls.any(same);
+  return chip(polled ? 'U anketi' : 'Glasaj', () {
+    polled ? trip.polls.removeWhere(same) : addYesNoPoll(ui, trip, name);
+    ui.changed();
+  }, on: polled);
+}
+
 web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
   final link = place.link;
   return el('div', cls: 'row', children: [
     el('div', cls: 'grow', children: [
       el('div', cls: 'label', text: place.name),
       el('div', cls: 'small', text: _placeFacts(place)),
+      el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
+        chip(place.planned ? 'U planu' : 'Dodaj u plan', () {
+          place.planned = !place.planned;
+          ui.changed();
+        }, on: place.planned),
+        _voteChip(ui, trip, place.name),
+      ]),
     ]),
     if (link != null) linkIcon(link, 'Otvori ${place.name}'),
-    chip(place.planned ? 'U planu' : 'Dodaj', () {
-      place.planned = !place.planned;
-      ui.changed();
-    }, on: place.planned),
     removeButton(place.name, () {
       trip.places.remove(place);
       ui.changed();
@@ -46,7 +59,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
     if (found != null && name.value.trim().isEmpty) name.value = found;
   });
 
-  void add({bool vote = false}) {
+  void add() {
     if (name.value.trim().isEmpty) {
       error.textContent = 'Upiši naziv mjesta.';
       return;
@@ -62,7 +75,6 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
       note: remark.isEmpty ? null : remark,
       link: address.isEmpty ? null : address,
     ));
-    if (vote) addYesNoPoll(ui, trip, name.value.trim());
     ui.changed();
   }
 
@@ -75,8 +87,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
     ]),
     field('Bilješka', note),
     error,
-    primaryButton('Dodaj u plan', add),
-    secondaryButton('Glasaj', () => add(vote: true)),
+    primaryButton('Dodaj mjesto', add),
   ]);
 }
 
@@ -91,6 +102,7 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
       ].join(' · ')),
     ]),
     el('div', cls: 'price', text: euros(dish.price * dish.servings)),
+    _voteChip(ui, trip, dish.name),
     removeButton(dish.name, () {
       trip.dishes.remove(dish);
       ui.changed();
@@ -105,7 +117,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   final place = input();
   final error = errorLine();
 
-  void add({bool vote = false}) {
+  void add() {
     final cents = parseEuros(price.value);
     if (name.value.trim().isEmpty || cents == null) {
       error.textContent = 'Upiši jelo i cijenu.';
@@ -119,7 +131,6 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
       servings: int.tryParse(servings.value.trim()) ?? 1,
       placeName: where.isEmpty ? null : where,
     ));
-    if (vote) addYesNoPoll(ui, trip, name.value.trim());
     ui.changed();
   }
 
@@ -131,8 +142,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
     ]),
     field('Gdje', place),
     error,
-    primaryButton('Dodaj u plan', add),
-    secondaryButton('Glasaj', () => add(vote: true)),
+    primaryButton('Dodaj jelo', add),
   ]);
 }
 
