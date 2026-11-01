@@ -7,6 +7,9 @@ import 'anthem.dart';
 import 'cloud.dart';
 import 'store.dart';
 
+/// The list of people folding open or shut.
+enum PeopleFold { opening, closing }
+
 /// What every screen needs from the app.
 class Ui {
   Ui({
@@ -64,6 +67,7 @@ class Ui {
   String? queueAddress;
   String? replyingTo;
   bool showPeople = false;
+  PeopleFold? peopleFold;
 
   AppData get data => store.data;
 

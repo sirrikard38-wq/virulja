@@ -70,7 +70,12 @@ class ViruljaApp {
         if (_trail.isNotEmpty && _trail.last == web.window.location.hash) {
           _trail.removeLast(); // the phone's back button
         }
-        _ui.showPeople = false;
+        final place = _Place(web.window.location.hash);
+        if (place.tripId != null && _mainTabs.contains(place.section)) {
+          if (_ui.showPeople) _ui.peopleFold = PeopleFold.closing;
+        } else {
+          _ui.showPeople = false;
+        }
         web.window.scrollTo(0.toJS, 0);
         render();
       }).toJS,

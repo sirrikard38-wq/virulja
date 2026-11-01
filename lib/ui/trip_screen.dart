@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
@@ -75,7 +77,39 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
   ]);
 }
 
+const Duration _foldTime = Duration(milliseconds: 200);
+
+/// Folds the list of people open or shut, once the screen has been drawn.
+void _foldPeople(Ui ui) {
+  final fold = ui.peopleFold;
+  if (fold == null) return;
+  ui.peopleFold = null;
+  final closing = fold == PeopleFold.closing;
+  if (closing) ui.showPeople = false; // a redraw meanwhile leaves it out
+  scheduleMicrotask(() {
+    final list = web.document.querySelector('.people-list') as web.HTMLElement?;
+    if (list == null) return;
+    final height = '${list.scrollHeight}px';
+    list.style
+      ..transition = 'none'
+      ..height = closing ? height : '0px';
+    list.getBoundingClientRect(); // so that the browser sees where it starts
+    list.style
+      ..transition = 'height 200ms ease'
+      ..height = closing ? '0px' : height;
+    Timer(_foldTime, () {
+      if (closing) {
+        list.remove();
+      } else {
+        list.style.height = '';
+      }
+    });
+  });
+}
+
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
+  final peopleShown = ui.showPeople; // still drawn while it folds shut
+  _foldPeople(ui);
   final cover = trip.coverId;
   final tabs = {
     'plan': tr('Plan'),
@@ -103,7 +137,8 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
             cls: 'people-link',
             text: peopleCount(trip.people),
             onTap: () {
-              ui.showPeople = !ui.showPeople;
+              ui.peopleFold = ui.showPeople ? PeopleFold.closing : PeopleFold.opening;
+              ui.showPeople = true;
               ui.rerender();
             },
           ),
@@ -120,8 +155,10 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
         ],
       ),
     ]),
-    if (ui.showPeople)
-      for (final id in trip.memberIds) memberRow(ui, trip, id),
+    if (peopleShown)
+      el('div', cls: 'people-list', children: [
+        for (final id in trip.memberIds) memberRow(ui, trip, id),
+      ]),
     for (final request in trip.requests) requestCard(ui, trip, request),
     for (final id in trip.kickVotes.keys)
       if (id != ui.meIn(trip)) kickCard(ui, trip, id),

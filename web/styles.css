@@ -234,6 +234,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Pages that change with a sideways swipe. They fill the screen, so a swipe
    works in the empty part of a short list too, and the estimate sits at the bottom. */
+.people-list { overflow: hidden; }
 .swipe-area {
   touch-action: pan-y;
   display: flex;
