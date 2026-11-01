@@ -359,6 +359,11 @@ void main() {
       expect(youTubeQueue(['https://open.spotify.com/track/x']), isNull);
     });
 
+    test('a YouTube playlist link is recognised', () {
+      expect(isYouTubePlaylist('https://www.youtube.com/playlist?list=PL1'), isTrue);
+      expect(isYouTubePlaylist('https://youtu.be/aaa'), isFalse);
+    });
+
     test('other links are refused', () {
       expect(playerFor('https://example.com/song'), isNull);
       expect(playerFor('nije link'), isNull);

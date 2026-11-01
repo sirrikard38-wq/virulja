@@ -79,6 +79,15 @@ String? youTubeQueue(List<String> links) {
   return 'https://www.youtube.com/embed/${ids.first}?playlist=$rest&playsinline=1';
 }
 
+/// True for a link to a whole YouTube playlist, which opens on YouTube.
+bool isYouTubePlaylist(String link) {
+  final uri = Uri.tryParse(link.trim());
+  if (uri == null) return false;
+  return uri.host.toLowerCase().endsWith('youtube.com') &&
+      uri.path == '/playlist' &&
+      uri.queryParameters.containsKey('list');
+}
+
 /// The official player for a song link, or null if the link is not one the app
 /// can play.
 SongPlayer? playerFor(String link) {

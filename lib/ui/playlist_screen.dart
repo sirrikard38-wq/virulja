@@ -74,14 +74,19 @@ web.HTMLElement _addSong(Ui ui, Trip trip) {
   void add() {
     final address = link.value.trim();
     final player = playerFor(address);
-    if (player == null) {
+    final isList = isYouTubePlaylist(address);
+    if (player == null && !isList) {
       error.textContent = 'Zalijepi link sa Spotifyja, YouTubea ili Apple Musica.';
       return;
     }
     final name = title.value.trim();
     trip.songs.add(Song(
       id: ui.store.newId(),
-      title: name.isEmpty ? 'Pjesma (${player.service})' : name,
+      title: name.isNotEmpty
+          ? name
+          : isList
+              ? 'YouTube playlista'
+              : 'Pjesma (${player!.service})',
       link: address,
       addedBy: ui.meIn(trip),
     ));
@@ -141,8 +146,14 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
   final player = playerFor(song.link);
   final playing = ui.playingSongId == song.id;
 
+  final isList = isYouTubePlaylist(song.link);
+
   void toggle() {
     ui.anthem.stop();
+    if (isList) {
+      web.window.open(song.link, '_blank');
+      return;
+    }
     ui.playingSongId = playing ? null : song.id;
     ui.rerender();
   }
@@ -157,7 +168,7 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
       ),
       el('div', cls: 'grow', attrs: {'style': 'cursor:pointer'}, children: [
         el('div', cls: 'label', text: song.title),
-        el('div', cls: 'small', text: '${player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
+        el('div', cls: 'small', text: '${isList ? 'YouTube playlista' : player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
       ])
         ..onClick.listen((_) => toggle()),
       removeButton(song.title, () {
