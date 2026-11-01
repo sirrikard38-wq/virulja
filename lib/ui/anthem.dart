@@ -53,7 +53,12 @@ class AnthemPlayer {
     if (context == null) return;
     try {
       if (context.state != 'running') {
-        await context.resume().toDart.timeout(_waking);
+        // Some phones never answer; start anyway rather than stay silent.
+        try {
+          await context.resume().toDart.timeout(_waking);
+        } on TimeoutException {
+          // Carry on.
+        }
       }
       final bytes = await wav.arrayBuffer().toDart;
       final sound = await context.decodeAudioData(bytes).toDart;
