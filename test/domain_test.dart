@@ -321,6 +321,18 @@ void main() {
       expect(nameFromLink('https://www.airbnb.com/rooms/123'), isNull);
     });
 
+    test('a queue holds only the YouTube songs, in order', () {
+      expect(
+        youTubeQueue([
+          'https://youtu.be/aaa',
+          'https://open.spotify.com/track/x',
+          'https://www.youtube.com/watch?v=bbb',
+        ]),
+        'https://www.youtube.com/embed/aaa?autoplay=1&playlist=bbb',
+      );
+      expect(youTubeQueue(['https://open.spotify.com/track/x']), isNull);
+    });
+
     test('other links are refused', () {
       expect(playerFor('https://example.com/song'), isNull);
       expect(playerFor('nije link'), isNull);

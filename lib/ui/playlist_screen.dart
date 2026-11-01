@@ -96,6 +96,36 @@ web.HTMLElement _addSong(Ui ui, Trip trip) {
   ]);
 }
 
+/// Marks the whole queue as what is playing, in place of one song.
+const String _queueId = 'red';
+
+/// "Pusti sve" and "Nasumično", with the queue's player once it runs.
+web.HTMLElement _queue(Ui ui, Trip trip) {
+  void start({required bool shuffled}) {
+    final links = [for (final song in trip.songs) song.link];
+    if (shuffled) links.shuffle();
+    final address = youTubeQueue(links);
+    if (address == null) {
+      ui.toast('Red radi samo s YouTube pjesmama.');
+      return;
+    }
+    ui.anthem.stop();
+    ui.queueAddress = address;
+    ui.playingSongId = _queueId;
+    ui.rerender();
+  }
+
+  final address = ui.queueAddress;
+  return el('div', children: [
+    el('div', cls: 'two', children: [
+      secondaryButton('Pusti sve', () => start(shuffled: false)),
+      secondaryButton('Nasumično', () => start(shuffled: true)),
+    ]),
+    if (ui.playingSongId == _queueId && address != null)
+      _player(SongPlayer('YouTube', address, 200)),
+  ]);
+}
+
 /// The service's own player; the song plays inside the app.
 web.HTMLElement _player(SongPlayer player) => el('iframe', cls: 'player', attrs: {
       'src': player.address,
@@ -143,6 +173,7 @@ web.HTMLElement playlistScreen(Ui ui, Trip trip, void Function(Trip) playAnthem)
       sectionTitle('Pjesme'),
       if (trip.songs.isEmpty)
         el('p', cls: 'soft pad', text: 'Dodajte linkove pjesama koje vas podsjećaju na ovo putovanje.'),
+      if (trip.songs.isNotEmpty) _queue(ui, trip),
       for (final song in trip.songs) _songRow(ui, trip, song),
       _addSong(ui, trip),
     ]);

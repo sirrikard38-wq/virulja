@@ -44,8 +44,8 @@ class SongPlayer {
   final int height;
 }
 
-/// The official player for a song link, or null if the link is not one the app
-/// can play.
+/// The name of a place when its link spells it out, as long Google Maps and
+/// Booking links do.
 String? nameFromLink(String link) {
   final uri = Uri.tryParse(link.trim());
   if (uri == null) return null;
@@ -66,6 +66,21 @@ String? nameFromLink(String link) {
   return null;
 }
 
+/// One YouTube player for all the YouTube [links], in the given order, or null
+/// when there are none. Other services cannot join a queue.
+String? youTubeQueue(List<String> links) {
+  final ids = [
+    for (final link in links)
+      if (playerFor(link) case final player? when player.service == 'YouTube')
+        player.address.split('/').last,
+  ];
+  if (ids.isEmpty) return null;
+  final rest = ids.skip(1).join(',');
+  return 'https://www.youtube.com/embed/${ids.first}?autoplay=1&playlist=$rest';
+}
+
+/// The official player for a song link, or null if the link is not one the app
+/// can play.
 SongPlayer? playerFor(String link) {
   final uri = Uri.tryParse(link.trim());
   if (uri == null || !uri.hasAuthority) return null;
