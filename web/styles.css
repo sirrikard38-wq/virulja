@@ -130,6 +130,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .round.left { left: max(14px, calc(50% - 226px)); }
 .round.right { right: max(14px, calc(50% - 226px)); }
 .round.second { top: calc(var(--top-safe) + 64px); }
+.people-link { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .title-link { display: block; padding: 0; background: none; border: 0; color: inherit; text-align: left; }
 .round .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
 .round .ring circle { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; }

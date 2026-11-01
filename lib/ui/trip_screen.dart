@@ -124,8 +124,17 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
           onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
           children: [el('h1', cls: 'title big', text: trip.city)],
         ),
-        el('p', cls: 'soft', text: '${dateRange(trip.start, trip.end)} · '
-            '${peopleCount(trip.people)}', attrs: {'style': 'margin-top:4px;font-size:15px'}),
+        el('p', cls: 'soft', attrs: {'style': 'margin-top:4px;font-size:15px'}, children: [
+          web.document.createTextNode('${dateRange(trip.start, trip.end)} · '),
+          button(
+            cls: 'people-link',
+            text: peopleCount(trip.people),
+            onTap: () {
+              ui.showPeople = !ui.showPeople;
+              ui.rerender();
+            },
+          ),
+        ]),
       ]),
       button(
         cls: 'title-link',
@@ -138,6 +147,13 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
         ],
       ),
     ]),
+    if (ui.showPeople)
+      for (final id in trip.memberIds)
+        el('div', cls: 'row', children: [
+          avatar(ui.nameOf(id)),
+          el('div', cls: 'grow', text: ui.nameOf(id)),
+          if (trip.adminIds.contains(id)) el('div', cls: 'small', text: 'admin'),
+        ]),
     el('div', cls: 'tabs', children: [
       for (final entry in tabs.entries)
         button(

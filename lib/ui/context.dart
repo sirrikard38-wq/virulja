@@ -54,6 +54,7 @@ class Ui {
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;
+  bool showPeople = false;
 
   AppData get data => store.data;
 
