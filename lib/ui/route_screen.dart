@@ -27,6 +27,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
       id: ui.store.newId(),
       dayIndex: day,
       time: time.value,
+      addedBy: ui.meIn(trip),
       title: title.value.trim(),
       cost: parseEuros(cost.value) ?? 0,
     ));

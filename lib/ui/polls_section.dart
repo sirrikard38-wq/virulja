@@ -36,6 +36,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
       text: poll.active ? 'Makni iz Plana napada' : 'Stavi u Plan napada',
       onTap: () {
         poll.active = !poll.active;
+        poll.activeBy = poll.active ? me : null;
         ui.changed();
       },
     ),
@@ -68,6 +69,7 @@ void addYesNoPoll(Ui ui, Trip trip, String title) {
     title: title,
     dayIndex: ui.routeDay.clamp(0, trip.dayCount - 1),
     single: true,
+    addedBy: ui.meIn(trip),
     options: [
       for (var i = 0; i < answers.length; i++)
         PollOption(id: 'o$i', time: answers[i]),
@@ -125,6 +127,7 @@ web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
       id: ui.store.newId(),
       title: title.value.trim(),
       dayIndex: day,
+      addedBy: ui.meIn(trip),
       options: [
         for (var i = 0; i < chosen.length; i++)
           PollOption(id: 'o$i', time: chosen[i]),

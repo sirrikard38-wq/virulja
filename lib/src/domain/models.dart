@@ -78,6 +78,8 @@ class Poll {
     this.dayIndex = 0,
     this.active = false,
     this.single = false,
+    this.addedBy,
+    this.activeBy,
   });
 
   factory Poll.fromJson(Json json) => Poll(
@@ -87,6 +89,8 @@ class Poll {
         dayIndex: json['dayIndex'] as int? ?? 0,
         active: json['active'] as bool? ?? false,
         single: json['single'] as bool? ?? false,
+        addedBy: json['addedBy'] as String?,
+        activeBy: json['activeBy'] as String?,
       );
 
   final String id;
@@ -99,6 +103,10 @@ class Poll {
 
   /// Whether each person may pick only one option.
   final bool single;
+  final String? addedBy;
+
+  /// Who put it in the plan of attack.
+  String? activeBy;
 
   Json toJson() => {
         'id': id,
@@ -106,6 +114,8 @@ class Poll {
         'dayIndex': dayIndex,
         'active': active,
         'single': single,
+        'addedBy': addedBy,
+        'activeBy': activeBy,
         'options': [for (final option in options) option.toJson()],
       };
 }
@@ -256,6 +266,7 @@ class Stop {
     required this.title,
     this.time = '',
     this.cost = 0,
+    this.addedBy,
   });
 
   factory Stop.fromJson(Json json) => Stop(
@@ -264,6 +275,7 @@ class Stop {
         title: json['title'] as String,
         time: json['time'] as String? ?? '',
         cost: json['cost'] as int? ?? 0,
+        addedBy: json['addedBy'] as String?,
       );
 
   final String id;
@@ -273,6 +285,7 @@ class Stop {
   /// `08:30`, or empty when the time does not matter.
   String time;
   int cost;
+  final String? addedBy;
 
   Json toJson() => {
         'id': id,
@@ -280,6 +293,7 @@ class Stop {
         'title': title,
         'time': time,
         'cost': cost,
+        'addedBy': addedBy,
       };
 }
 

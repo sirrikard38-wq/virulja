@@ -1,0 +1,29 @@
+name: Trip news
+
+# Every few minutes, sends notifications about what is new in the trips
+# (tool/remind.dart --events). GitHub often runs this later than asked.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/events.yml', 'tool/remind.dart']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: events
+
+jobs:
+  events:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart run tool/remind.dart --events
+        env:
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}

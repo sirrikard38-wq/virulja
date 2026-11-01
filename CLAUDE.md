@@ -104,6 +104,12 @@ scheduled runs off after 60 days with no activity in the repo. To send a test me
 change `.github/test-notification` and push; this machine cannot run it itself, because
 Dart here does not trust the certificate of Apple's push service.
 
+Instant sending would need a server, so `.github/workflows/events.yml` runs
+`tool/remind.dart --events` every 5 minutes, which GitHub often stretches: news arrives
+late, not at once. It compares each trip with `/push/_robot/<trip>` and tells the group
+about new polls, Plan napada items, and each person about reactions and comments on
+their photos and comments (`lib/src/domain/trip_events.dart`).
+
 ## Not done yet
 
 1. Automatic lists of places from Google Places: needs a billing account with a card, and
