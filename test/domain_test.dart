@@ -272,6 +272,7 @@ void main() {
       city: 'Vis',
       start: dayOf(2026, 7, 1),
       end: dayOf(2026, 7, 3),
+      memberIds: [],
       stops: [
         Stop(id: 'a', dayIndex: 0, title: 'Kava', time: '08:00'),
         Stop(id: 'b', dayIndex: 0, title: 'Brod', time: '12:00'),
