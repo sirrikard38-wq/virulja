@@ -196,7 +196,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
    same weight there, so the chips keep their width and nothing shifts. */
 .chips { position: relative; }
 .chips .chip { position: relative; z-index: 1; transition: color 160ms ease, border-color 160ms ease; }
-.swipe-area .chips .chip { font-weight: 600; }
+.swipe-area > .chips .chip { font-weight: 600; }
 .chips.gliding .chip.on, .chips.gliding .chip.leaving { background: transparent; border-color: transparent; }
 .chips.glide-start .chip.on { color: var(--ink); }
 .chips.glide-start .chip.leaving { color: var(--on-accent); }
@@ -209,9 +209,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .badge { display: inline-block; padding: 1px 8px; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 700; }
 
 /* Tabs */
-.tabs { display: grid; grid-template-columns: repeat(4, auto); margin: 6px 20px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-.tab { height: 44px; color: var(--soft); text-align: center; }
-.tab.on { color: var(--accent); font-weight: 700; border-bottom: 2px solid var(--accent); }
+.tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  margin: 6px 20px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  scroll-margin-top: calc(var(--top-safe) + 60px);
+}
+.tab { height: 44px; color: var(--soft); text-align: center; border-bottom: 2px solid transparent; transition: color 160ms ease; }
+.tab.on { color: var(--accent); font-weight: 700; border-bottom-color: var(--accent); }
+/* Every tab keeps room for its bold word, so the words stay put when the chosen one changes. */
+.tab::after { content: attr(data-label); display: block; height: 0; overflow: hidden; visibility: hidden; font-weight: 700; }
+.tabs.gliding .tab.on { border-bottom-color: transparent; }
+.tabs.glide-start .tab.on { color: var(--soft); }
+.tabs.glide-start .tab.leaving { color: var(--accent); }
+.tab-line { position: absolute; bottom: 0; height: 2px; background: var(--accent); }
 
 /* Bottom menu */
 .nav {

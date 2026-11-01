@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:js_interop';
+import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
@@ -14,6 +16,7 @@ import 'memories_screen.dart';
 import 'people_section.dart';
 import 'polls_section.dart';
 import 'requests_section.dart';
+import 'swipes.dart';
 import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
@@ -107,6 +110,49 @@ void _foldPeople(Ui ui) {
   });
 }
 
+/// A change of tab on its way through the address: the tab it leaves, where the
+/// line under that tab is, and how far the page is scrolled.
+typedef _TabChange = ({int from, double left, double width, double scroll});
+
+_TabChange? _tabChange;
+
+/// Shows a change of tab once the screen has been drawn. The page stays where it
+/// was, with the tabs in sight, and the list slides in. A redraw replaces the tabs,
+/// so for a moment a line stands in for the one under the chosen tab and glides
+/// over while the words change colour.
+void _showTabChange(_TabChange change, int index) {
+  web.window.scrollTo(0.toJS, change.scroll);
+  final row = web.document.querySelector('.tabs') as web.HTMLElement?;
+  final chosen = row?.querySelector('.tab.on') as web.HTMLElement?;
+  if (row == null || chosen == null) return;
+  row.scrollIntoView(web.ScrollIntoViewOptions(block: 'nearest'));
+  slideIn(index > change.from ? 1 : -1);
+  if (wantsLessMotion) return;
+  final leaving = row.querySelectorAll('.tab').item(change.from) as web.HTMLElement?;
+  final toLeft = chosen.offsetLeft.toDouble();
+  final toWidth = chosen.offsetWidth.toDouble();
+  final line = el('span', cls: 'tab-line');
+  line.style
+    ..left = '${change.left}px'
+    ..width = '${change.width}px';
+  leaving?.classList.add('leaving');
+  row
+    ..append(line)
+    ..classList.add('gliding')
+    ..classList.add('glide-start');
+  row.getBoundingClientRect(); // so that the browser sees the colours they start from
+  row.classList.remove('glide-start');
+  animate(glideTime, (progress) {
+    line.style
+      ..left = '${change.left + (toLeft - change.left) * progress}px'
+      ..width = '${change.width + (toWidth - change.width) * progress}px';
+  }, () {
+    line.remove();
+    leaving?.classList.remove('leaving');
+    row.classList.remove('gliding');
+  });
+}
+
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final peopleShown = ui.showPeople; // still drawn while it folds shut
   _foldPeople(ui);
@@ -117,7 +163,33 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     'ankete': tr('Ankete'),
     'napad': tr('Plan napada'),
   };
-  return el('div', children: [
+  final keys = tabs.keys.toList();
+  final index = max(keys.indexOf(tab), 0);
+  final change = _tabChange;
+  _tabChange = null;
+  if (change != null) scheduleMicrotask(() => _showTabChange(change, index));
+
+  void show(String next) {
+    if (next == keys[index]) return;
+    final line = web.document.querySelector('.tab.on') as web.HTMLElement?;
+    _tabChange = (
+      from: index,
+      left: line?.offsetLeft.toDouble() ?? 0,
+      width: line?.offsetWidth.toDouble() ?? 0,
+      scroll: web.window.scrollY,
+    );
+    ui.swap(ui.tripRoute(trip, next));
+  }
+
+  final sliding = el('div', cls: 'slide-page', children: [
+    switch (tab) {
+      'slike' => galleryTab(ui, trip),
+      'ankete' => pollsTab(ui, trip),
+      'napad' => attackTab(ui, trip),
+      _ => _planTab(ui, trip),
+    },
+  ]);
+  final page = el('div', cls: 'swipe-area', children: [
     el('div', cls: 'hero', children: [
       if (cover != null)
         storedImage(ui, trip, cover, cls: 'hero-photo', alt: trip.city)
@@ -167,16 +239,16 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
         button(
           cls: entry.key == tab ? 'tab on' : 'tab',
           text: entry.value,
-          onTap: () => ui.swap(ui.tripRoute(trip, entry.key)),
-        ),
+          onTap: () => show(entry.key),
+        )..setAttribute('data-label', entry.value),
     ]),
-    if (tab == 'slike')
-      galleryTab(ui, trip)
-    else if (tab == 'ankete')
-      pollsTab(ui, trip)
-    else if (tab == 'napad')
-      attackTab(ui, trip)
-    else
-      _planTab(ui, trip),
+    el('div', cls: 'slide-clip', children: [sliding]),
   ]);
+  bool canMove(int step) {
+    final next = index + step;
+    return next >= 0 && next < keys.length;
+  }
+
+  followSwipes(page, sliding, canMove, (step) => show(keys[index + step]));
+  return page;
 }
