@@ -161,18 +161,17 @@ const double _backGestureEdge = 30;
 /// How far the page follows the finger when there is no next kind.
 const double _resistance = 0.25;
 
-const Duration _slideTime = Duration(milliseconds: 90);
-const String _slide = 'transform 90ms ease-out';
+const Duration _slideTime = Duration(milliseconds: 80);
+const String _slide = 'transform 80ms ease-out';
 
-const Duration _glideTime = Duration(milliseconds: 150);
-const String _glide = 'left 150ms ease, width 150ms ease';
+const Duration _glideTime = Duration(milliseconds: 100);
+const String _glide = 'left 100ms ease, width 100ms ease';
 
 bool get _wantsLessMotion =>
     web.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/// Lets [sliding] follow the finger across [page]. Past the swipe length it
-/// slides away and [move] is called with +1 for the next kind, -1 for the one
-/// before. Lists of chips scroll by themselves, and an open form would lose what
+/// Lets [sliding] follow the finger across [page]. Past the swipe length [move]
+/// is called at once, with +1 for the next kind, -1 for the one before. Lists of chips scroll by themselves, and an open form would lose what
 /// was typed in it, so those are left alone.
 void _followSwipes(
   web.HTMLElement page,
@@ -221,13 +220,8 @@ void _followSwipes(
     final across = event.changedTouches.item(0)!.clientX - from;
     final step = across < 0 ? 1 : -1;
     final done = across.abs() >= _swipeLength && canMove(step);
-    if (done && _wantsLessMotion) {
+    if (done) {
       move(step);
-    } else if (done) {
-      sliding.style
-        ..transition = _slide
-        ..transform = 'translateX(${-step * 100}%)';
-      Timer(_slideTime, () => move(step));
     } else {
       sliding.style
         ..transition = _slide
