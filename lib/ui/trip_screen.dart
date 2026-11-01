@@ -84,10 +84,16 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
         el('p', cls: 'soft', text: '${dateRange(trip.start, trip.end)} · '
             '${peopleCount(trip.people)}', attrs: {'style': 'margin-top:4px;font-size:15px'}),
       ]),
-      el('div', attrs: {'style': 'text-align:right;flex:none'}, children: [
-        el('div', cls: 'small', text: 'po osobi'),
-        el('div', cls: 'title', text: euros(Budget.of(trip).plannedPerPerson)),
-      ]),
+      button(
+        cls: 'title-link',
+        onTap: () => ui.go(ui.tripRoute(trip, 'troskovi')),
+        children: [
+          el('div', attrs: {'style': 'text-align:right;flex:none'}, children: [
+            el('div', cls: 'small', text: 'po osobi'),
+            el('div', cls: 'title', text: euros(Budget.of(trip).plannedPerPerson)),
+          ]),
+        ],
+      ),
     ]),
     el('div', cls: 'tabs', children: [
       for (final entry in tabs.entries)
