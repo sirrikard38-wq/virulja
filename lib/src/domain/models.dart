@@ -168,6 +168,7 @@ class Offer {
 enum PlaceKind {
   restaurant('Restorani', 'restorani'),
   cafe('Kafići', 'kafići'),
+  club('Klubovi', 'klub'),
   beachBar('Beach barovi', 'beach bar'),
   wineShop('Vinoteke', 'vinoteka'),
   winery('Vinarije', 'vinarija');

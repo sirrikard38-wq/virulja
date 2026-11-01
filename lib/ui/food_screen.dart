@@ -146,17 +146,66 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   ]);
 }
 
+/// A swipe must be this long, in pixels, and clearly more sideways than down.
+const double _swipeLength = 60;
+
+/// A swipe from this close to the left edge is an iPhone's way back.
+const double _backGestureEdge = 30;
+
+/// Calls [move] with +1 for a swipe to the left, the next kind, and -1 for one
+/// to the right. Lists of chips scroll by themselves, and an open form would
+/// lose what was typed in it, so those are left alone.
+void _followSwipes(web.HTMLElement page, void Function(int step) move) {
+  double? startX;
+  double startY = 0;
+  page.onTouchStart.listen((event) {
+    final touch = event.changedTouches.item(0)!;
+    final inChips = (event.target as web.Element).closest('.chips') != null;
+    final formOpen = web.document.querySelector('details[open]') != null;
+    final usable = event.touches.length == 1 &&
+        touch.clientX >= _backGestureEdge &&
+        !inChips &&
+        !formOpen;
+    startX = usable ? touch.clientX.toDouble() : null;
+    startY = touch.clientY.toDouble();
+  });
+  page.onTouchEnd.listen((event) {
+    final from = startX;
+    if (from == null) return;
+    startX = null;
+    final touch = event.changedTouches.item(0)!;
+    final across = touch.clientX - from;
+    final down = touch.clientY - startY;
+    if (across.abs() >= _swipeLength && across.abs() > down.abs() * 2) {
+      move(across < 0 ? 1 : -1);
+    }
+  });
+}
+
+/// Keeps the chosen chip in sight after a redraw, without moving the page.
+void _centreChosenChip() {
+  final row = web.document.querySelector('.chips') as web.HTMLElement?;
+  final chosen = row?.querySelector('.chip.on') as web.HTMLElement?;
+  if (row == null || chosen == null) return;
+  row.scrollLeft =
+      chosen.offsetLeft - row.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2;
+}
+
 web.HTMLElement foodScreen(Ui ui, Trip trip) {
   final kind = ui.placeKind;
   final places = trip.places.where((place) => place.kind == kind).toList();
-  return el('div', children: [
+
+  void show(PlaceKind item) {
+    ui.placeKind = item;
+    ui.rerender();
+    _centreChosenChip();
+  }
+
+  final page = el('div', children: [
     topBar('Hrana i piće'),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (final item in PlaceKind.values)
-        chip(item.label, () {
-          ui.placeKind = item;
-          ui.rerender();
-        }, on: item == kind),
+        chip(item.label, () => show(item), on: item == kind),
     ]),
     el('div', cls: 'pad gap-top', children: [
       outLink('Traži: ${kind.label} u mjestu ${trip.city}', mapsSearch(kind, trip)),
@@ -175,4 +224,9 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
       el('div', cls: 'price', text: euros(plannedCost(trip, CostCategory.food))),
     ]),
   ]);
+  _followSwipes(page, (step) {
+    final next = kind.index + step;
+    if (next >= 0 && next < PlaceKind.values.length) show(PlaceKind.values[next]);
+  });
+  return page;
 }
