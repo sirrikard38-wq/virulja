@@ -8,6 +8,7 @@ import 'dom.dart';
 import 'join_screen.dart';
 import 'media.dart';
 import 'people_section.dart';
+import 'profile_section.dart';
 import 'range_picker.dart';
 import 'widgets.dart';
 
@@ -122,6 +123,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
 
   return el('div', children: [
     topBar(trip == null ? tr('Novo putovanje') : tr('Postavke')),
+    if (trip != null) profilePhoto(ui),
     el('datalist', attrs: {'id': 'drzave'}, children: [
       for (final name in countryNames()) el('option', attrs: {'value': name}),
     ]),
