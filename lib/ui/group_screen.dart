@@ -28,6 +28,11 @@ web.HTMLElement groupScreen(Ui ui) {
       ui.toast('Spremljeno.');
     }),
     if (cloud != null) ...[
+      if (ui.data.trips.any((trip) => trip.code != null)) ...[
+        sectionTitle('Šifre putovanja'),
+        for (final trip in ui.data.trips)
+          if (trip.code != null) codeRow(trip),
+      ],
       el('hr', cls: 'divider'),
       sectionTitle('Imaš šifru putovanja?'),
       codeField(ui),

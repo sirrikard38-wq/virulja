@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
@@ -24,6 +25,24 @@ Future<void> copyCode(Ui ui, Trip trip) async {
   } on Object {
     ui.toast('Šifra: ${trip.code}');
   }
+}
+
+/// A trip's code; a tap copies it and says so above the code for a moment.
+web.HTMLElement codeRow(Trip trip) {
+  final label = el('div', cls: 'small', text: trip.city);
+  return button(
+    cls: 'title-link pad gap-top',
+    onTap: () async {
+      try {
+        await web.window.navigator.clipboard.writeText(trip.code ?? '').toDart;
+        label.textContent = 'Kopirano';
+        Timer(const Duration(seconds: 2), () => label.textContent = trip.city);
+      } on Object {
+        label.textContent = 'Kopiraj ručno';
+      }
+    },
+    children: [label, el('div', cls: 'label', text: trip.code)],
+  );
 }
 
 /// Enter a code once and the trip stays on this phone.
