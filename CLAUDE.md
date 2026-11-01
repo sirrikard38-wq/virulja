@@ -53,7 +53,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   YouTube demands a visible player of at least 200x200. So someone uploads the song once
   and the app keeps only the first 10 seconds. iPhones ignore `audio.volume`, so sound
   goes through a gain node of an audio context, started inside the tap that opens the
-  trip. Moving around inside a trip never restarts it; muting is remembered.
+  trip. Moving around inside a trip never restarts it; muting lasts only until a trip is
+  opened again, because the user wants the anthem on every entry.
 - The quiet level on a real iPhone is not tested yet.
 - Booking's API needs a partner contract. Airbnb has no public API and forbids scraping:
   do not build a scraper. Google Hotels data through SerpApi (250 free searches a month,

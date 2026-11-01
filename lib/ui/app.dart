@@ -171,7 +171,8 @@ class ViruljaApp {
   /// the trip later never restarts it.
   void _openTrip(Trip trip) {
     _anthem.wake();
-    if (!_data.anthemMuted) _playAnthem(trip);
+    _data.anthemMuted = false;
+    _playAnthem(trip);
     final fromForm = _Place(web.window.location.hash).page == 'novo';
     (fromForm ? _swap : _go)('#/p/${trip.id}');
   }
