@@ -204,6 +204,8 @@ const Map<String, List<String>> _texts = {
   'Isključi obavijesti': ['Turn notifications off', 'Bildirimleri kapat'],
   'Podsjetnik za putovanje': ['Trip reminder', 'Gezi hatırlatıcısı'],
 
+  'Verzija {0} u {1}': ['Version {0} at {1}', 'Sürüm {0} {1}'],
+
   // Home
   'Upiši ime i broj mobitela.': ['Write your name and mobile number.', 'Adını ve cep telefonunu yaz.'],
   'Dobro došli': ['Welcome', 'Hoş geldiniz'],

@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
@@ -69,5 +70,10 @@ web.HTMLElement groupScreen(Ui ui) {
     ],
     sectionTitle(tr('Jezik')),
     languageChips(ui),
+    if (builtAt case final built?)
+      el('p', cls: 'small pad gap-top', text: tr('Verzija {0} u {1}', [
+        dayAndMonth(built),
+        '${built.hour.toString().padLeft(2, '0')}:${built.minute.toString().padLeft(2, '0')}',
+      ])),
   ]);
 }

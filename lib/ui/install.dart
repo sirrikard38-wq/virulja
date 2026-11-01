@@ -23,7 +23,15 @@ Future<void> registerServiceWorker({void Function()? updateReady}) async {
         }).toJS,
       );
     }
-    await container.register('sw.js'.toJS).toDart;
+    final worker = await container.register('sw.js'.toJS).toDart;
+    // An app on the home screen can stay open for days: look for a newer version
+    // whenever it comes back to the screen, not only when it starts.
+    web.document.addEventListener(
+      'visibilitychange',
+      ((web.Event event) {
+        if (web.document.visibilityState == 'visible') worker.update();
+      }).toJS,
+    );
   } on Object {
     // The app works without it; it just cannot be used offline.
   }
@@ -42,6 +50,13 @@ Future<void> _notifyIfNewer(void Function() updateReady) async {
     // The caches cannot be read: reload.
   }
   if (needed) updateReady();
+}
+
+/// When this version of the app was built, or null when that cannot be told.
+DateTime? get builtAt {
+  final script = web.document.querySelector('script[src*="main.dart.js"]');
+  final stamp = int.tryParse(buildOfScriptSrc(script?.getAttribute('src')) ?? '');
+  return stamp == null ? null : DateTime.fromMillisecondsSinceEpoch(stamp);
 }
 
 /// What the group screen should offer to help install the app.
