@@ -116,7 +116,7 @@ web.HTMLElement _queue(Ui ui, Trip trip) {
   }
 
   final address = ui.queueAddress;
-  return el('div', children: [
+  return el('div', attrs: {'style': 'margin-bottom:16px'}, children: [
     el('div', cls: 'two', children: [
       secondaryButton('Pusti sve', () => start(shuffled: false)),
       secondaryButton('Nasumično', () => start(shuffled: true)),
@@ -148,7 +148,7 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
           ui.playingSongId = playing ? null : song.id;
           ui.rerender();
         },
-        children: [icon(playing ? 'close' : 'play')],
+        children: [icon(playing ? 'minus' : 'play')],
       ),
       el('div', cls: 'grow', children: [
         el('div', cls: 'label', text: song.title),
