@@ -140,22 +140,26 @@ web.HTMLElement _player(SongPlayer player) => el('iframe', cls: 'player', attrs:
 web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
   final player = playerFor(song.link);
   final playing = ui.playingSongId == song.id;
+
+  void toggle() {
+    ui.anthem.stop();
+    ui.playingSongId = playing ? null : song.id;
+    ui.rerender();
+  }
+
   return el('div', children: [
     el('div', cls: 'row', attrs: {'style': 'padding:2px 0'}, children: [
       button(
         cls: 'icon-button',
         ariaLabel: playing ? 'Zatvori ${song.title}' : 'Pusti ${song.title}',
-        onTap: () {
-          ui.anthem.stop();
-          ui.playingSongId = playing ? null : song.id;
-          ui.rerender();
-        },
+        onTap: toggle,
         children: [icon(playing ? 'minus' : 'play')],
       ),
-      el('div', cls: 'grow', children: [
+      el('div', cls: 'grow', attrs: {'style': 'cursor:pointer'}, children: [
         el('div', cls: 'label', text: song.title),
         el('div', cls: 'small', text: '${player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
-      ]),
+      ])
+        ..onClick.listen((_) => toggle()),
       removeButton(song.title, () {
         trip.songs.remove(song);
         if (playing) ui.playingSongId = null;
