@@ -51,6 +51,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Photos have reactions and comments, one reaction per person.
 - Food planning has both: places with a price per person and dishes with prices.
 - First version also has: drive calculation, actual costs, who owes whom, voting.
+- The postcard has a round seal with no background, as the user asked, so its ink follows
+  the photo: dark on a bright corner, light with a shadow otherwise (`lib/src/domain/seal.dart`).
 
 ## Limits that were checked (2026-10-31)
 

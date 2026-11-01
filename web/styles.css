@@ -303,7 +303,11 @@ details.adder .wide { width: 100%; }
   font-size: 56px;
   overflow: hidden;
 }
-.seal { position: absolute; top: 18px; right: 18px; transform: rotate(-8deg); }
+.seal { position: absolute; top: 18px; right: 18px; color: var(--accent); transform: rotate(-8deg); }
+.seal.waiting { visibility: hidden; }
+/* On a photo the ink follows the picture, not the theme. */
+.seal.on-bright { color: #3A4122; }
+.seal.on-dark { color: #F7F5F0; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .55)); }
 .postcard .title { display: block; margin-top: 12px; font-size: 38px; line-height: 1; }
 .postcard .soft { display: block; margin-top: 4px; font-size: 15px; }
 .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 20px; }

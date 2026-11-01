@@ -1,8 +1,6 @@
 /// How numbers and dates read in each language.
 library;
 
-import 'dart:math';
-
 import 'i18n.dart';
 
 const _monthsHr = [
@@ -223,24 +221,6 @@ String euros(int cents) {
   }
   final fraction = rest == 0 ? '' : ',${rest.toString().padLeft(2, '0')}';
   return '$sign$grouped$fraction €';
-}
-
-/// A place on a postcard's seal: a long name with a space goes on two lines,
-/// broken where the longer line comes out shortest.
-List<String> sealLines(String place) {
-  var lines = [place];
-  if (place.length < 10) return lines;
-  final words = place.split(' ');
-  var longest = place.length;
-  for (var i = 1; i < words.length; i++) {
-    final split = [words.take(i).join(' '), words.skip(i).join(' ')];
-    final longer = max(split.first.length, split.last.length);
-    if (longer < longest) {
-      lines = split;
-      longest = longer;
-    }
-  }
-  return lines;
 }
 
 /// Reads an amount as people type it: `12`, `12,5`, `1.200`, `1.200,50`,

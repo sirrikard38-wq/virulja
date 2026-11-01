@@ -11,6 +11,7 @@ import 'package:virulja/src/domain/format.dart';
 import 'package:virulja/src/domain/links.dart';
 import 'package:virulja/src/domain/models.dart';
 import 'package:virulja/src/domain/offers.dart';
+import 'package:virulja/src/domain/seal.dart';
 import 'package:virulja/src/domain/settlement.dart';
 import 'package:virulja/src/domain/wav.dart';
 
@@ -509,6 +510,29 @@ void main() {
     test('breaks a long place where the longer line is shortest', () {
       expect(sealLines('Rio de Janeiro'), ['Rio de', 'Janeiro']);
       expect(sealLines('Sveti Filip i Jakov'), ['Sveti Filip', 'i Jakov']);
+    });
+
+    test('reads the corner of a photo as the postcard cuts it', () {
+      final wide = sealCorner(2000, 1000);
+      expect(wide.x, closeTo(375 + .66 * 1250, .001));
+      expect(wide.y, closeTo(.03 * 1000, .001));
+      expect(wide.width, closeTo(.32 * 1250, .001));
+      expect(wide.height, closeTo(.39 * 1000, .001));
+
+      final tall = sealCorner(1000, 2000);
+      expect(tall.x, closeTo(.66 * 1000, .001));
+      expect(tall.y, closeTo(600 + .03 * 800, .001));
+    });
+
+    test('takes dark ink only on a bright corner', () {
+      List<int> pixels(int red, int green, int blue) => [
+            for (var i = 0; i < 4; i++) ...[red, green, blue, 255],
+          ];
+
+      expect(isBright(pixels(234, 244, 251)), isTrue, reason: 'a pale sky');
+      expect(isBright(pixels(246, 241, 228)), isTrue, reason: 'a white wall');
+      expect(isBright(pixels(47, 143, 179)), isFalse, reason: 'the sea');
+      expect(isBright(pixels(16, 26, 38)), isFalse, reason: 'the night');
     });
   });
 

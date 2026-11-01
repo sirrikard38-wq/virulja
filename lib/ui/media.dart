@@ -7,6 +7,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/exif.dart';
 import '../src/domain/models.dart';
+import '../src/domain/seal.dart';
 import 'store.dart';
 
 /// The copy of a photo the app keeps and shares: sharp on a phone, a few hundred
@@ -64,6 +65,18 @@ Future<void> storeAvatar(AppStore store, String id, web.File file) async {
   } finally {
     picture.close();
   }
+}
+
+/// Whether the part of [image] under a postcard's seal is bright.
+bool sealCornerIsBright(web.HTMLImageElement image) {
+  const side = 8;
+  final corner = sealCorner(image.naturalWidth, image.naturalHeight);
+  final canvas = web.document.createElement('canvas') as web.HTMLCanvasElement
+    ..width = side
+    ..height = side;
+  final context = canvas.getContext('2d') as web.CanvasRenderingContext2D
+    ..drawImage(image, corner.x, corner.y, corner.width, corner.height, 0, 0, side, side);
+  return isBright(context.getImageData(0, 0, side, side).data.toDart);
 }
 
 /// When the file says it was taken; the file's own date when it does not say.

@@ -47,6 +47,7 @@ web.HTMLElement _welcome(Ui ui) {
 
 web.HTMLElement _bigPostcard(Ui ui, Trip trip, String when) {
   final cover = trip.coverId;
+  final mark = seal(trip.city, trip.start.year);
   return el('div', children: [
     el('div', cls: 'head-row', children: [
       el('span', cls: 'label', text: tr('Sljedeće putovanje')),
@@ -58,10 +59,10 @@ web.HTMLElement _bigPostcard(Ui ui, Trip trip, String when) {
       onTap: () => ui.openTrip(trip),
       children: [
         if (cover != null)
-          storedImage(ui, trip, cover, cls: 'postcard-photo', alt: trip.city)
+          coverUnderSeal(ui, trip, cover, mark)
         else
           el('span', cls: 'postcard-blank', text: trip.city),
-        seal(trip.city, trip.start.year),
+        mark,
         el('span', cls: 'title', text: trip.city),
         el('span', cls: 'soft', text: '${trip.country} · '
             '${dateRange(trip.start, trip.end)} · ${peopleCount(trip.people)}'),

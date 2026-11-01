@@ -2,12 +2,13 @@ import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
-import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import '../src/domain/seal.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'media.dart';
 
 /// The title row of a screen; the round buttons float over its corners.
 web.HTMLElement topBar(String title, {bool plain = false}) => el(
@@ -176,14 +177,11 @@ String offerFacts(Offer offer) => [
       tr(offer.source),
     ].join(' · ');
 
-/// About how wide [line] is in the display font, in font sizes.
-double _lettersWide(String line) => line.split('').fold(
-    0, (width, letter) => width + (letter == letter.toLowerCase() ? .44 : .72));
-
-/// The round seal on a postcard: the place and, under it, the year.
+/// The round seal on a postcard: the place and, under it, the year, in ink with
+/// nothing behind it.
 web.Element seal(String place, int year) {
   final lines = sealLines(place);
-  final size = min(lines.length == 1 ? 29.0 : 19.0, 66 / lines.map(_lettersWide).reduce(max));
+  final size = min(lines.length == 1 ? 29.0 : 19.0, 66 / lines.map(lettersWide).reduce(max));
   final lead = lines.length == 1 ? 0.0 : 1.08 * size;
   // The name, the rule and the year stand together in the middle of the circle.
   final first = 40 + (.63 * size - lead) / 2;
@@ -196,7 +194,7 @@ web.Element seal(String place, int year) {
         'stroke-width': '$width',
         if (dots != null) 'stroke-linecap': 'round',
         if (dots != null) 'stroke-dasharray': dots,
-        'style': 'fill:none;stroke:var(--accent)',
+        'style': 'fill:none;stroke:currentColor',
       });
 
   return svg('svg', cls: 'seal', attrs: {
@@ -205,13 +203,6 @@ web.Element seal(String place, int year) {
     'height': '96',
     'aria-hidden': 'true',
   }, children: [
-    svg('circle', attrs: {
-      'cx': '50',
-      'cy': '50',
-      'r': '49',
-      'fill-opacity': '.9',
-      'style': 'fill:var(--card)',
-    }),
     ring(47, 2),
     ring(43.5, 1.3, dots: '.01 3.027'),
     ring(40.5, .7),
@@ -220,7 +211,7 @@ web.Element seal(String place, int year) {
         'x': '50',
         'y': '${first + i * lead}',
         'text-anchor': 'middle',
-        'style': 'fill:var(--accent);font-family:var(--display);'
+        'style': 'fill:currentColor;font-family:var(--display);'
             'font-weight:700;font-size:${size}px',
       }),
     svg('line', attrs: {
@@ -229,14 +220,42 @@ web.Element seal(String place, int year) {
       'y1': '$rule',
       'y2': '$rule',
       'stroke-width': '.8',
-      'style': 'stroke:var(--accent)',
+      'style': 'stroke:currentColor',
     }),
     svg('text', text: '$year', attrs: {
       'x': '50',
       'y': '${rule + 13}',
       'text-anchor': 'middle',
-      'style': 'fill:var(--accent);font-family:var(--body);'
+      'style': 'fill:currentColor;font-family:var(--body);'
           'font-weight:700;font-size:11px;letter-spacing:.16em',
     }),
   ]);
+}
+
+/// Which covers are bright under the seal, so that a redraw does not blink.
+final Map<String, bool> _brightCovers = {};
+
+/// The photo of a postcard, which gives [mark] the ink that reads on it. The seal
+/// waits for the photo the first time, so it never shows in the wrong ink.
+web.HTMLElement coverUnderSeal(Ui ui, Trip trip, String cover, web.Element mark) {
+  void ink(bool bright) =>
+      mark.setAttribute('class', bright ? 'seal on-bright' : 'seal on-dark');
+
+  final image = storedImage(ui, trip, cover, cls: 'postcard-photo', alt: trip.city)
+      as web.HTMLImageElement;
+  final known = _brightCovers[cover];
+  if (known != null) {
+    ink(known);
+    return image;
+  }
+  mark.classList.add('waiting');
+  image.onLoad.listen((_) {
+    try {
+      ink(_brightCovers[cover] = sealCornerIsBright(image));
+    } on Object {
+      ink(false);
+    }
+  });
+  image.onError.listen((_) => ink(false));
+  return image;
 }
