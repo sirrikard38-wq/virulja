@@ -251,6 +251,8 @@ class Place {
     required this.name,
     this.rating,
     this.pricePerPerson,
+    this.priceLow,
+    this.priceHigh,
     this.note,
     this.link,
     this.planned = false,
@@ -264,6 +266,8 @@ class Place {
         name: json['name'] as String,
         rating: (json['rating'] as num?)?.toDouble(),
         pricePerPerson: json['pricePerPerson'] as int?,
+        priceLow: json['priceLow'] as int?,
+        priceHigh: json['priceHigh'] as int?,
         note: json['note'] as String?,
         link: json['link'] as String?,
         planned: json['planned'] as bool? ?? false,
@@ -276,7 +280,13 @@ class Place {
   final String? customKindId;
   String name;
   double? rating;
+
+  /// What a person pays here; for a range, the amount in the middle of it.
   int? pricePerPerson;
+
+  /// The two ends of the price, when it was given as a range.
+  int? priceLow;
+  int? priceHigh;
   String? note;
   String? link;
   bool planned;
@@ -288,6 +298,8 @@ class Place {
         'name': name,
         'rating': rating,
         'pricePerPerson': pricePerPerson,
+        'priceLow': priceLow,
+        'priceHigh': priceHigh,
         'note': note,
         'link': link,
         'planned': planned,

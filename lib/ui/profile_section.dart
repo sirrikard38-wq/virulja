@@ -155,13 +155,11 @@ web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
     picker,
     _name(ui, me),
     circle,
-    el('label', cls: 'secondary profile-button', attrs: {'for': pickerId}, children: [
-      web.document.createTextNode(switch ((trip != null, own != null, photo != null)) {
-        (true, false, _) => tr('Dodaj za ovo putovanje'),
-        (_, _, true) => tr('Promijeni fotografiju'),
-        _ => tr('Dodaj fotografiju'),
-      }),
-    ]),
+    if (own == null)
+      el('label', cls: 'secondary profile-button', attrs: {'for': pickerId}, children: [
+        web.document.createTextNode(
+            trip == null ? tr('Dodaj fotografiju') : tr('Dodaj za ovo putovanje')),
+      ]),
     if (trip != null && own == null)
       if (_undo?.trip.id == trip.id)
         el('div', cls: 'photo-undo', children: [

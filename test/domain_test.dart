@@ -121,6 +121,30 @@ void main() {
     });
   });
 
+  group('a price range', () {
+    Place place() => Place(
+          id: 'p',
+          kind: PlaceKind.restaurant,
+          name: 'Konoba',
+          pricePerPerson: 2000,
+          priceLow: 1000,
+          priceHigh: 3000,
+          planned: true,
+        );
+
+    test('survives saving', () {
+      final back = Place.fromJson(jsonDecode(jsonEncode(place().toJson())) as Json);
+      expect(back.pricePerPerson, 2000);
+      expect(back.priceLow, 1000);
+      expect(back.priceHigh, 3000);
+    });
+
+    test('counts as its middle in the estimate', () {
+      final trip = visTrip()..places.add(place());
+      expect(plannedCost(trip, CostCategory.food), 2000 * trip.people);
+    });
+  });
+
   group('budget', () {
     test('adds up every part of the plan', () {
       final trip = visTrip()
@@ -497,6 +521,30 @@ void main() {
       expect(parseEuros(''), isNull);
       expect(parseEuros('puno'), isNull);
       expect(parseEuros('-5'), isNull);
+      expect(parseEuros('Infinity'), isNull);
+    });
+
+    test('reads a price that may be a range', () {
+      const tenToThirty = (middle: 2000, low: 1000, high: 3000);
+      expect(parsePriceRange('20'), (middle: 2000, low: null, high: null));
+      expect(parsePriceRange('12,50'), (middle: 1250, low: null, high: null));
+      expect(parsePriceRange('10-30'), tenToThirty);
+      expect(parsePriceRange(' 10 – 30 € '), tenToThirty);
+      expect(parsePriceRange('10--30'), tenToThirty);
+      expect(parsePriceRange('10—30'), tenToThirty);
+      expect(parsePriceRange('30-10'), tenToThirty);
+      expect(parsePriceRange('10,50-12'), (middle: 1125, low: 1050, high: 1200));
+      expect(parsePriceRange('20-20'), (middle: 2000, low: null, high: null));
+      expect(parsePriceRange(''), isNull);
+      expect(parsePriceRange('10-'), isNull);
+      expect(parsePriceRange('-10'), isNull);
+      expect(parsePriceRange('10-20-30'), isNull);
+      expect(parsePriceRange('puno'), isNull);
+    });
+
+    test('shows a range of euros', () {
+      expect(eurosRange(1000, 3000), '10–30 €');
+      expect(eurosRange(750, 1200), '7,50–12 €');
     });
   });
 

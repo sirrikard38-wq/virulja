@@ -160,6 +160,7 @@ const Map<String, List<String>> _texts = {
   'Dodaj u plan': ['Add to plan', 'Plana ekle'],
   'Otvori {0}': ['Open {0}', '{0} aç'],
   'Upiši naziv mjesta.': ['Write the name of the place.', 'Mekanın adını yaz.'],
+  'Upiši cijenu ili raspon, npr. 10-30.': ['Write a price or a range, for example 10-30.', 'Bir fiyat ya da aralık yaz, örneğin 10-30.'],
   'Dodaj mjesto': ['Add a place', 'Mekan ekle'],
   'Cijena po osobi (€)': ['Price per person (€)', 'Kişi başı fiyat (€)'],
   'Bilješka': ['Note', 'Not'],

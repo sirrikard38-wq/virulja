@@ -16,9 +16,14 @@ import 'polls_section.dart';
 import 'swipes.dart';
 import 'widgets.dart';
 
+String _priceOf(Place place) => switch ((place.priceLow, place.priceHigh)) {
+      (final low?, final high?) => eurosRange(low, high),
+      _ => euros(place.pricePerPerson!),
+    };
+
 String _placeFacts(Place place) => [
       if (place.rating != null) place.rating!.toString().replaceAll('.', ','),
-      if (place.pricePerPerson != null) tr('{0} po osobi', [euros(place.pricePerPerson!)]),
+      if (place.pricePerPerson != null) tr('{0} po osobi', [_priceOf(place)]),
       if (place.note != null) place.note!,
     ].join(' · ');
 
@@ -57,7 +62,7 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
 web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
   final name = input();
   final rating = numberInput();
-  final price = numberInput();
+  final price = input(); // a phone's number keys have no dash for a range
   final note = input();
   final link = input(type: 'url');
   final error = errorLine();
@@ -71,6 +76,11 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
       error.textContent = tr('Upiši naziv mjesta.');
       return;
     }
+    final cost = parsePriceRange(price.value);
+    if (cost == null && price.value.trim().isNotEmpty) {
+      error.textContent = tr('Upiši cijenu ili raspon, npr. 10-30.');
+      return;
+    }
     final address = link.value.trim();
     final remark = note.value.trim();
     trip.places.add(Place(
@@ -79,7 +89,9 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
       customKindId: custom?.id,
       name: name.value.trim(),
       rating: double.tryParse(rating.value.trim().replaceAll(',', '.')),
-      pricePerPerson: parseEuros(price.value),
+      pricePerPerson: cost?.middle,
+      priceLow: cost?.low,
+      priceHigh: cost?.high,
       note: remark.isEmpty ? null : remark,
       link: address.isEmpty ? null : address,
     ));

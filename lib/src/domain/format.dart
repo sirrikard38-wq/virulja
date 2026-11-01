@@ -1,6 +1,8 @@
 /// How numbers and dates read in each language.
 library;
 
+import 'dart:math';
+
 import 'i18n.dart';
 
 const _monthsHr = [
@@ -223,6 +225,27 @@ String euros(int cents) {
   return '$sign$grouped$fraction €';
 }
 
+/// `10–30 €`, `7,50–12 €`
+String eurosRange(int low, int high) =>
+    '${euros(low).replaceAll(' €', '')}–${euros(high)}';
+
+/// Reads a price per person: one amount or a range, such as `10-30`. A range counts
+/// as the amount in the middle of it and keeps its ends to show. Returns null when
+/// it is not a price.
+({int middle, int? low, int? high})? parsePriceRange(String text) {
+  final parts = text.split(RegExp(r'[-–—−]+'));
+  if (parts.length > 2) return null;
+  final first = parseEuros(parts.first);
+  final last = parseEuros(parts.last);
+  if (first == null || last == null) return null;
+  if (first == last) return (middle: first, low: null, high: null);
+  return (
+    middle: ((first + last) / 2).round(),
+    low: min(first, last),
+    high: max(first, last),
+  );
+}
+
 /// Reads an amount as people type it: `12`, `12,5`, `1.200`, `1.200,50`,
 /// `12.50 €`. Returns cents, or null when it is not an amount.
 int? parseEuros(String text) {
@@ -234,6 +257,6 @@ int? parseEuros(String text) {
     value = value.replaceAll('.', '');
   }
   final amount = double.tryParse(value);
-  if (amount == null || amount < 0) return null;
+  if (amount == null || amount < 0 || !amount.isFinite) return null;
   return (amount * 100).round();
 }
