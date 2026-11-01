@@ -100,7 +100,9 @@ address and trips in `/push/<uid>`, which only that phone and the sender can rea
 sender is an anonymous Firebase user; its uid is in the rules. Secrets `VAPID_PRIVATE` and
 `ROBOT_TOKEN` live in GitHub only, never in the repo, and run logs are public, so the tool
 prints only counts. iPhones need iOS 16.4+ and the app on the home screen. GitHub turns
-scheduled runs off after 60 days with no activity in the repo.
+scheduled runs off after 60 days with no activity in the repo. To send a test message,
+change `.github/test-notification` and push; this machine cannot run it itself, because
+Dart here does not trust the certificate of Apple's push service.
 
 ## Not done yet
 

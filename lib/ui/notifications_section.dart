@@ -50,7 +50,7 @@ web.HTMLElement notificationsSection(Ui ui) {
     if (on) toggle.textContent = 'Isključi obavijesti';
   }).catchError((Object _) {}));
   return el('div', children: [
-    el('p', cls: 'soft pad', text: 'Podsjetnik 3, 2 i 1 tjedan te 3, 2 i 1 dan prije putovanja.'),
+    el('p', cls: 'soft pad', text: 'Podsjetnik za putovanje'),
     toggle,
   ]);
 }

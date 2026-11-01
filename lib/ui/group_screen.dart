@@ -37,9 +37,8 @@ web.HTMLElement groupScreen(Ui ui) {
       el('hr', cls: 'divider'),
       sectionTitle('Imaš šifru putovanja?'),
       codeField(ui),
-      el('p', cls: 'small pad gap-top', text: cloud.reachable
-          ? 'Putovanja se dijele s grupom.'
-          : 'Nema veze: promjene čekaju i poslat će se same.'),
+      if (cloud.reachable)
+        el('p', cls: 'small pad gap-top', text: 'Putovanja se dijele s grupom.'),
     ],
     if (cloud?.pushKey != null) ...[
       sectionTitle('Obavijesti'),
