@@ -75,7 +75,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
     ]),
     field('Bilješka', note),
     error,
-    primaryButton('Dodaj mjesto', add),
+    primaryButton('Dodaj u plan', add),
     secondaryButton('Glasaj', () => add(vote: true)),
   ]);
 }
@@ -131,7 +131,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
     ]),
     field('Gdje', place),
     error,
-    primaryButton('Dodaj jelo', add),
+    primaryButton('Dodaj u plan', add),
     secondaryButton('Glasaj', () => add(vote: true)),
   ]);
 }
