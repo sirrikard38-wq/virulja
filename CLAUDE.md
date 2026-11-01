@@ -73,7 +73,9 @@ with anonymous sign-in. Rules are in `firebase/database.rules.json`; a change th
 also be pasted into the Firebase console.
 
 - Each trip has a code of 10 mixed characters (older trips: 10 digits) in `/codes/<code>`; entering it once joins that device.
-  Nobody is added by hand. Changing the code keeps the members. Admins remove people and
+  Nobody is added by hand: with more than one member, two of them must accept a newcomer
+  (`JoinRequest`, kept inside the trip, so no rule change). This is checked by the app, not
+  by the database: the code stays the real lock. Changing the code keeps the members. Admins remove people and
   name admins; `/banned/<trip>/<uid>` locks a removed person out. Names and phone numbers
   are entered once per device and changed in Postavke. The WhatsApp button is one tap
   (automatic sending needs the paid Business API). The anthem stays an uploaded file.

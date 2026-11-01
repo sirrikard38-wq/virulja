@@ -61,8 +61,17 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
       error.textContent = 'Nema putovanja s tom šifrom.';
       return;
     }
-    if (ui.data.tripById(found.trip.trip.id) == null) cloud.join(found);
-    ui.openTrip(ui.data.tripById(found.trip.trip.id)!);
+    final trip = found.trip.trip;
+    if (ui.data.tripById(trip.id) == null) {
+      if (trip.approvalsNeeded > 0) {
+        await cloud.askToJoin(found);
+        ui.toast('Zahtjev je poslan. Grupa te mora prihvatiti.');
+        ui.rerender();
+        return;
+      }
+      cloud.join(found);
+    }
+    ui.openTrip(ui.data.tripById(trip.id)!);
   } on Object {
     error.textContent = 'Ne mogu provjeriti šifru. Možda si uklonjen s putovanja '
         'ili nema interneta.';

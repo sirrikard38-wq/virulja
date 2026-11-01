@@ -9,6 +9,7 @@ import 'icons.dart';
 import '../src/domain/attack.dart';
 import 'memories_screen.dart';
 import 'polls_section.dart';
+import 'requests_section.dart';
 import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
@@ -154,6 +155,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
           el('div', cls: 'grow', text: ui.nameOf(id)),
           if (trip.adminIds.contains(id)) el('div', cls: 'small', text: 'admin'),
         ]),
+    for (final request in trip.requests) requestCard(ui, trip, request),
     el('div', cls: 'tabs', children: [
       for (final entry in tabs.entries)
         button(

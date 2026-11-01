@@ -64,6 +64,7 @@ class CloudSync {
   static const Duration _pushDelay = Duration(milliseconds: 600);
   static const Duration _retryDelay = Duration(seconds: 20);
   static const Duration _streamRetryDelay = Duration(seconds: 5);
+  static const Duration _waitingCheck = Duration(seconds: 30);
 
   /// The database rules refuse anything bigger.
   static const int _maxBlobLength = 3000000;
@@ -83,6 +84,9 @@ class CloudSync {
 
   /// Called when something new has arrived from the group.
   void Function()? onChange;
+
+  /// A short message for whoever holds the phone.
+  void Function(String message)? onNotice;
 
   /// False while the cloud cannot be reached; changes then wait on the phone.
   bool reachable = true;
@@ -223,11 +227,56 @@ class CloudSync {
         _refresh();
       }).toJS,
     );
+    Timer.periodic(_waitingCheck, (_) {
+      if (_data.waiting.isNotEmpty && web.document.visibilityState == 'visible') {
+        _checkWaiting();
+      }
+    });
     _refresh();
+  }
+
+  /// Asks the group to let this phone into [invited].
+  Future<void> askToJoin(({CloudTrip trip, Tree tree}) invited) async {
+    final trip = invited.trip.trip;
+    await _session.token();
+    await _send('PATCH', 'trips/${trip.id}/requests/${_session.uid}', json: {
+      'name': _nameOf(_data.meId!),
+      'phone': _data.personById(_data.meId!)?.phone,
+    });
+    _data.waiting[trip.id] = trip.city;
+    _store.save();
+  }
+
+  /// Sees what the groups decided about this phone.
+  Future<void> _checkWaiting() async {
+    try {
+      await _session.token();
+      for (final entry in _data.waiting.entries.toList()) {
+        final found = await fetchTrip(entry.key);
+        if (found == null) continue;
+        final trip = found.trip.trip;
+        final mine = trip.requests.where((item) => item.id == _session.uid);
+        if (mine.isEmpty) {
+          _data.waiting.remove(entry.key);
+          _store.save();
+          onNotice?.call('${entry.value}: zahtjev je odbijen.');
+          onChange?.call();
+        } else if (mine.first.approvals.length >= trip.approvalsNeeded) {
+          _data.waiting.remove(entry.key);
+          trip.requests.remove(mine.first);
+          join(found);
+          onNotice?.call('${entry.value}: grupa te prihvatila.');
+          onChange?.call();
+        }
+      }
+    } on Object {
+      // Asked again soon.
+    }
   }
 
   /// Everything new from the cloud, then everything waiting on this phone.
   Future<void> _refresh() async {
+    await _checkWaiting();
     try {
       for (final trip in _data.trips.toList()) {
         // Asked with a fresh token, a refusal can only mean a locked door.
@@ -265,16 +314,17 @@ class CloudSync {
       for (final trip in _data.trips.toList()) {
         await _prepare(trip);
         final mirror = _store.mirrorOf(trip.id);
-        final pending = mirror.pending(_flat(trip));
-        if (pending.isNotEmpty) {
-          await _send('PATCH', 'trips/${trip.id}', json: pending);
-          mirror.confirm(pending);
-          _store.save();
-        }
+        // First, so that the code works even if something else cannot be sent.
         final codeMark = 'code:${trip.code}';
         if (!mirror.uploaded.contains(codeMark)) {
           await _send('PUT', 'codes/${trip.code}', json: trip.id);
           mirror.uploaded.add(codeMark);
+          _store.save();
+        }
+        final pending = mirror.pending(_flat(trip));
+        if (pending.isNotEmpty) {
+          await _send('PATCH', 'trips/${trip.id}', json: pending);
+          mirror.confirm(pending);
           _store.save();
         }
       }

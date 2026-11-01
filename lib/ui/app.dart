@@ -71,6 +71,7 @@ class ViruljaApp {
     );
     watchForInstall(render);
     _cloud?.onChange = _groupChanged;
+    _cloud?.onNotice = _showToast;
     Timer.periodic(_redrawCheck, (_) {
       if (_redrawWaiting && !_busy) render();
     });

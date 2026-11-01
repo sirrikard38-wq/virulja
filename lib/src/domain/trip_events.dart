@@ -33,6 +33,8 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
     for (final stop in trip.stops)
       TripEvent('stop:${stop.id}', 'Novo u Planu napada: ${stop.title}', 'napad',
           from: stop.addedBy),
+    for (final request in trip.requests)
+      TripEvent('request:${request.id}', '${request.name} želi na putovanje', 'plan'),
   ];
 
   void reactions(Map<String, Set<Reaction>> given, String id, String owner,

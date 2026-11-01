@@ -6,6 +6,7 @@ import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'join_screen.dart';
+import 'requests_section.dart';
 import 'widgets.dart';
 
 web.HTMLElement _brand() => el('div', cls: 'brand', children: [
@@ -141,6 +142,7 @@ web.HTMLElement homeScreen(Ui ui) {
       el('hr', cls: 'divider'),
       sectionTitle('Imaš šifru putovanja?'),
       codeField(ui),
+      ...waitingNotes(ui),
     ],
   ]);
 }

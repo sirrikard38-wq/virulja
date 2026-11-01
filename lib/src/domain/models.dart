@@ -639,6 +639,7 @@ class Trip {
     List<Dish>? dishes,
     List<Stop>? stops,
     List<Leg>? legs,
+    List<JoinRequest>? requests,
     Drive? drive,
     List<Expense>? expenses,
     List<Payment>? payments,
@@ -652,6 +653,7 @@ class Trip {
         dishes = dishes ?? [],
         stops = stops ?? [],
         legs = legs ?? [],
+        requests = requests ?? [],
         drive = drive ?? Drive(),
         expenses = expenses ?? [],
         payments = payments ?? [],
@@ -679,6 +681,7 @@ class Trip {
         dishes: _list(json['dishes'], Dish.fromJson),
         stops: _list(json['stops'], Stop.fromJson),
         legs: _list(json['legs'], Leg.fromJson),
+        requests: _list(json['requests'], JoinRequest.fromJson),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -720,6 +723,7 @@ class Trip {
   List<Dish> dishes;
   List<Stop> stops;
   List<Leg> legs;
+  List<JoinRequest> requests;
   Drive drive;
   List<Expense> expenses;
   List<Payment> payments;
@@ -732,6 +736,10 @@ class Trip {
   int get dayCount => nights + 1;
 
   int get people => memberIds.length;
+
+  /// How many members must let a newcomer in. Someone alone on a trip is not
+  /// asked; a group of two must both agree.
+  int get approvalsNeeded => memberIds.length <= 1 ? 0 : 2;
 
   DateTime dayAt(int index) => start.add(Duration(days: index));
 
@@ -770,6 +778,7 @@ class Trip {
     dishes = other.dishes;
     stops = other.stops;
     legs = other.legs;
+    requests = other.requests;
     drive = other.drive;
     expenses = other.expenses;
     payments = other.payments;
@@ -797,6 +806,7 @@ class Trip {
         'dishes': [for (final item in dishes) item.toJson()],
         'stops': [for (final item in stops) item.toJson()],
         'legs': [for (final item in legs) item.toJson()],
+        'requests': [for (final item in requests) item.toJson()],
         'drive': drive.toJson(),
         'expenses': [for (final item in expenses) item.toJson()],
         'payments': [for (final item in payments) item.toJson()],
@@ -815,6 +825,38 @@ enum ThemeChoice {
   final String label;
 }
 
+/// Someone who entered the right code and waits for the group to let them in.
+class JoinRequest {
+  JoinRequest({
+    required this.id,
+    required this.name,
+    this.phone,
+    Set<String>? approvals,
+  }) : approvals = approvals ?? {};
+
+  factory JoinRequest.fromJson(Json json) => JoinRequest(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        phone: json['phone'] as String?,
+        approvals: _strings(json['approvals']).toSet(),
+      );
+
+  /// The sign-in id of the phone that asks.
+  final String id;
+  final String name;
+  final String? phone;
+
+  /// The members who said yes.
+  final Set<String> approvals;
+
+  Json toJson() => {
+        'id': id,
+        'name': name,
+        'phone': phone,
+        'approvals': approvals.toList(),
+      };
+}
+
 /// Everything saved on the device.
 class AppData {
   AppData({
@@ -824,15 +866,19 @@ class AppData {
     this.theme = ThemeChoice.system,
     this.anthemMuted = false,
     Map<String, String>? identities,
+    Map<String, String>? waiting,
   })  : people = people ?? [],
         trips = trips ?? [],
-        identities = identities ?? {};
+        identities = identities ?? {},
+        waiting = waiting ?? {};
 
   factory AppData.fromJson(Json json) => AppData(
         people: _list(json['people'], Person.fromJson),
         meId: json['meId'] as String?,
         trips: _list(json['trips'], Trip.fromJson),
         identities: (json['identities'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>(),
+        waiting: (json['waiting'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
         theme: ThemeChoice.values
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
@@ -852,6 +898,9 @@ class AppData {
   /// Trip id -> who this phone is on that trip, when someone joined as a name
   /// that was already on the list.
   Map<String, String> identities;
+
+  /// Trip id -> place, for trips this phone has asked to enter.
+  Map<String, String> waiting;
 
   Person? personById(String id) {
     for (final person in people) {
@@ -874,5 +923,6 @@ class AppData {
         'theme': theme.name,
         'anthemMuted': anthemMuted,
         'identities': identities,
+        'waiting': waiting,
       };
 }

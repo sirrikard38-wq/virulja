@@ -82,6 +82,14 @@ Tree tripToTree(
       'legs': {
         for (final leg in trip.legs) leg.id: _withoutId(leg.toJson()),
       },
+      'requests': {
+        for (final request in trip.requests)
+          request.id: {
+            'name': request.name,
+            'phone': request.phone,
+            'approvals': _set(request.approvals),
+          },
+      },
       'expenses': {
         for (final expense in trip.expenses)
           expense.id: {
@@ -181,6 +189,11 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       dishes: _items(tree, 'dishes', Dish.fromJson),
       stops: _items(tree, 'stops', Stop.fromJson),
       legs: _items(tree, 'legs', Leg.fromJson),
+      requests: _items(
+          tree,
+          'requests',
+          (json) => JoinRequest.fromJson(
+              {...json, 'approvals': _keys(json['approvals'])})),
       expenses: _items(tree, 'expenses', (json) {
         final sharers = _keys(json['sharedBy'])
           ..sort((a, b) => order.indexOf(a).compareTo(order.indexOf(b)));

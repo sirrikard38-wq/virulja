@@ -38,7 +38,21 @@ Tree unflatten(Flat flat) {
   return tree;
 }
 
+/// Every path above [path].
+Iterable<String> _parents(String path) sync* {
+  var at = path.lastIndexOf('/');
+  while (at > 0) {
+    yield path.substring(0, at);
+    at = path.lastIndexOf('/', at - 1);
+  }
+}
+
 /// What turns [from] into [to]: new values, and null for what is gone.
+///
+/// A value can turn into a branch or the other way round, as when one reaction
+/// per person became several. The database refuses a change that names both a
+/// path and something under it, and the new value replaces the old anyway, so
+/// the removal is left out.
 Map<String, Object?> changesBetween(Flat from, Flat to) {
   final changes = <String, Object?>{};
   to.forEach((path, value) {
@@ -47,11 +61,26 @@ Map<String, Object?> changesBetween(Flat from, Flat to) {
   for (final path in from.keys) {
     if (!to.containsKey(path)) changes[path] = null;
   }
+  final written = {
+    for (final entry in changes.entries)
+      if (entry.value != null) entry.key,
+  };
+  final above = {for (final path in written) ..._parents(path)};
+  changes.removeWhere((path, value) =>
+      value == null &&
+      (above.contains(path) || _parents(path).any(written.contains)));
   return changes;
 }
 
 Flat applyChanges(Flat base, Map<String, Object?> changes) {
-  final result = Flat.of(base);
+  final written = {
+    for (final entry in changes.entries)
+      if (entry.value != null) entry.key,
+  };
+  final above = {for (final path in written) ..._parents(path)};
+  final result = Flat.of(base)
+    ..removeWhere((path, _) =>
+        above.contains(path) || _parents(path).any(written.contains));
   changes.forEach((path, value) {
     if (value == null) {
       result.remove(path);
