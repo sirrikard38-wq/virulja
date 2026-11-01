@@ -17,9 +17,9 @@ String _songName(String fileName) {
 }
 
 web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
+  // No file filter: on many phones an audio filter hides downloaded mp3s.
   final picker = el('input', cls: 'file', attrs: {
     'type': 'file',
-    'accept': 'audio/*',
   }) as web.HTMLInputElement;
   picker.onChange.listen((_) async {
     final files = pickedFiles(picker);
