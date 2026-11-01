@@ -4,6 +4,8 @@
 /// so counting days never trips over a clock change.
 library;
 
+import 'dart:math';
+
 typedef Json = Map<String, dynamic>;
 
 List<T> _list<T>(Object? raw, T Function(Json) read) => [
@@ -36,19 +38,23 @@ DateTime parseDay(String key) {
 }
 
 class Person {
-  Person({required this.id, required this.name, this.phone});
+  Person({required this.id, required this.name, this.phone, this.photoId});
 
   factory Person.fromJson(Json json) => Person(
         id: json['id'] as String,
         name: json['name'] as String,
         phone: json['phone'] as String?,
+        photoId: json['photoId'] as String?,
       );
 
   final String id;
   String name;
   String? phone;
 
-  Json toJson() => {'id': id, 'name': name, 'phone': phone};
+  /// The profile photo, stored like the pictures of a trip.
+  String? photoId;
+
+  Json toJson() => {'id': id, 'name': name, 'phone': phone, 'photoId': photoId};
 }
 
 /// Day -> who can go that day. A database key made of plain numbers would turn
@@ -804,9 +810,9 @@ class Trip {
 
   int get people => memberIds.length;
 
-  /// How many members must let a newcomer in. Someone alone on a trip is not
-  /// asked; a group of two must both agree.
-  int get approvalsNeeded => memberIds.length <= 1 ? 0 : 2;
+  /// How many members must let a newcomer in: two, or everyone in a smaller
+  /// group, so someone alone on a trip decides alone.
+  int get approvalsNeeded => min(2, memberIds.length);
 
   DateTime dayAt(int index) => start.add(Duration(days: index));
 

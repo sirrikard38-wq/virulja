@@ -3,7 +3,12 @@ import 'tree.dart';
 
 /// A trip as it arrives from the cloud, with the names of its group.
 class CloudTrip {
-  const CloudTrip(this.trip, this.names, [this.phones = const {}]);
+  const CloudTrip(
+    this.trip,
+    this.names, [
+    this.phones = const {},
+    this.photos = const {},
+  ]);
 
   final Trip trip;
 
@@ -12,6 +17,9 @@ class CloudTrip {
 
   /// Person id -> mobile number.
   final Map<String, String> phones;
+
+  /// Person id -> profile photo.
+  final Map<String, String> photos;
 }
 
 Json _withoutId(Json json) => Map.of(json)..remove('id');
@@ -24,6 +32,7 @@ Tree tripToTree(
   Trip trip,
   String Function(String id) nameOf, [
   String? Function(String id)? phoneOf,
+  String? Function(String id)? photoOf,
 ]) =>
     {
       'code': trip.code,
@@ -67,6 +76,7 @@ Tree tripToTree(
             'name': nameOf(trip.memberIds[i]),
             'order': i,
             'phone': phoneOf?.call(trip.memberIds[i]),
+            'photo': photoOf?.call(trip.memberIds[i]),
             'uid': trip.uids[trip.memberIds[i]],
           },
       },
@@ -223,6 +233,10 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       for (final person in order)
         if ((people[person] as Map)['phone'] != null)
           person: (people[person] as Map)['phone'] as String,
+    }, {
+      for (final person in order)
+        if ((people[person] as Map)['photo'] != null)
+          person: (people[person] as Map)['photo'] as String,
     });
   } on Object {
     return null;

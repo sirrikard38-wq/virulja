@@ -96,7 +96,12 @@ class CloudSync {
   String _nameOf(String id) => _data.personById(id)?.name ?? 'Netko';
 
   Flat _flat(Trip trip) => flatten(
-      tripToTree(trip, _nameOf, (id) => _data.personById(id)?.phone));
+      tripToTree(trip, _nameOf, (id) => _data.personById(id)?.phone,
+          (id) => _photoOf(trip, id)));
+
+  /// This phone may be someone else's person on a trip it joined by name.
+  String? _photoOf(Trip trip, String id) =>
+      _data.personById(id == _meIn(trip) ? _data.meId! : id)?.photoId;
 
   /// Null while notifications are not set up.
   String? get pushKey => _config.pushKey;
@@ -362,8 +367,7 @@ class CloudSync {
       return;
     }
     trip.copyFrom(cloud.trip);
-    _learnNames(cloud.names);
-    cloud.phones.forEach((id, phone) => _data.personById(id)?.phone = phone);
+    _learnPeople(trip, cloud);
     onChange?.call();
   }
 
@@ -373,6 +377,16 @@ class CloudSync {
     _store.forgetMirror(trip.id);
     _store.save();
     onChange?.call();
+  }
+
+  /// Everything the group says about its people, except this phone's own photo:
+  /// a photo that is gone from the cloud has been removed.
+  void _learnPeople(Trip trip, CloudTrip cloud) {
+    _learnNames(cloud.names);
+    cloud.phones.forEach((id, phone) => _data.personById(id)?.phone = phone);
+    for (final id in cloud.names.keys) {
+      if (id != _meIn(trip)) _data.personById(id)?.photoId = cloud.photos[id];
+    }
   }
 
   void _learnNames(Map<String, String> names) {
@@ -391,7 +405,8 @@ class CloudSync {
   Future<void> _uploadBlobs() async {
     for (final trip in _data.trips.toList()) {
       final mirror = _store.mirrorOf(trip.id);
-      for (final id in blobIds(trip).toList()) {
+      final myPhoto = _photoOf(trip, _meIn(trip));
+      for (final id in [...blobIds(trip), if (myPhoto != null) myPhoto]) {
         if (mirror.uploaded.contains(id)) continue;
         final blob = await _store.getBlob(id);
         if (blob == null) continue; // someone else's, still on its way
@@ -440,6 +455,13 @@ class CloudSync {
     }
   }
 
+  /// Takes this person's old profile photo out of every trip.
+  Future<void> removeProfilePhoto(String id) async {
+    for (final trip in _data.trips.toList()) {
+      await removeBlob(trip, id);
+    }
+  }
+
   /// Removes a picture or sound from the cloud; failing is harmless.
   Future<void> removeBlob(Trip trip, String id) async {
     try {
@@ -462,7 +484,7 @@ class CloudSync {
   /// Puts a trip on this phone: the right code is all it takes to be in it.
   void join(({CloudTrip trip, Tree tree}) invited) {
     final trip = invited.trip.trip;
-    _learnNames(invited.trip.names);
+    _learnPeople(trip, invited.trip);
     _store.mirrorOf(trip.id).server = flatten(invited.tree);
     if (!trip.memberIds.contains(_data.meId)) {
       trip.memberIds.add(_data.meId!);

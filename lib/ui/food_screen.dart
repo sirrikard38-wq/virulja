@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:js_interop';
 import 'dart:math';
 
 import 'package:web/web.dart' as web;
@@ -166,8 +167,7 @@ const double _resistance = 0.25;
 const Duration _slideTime = Duration(milliseconds: 80);
 const String _slide = 'transform 80ms ease-out';
 
-const Duration _glideTime = Duration(milliseconds: 100);
-const String _glide = 'left 100ms ease, width 100ms ease';
+const Duration _glideTime = Duration(milliseconds: 160);
 
 bool get _wantsLessMotion =>
     web.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -262,29 +262,67 @@ double _centredLeft(web.HTMLElement row, web.HTMLElement chosen) =>
     chosen.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2;
 
 /// Where the green of the chosen chip is, to start gliding from after a redraw.
-({double left, double width, double scroll})? _chipPlace() {
+typedef _ChipPlace = ({int index, double left, double width, double scroll});
+
+_ChipPlace? _chipPlace() {
   final row = _chipRow, chosen = _chosenChip;
   if (row == null || chosen == null) return null;
+  final chips = row.querySelectorAll('.chip');
+  var index = 0;
+  while (index < chips.length && !identical(chips.item(index), chosen)) {
+    index++;
+  }
   return (
+    index: index,
     left: chosen.offsetLeft.toDouble(),
     width: chosen.offsetWidth.toDouble(),
     scroll: row.scrollLeft.toDouble(),
   );
 }
 
+/// Calls [frame] with the progress, from 0 to 1, on every frame for [length],
+/// then [end]. A hidden page gets no frames, so a timer makes sure it ends.
+void _animate(Duration length, void Function(double progress) frame, void Function() end) {
+  final started = web.window.performance.now();
+  var finished = false;
+
+  void finish() {
+    if (finished) return;
+    finished = true;
+    frame(1);
+    end();
+  }
+
+  void tick(double now) {
+    if (finished) return;
+    final time = (now - started) / length.inMilliseconds;
+    if (time >= 1) {
+      finish();
+    } else {
+      frame(1 - pow(1 - max(time, 0), 3).toDouble());
+      web.window.requestAnimationFrame(tick.toJS);
+    }
+  }
+
+  web.window.requestAnimationFrame(tick.toJS);
+  Timer(length * 2, finish);
+}
+
 /// A redraw replaces the chips, so for a moment a green marker stands in for the
-/// chosen chip's own colour and glides from the old place to the new one, while
-/// the row scrolls to keep the chosen chip in sight.
-void _glideToChosenChip(({double left, double width, double scroll}) from) {
+/// chosen chip's own colour. It glides from the old place to the new one while
+/// the row scrolls with it and the words change colour, all in one movement.
+void _glideToChosenChip(_ChipPlace from) {
   final row = _chipRow, chosen = _chosenChip;
   if (row == null || chosen == null) return;
-  final centred = _centredLeft(row, chosen);
+  final longest = (row.scrollWidth - row.clientWidth).toDouble();
+  final centred = _centredLeft(row, chosen).clamp(0.0, max(longest, 0.0));
   if (_wantsLessMotion) {
     row.scrollLeft = centred;
     return;
   }
-  row.scrollLeft = from.scroll;
-  row.scrollTo(web.ScrollToOptions(left: centred, behavior: 'smooth'));
+  final leaving = row.querySelectorAll('.chip').item(from.index) as web.HTMLElement?;
+  final toLeft = chosen.offsetLeft.toDouble();
+  final toWidth = chosen.offsetWidth.toDouble();
   final marker = el('span', cls: 'chip-marker');
   marker.style
     ..left = '${from.left}px'
@@ -292,18 +330,23 @@ void _glideToChosenChip(({double left, double width, double scroll}) from) {
     ..top = '${chosen.offsetTop}px'
     ..height = '${chosen.offsetHeight}px'
     ..borderRadius = web.window.getComputedStyle(chosen).borderRadius;
+  leaving?.classList.add('leaving');
   row
     ..append(marker)
-    ..classList.add('gliding');
-  marker.getBoundingClientRect(); // so that the browser sees where it starts
-  marker.style
-    ..transition = _glide
-    ..left = '${chosen.offsetLeft}px'
-    ..width = '${chosen.offsetWidth}px';
-  Timer(_glideTime, () {
+    ..scrollLeft = from.scroll
+    ..classList.add('gliding')
+    ..classList.add('glide-start');
+  row.getBoundingClientRect(); // so that the browser sees the colours they start from
+  row.classList.remove('glide-start');
+  _animate(_glideTime, (progress) {
+    marker.style
+      ..left = '${from.left + (toLeft - from.left) * progress}px'
+      ..width = '${from.width + (toWidth - from.width) * progress}px';
+    row.scrollLeft = from.scroll + (centred - from.scroll) * progress;
+  }, () {
     marker.remove();
+    leaving?.classList.remove('leaving');
     row.classList.remove('gliding');
-    row.scrollLeft = centred;
   });
 }
 

@@ -49,6 +49,15 @@ void main() {
     });
   });
 
+  test('profile photos survive the cloud', () {
+    final tree = unflatten(flatten(
+        tripToTree(_trip(['a', 'b']), (id) => id, null, (id) => id == 'a' ? 'pic' : null)));
+    final back = tripFromTree('tttttttttttttttt', jsonDecode(jsonEncode(tree)) as Tree)!;
+    expect(back.photos, {'a': 'pic'});
+    final person = Person.fromJson(Person(id: 'a', name: 'A', photoId: 'pic').toJson());
+    expect(person.photoId, 'pic');
+  });
+
   test('categories the group made survive the cloud', () {
     final trip = _trip(['a'])
       ..customKinds = [CustomKind(id: 'k1', label: 'Pizzerije')]
@@ -65,8 +74,8 @@ void main() {
   });
 
   group('joining', () {
-    test('one member lets people straight in, more need two approvals', () {
-      expect(_trip(['a']).approvalsNeeded, 0);
+    test('a lone member decides alone, a bigger group needs two approvals', () {
+      expect(_trip(['a']).approvalsNeeded, 1);
       expect(_trip(['a', 'b']).approvalsNeeded, 2);
       expect(_trip(['a', 'b', 'c', 'd']).approvalsNeeded, 2);
     });

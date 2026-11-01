@@ -42,7 +42,7 @@ web.HTMLElement memberRow(Ui ui, Trip trip, String id) {
   final canGive = amAdmin && !isAdmin;
   final phone = ui.data.personById(id)?.phone;
   return el('div', cls: 'row', children: [
-    avatar(ui.nameOf(id)),
+    personAvatar(ui, trip, id),
     el('div', cls: 'grow', children: [
       el('div', text: ui.nameOf(id)),
       el('div', cls: 'small', text: [

@@ -16,6 +16,8 @@ const int _fullSide = 1280;
 const double _fullQuality = 0.75;
 const int _thumbSide = 360;
 const double _thumbQuality = 0.6;
+const int _avatarSide = 240;
+const double _avatarQuality = 0.7;
 
 /// The Exif block is at the very start of a photo file.
 const int _exifBytes = 256 * 1024;
@@ -49,6 +51,16 @@ Future<void> storePicture(AppStore store, String id, web.File file) async {
     await store.putBlob(id, await _shrink(picture, _fullSide, _fullQuality));
     await store.putBlob(
         thumbId(id), await _shrink(picture, _thumbSide, _thumbQuality));
+  } finally {
+    picture.close();
+  }
+}
+
+/// Stores a profile photo: small, as it only ever shows in a little circle.
+Future<void> storeAvatar(AppStore store, String id, web.File file) async {
+  final picture = await web.window.createImageBitmap(file).toDart;
+  try {
+    await store.putBlob(id, await _shrink(picture, _avatarSide, _avatarQuality));
   } finally {
     picture.close();
   }

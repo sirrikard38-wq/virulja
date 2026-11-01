@@ -140,6 +140,15 @@ web.HTMLElement avatar(String name, {bool big = false}) => el(
       attrs: {'aria-hidden': 'true'},
     );
 
+/// The circle of a person of [trip]: their photo, or their initials until there
+/// is one.
+web.HTMLElement personAvatar(Ui ui, Trip trip, String id, {bool big = false}) {
+  final circle = avatar(ui.nameOf(id), big: big);
+  final photo = ui.data.personById(id == ui.meIn(trip) ? ui.meId : id)?.photoId;
+  if (photo != null) circle.append(storedImage(ui, trip, photo, cls: 'avatar-photo'));
+  return circle;
+}
+
 /// A stored picture of [trip], which appears as soon as it is read from storage
 /// or has arrived from the cloud.
 web.HTMLElement storedImage(

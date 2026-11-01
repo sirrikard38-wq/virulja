@@ -103,6 +103,7 @@ String _clock(DateTime at) => '${at.hour.toString().padLeft(2, '0')}:'
 /// ([threadId]), so a conversation stays one level deep and easy to read.
 web.HTMLElement _commentRow(
   Ui ui,
+  Trip trip,
   Comment comment,
   String me,
   String threadId, {
@@ -110,7 +111,7 @@ web.HTMLElement _commentRow(
 }) {
   final mine = comment.reactions[me] ?? const <Reaction>{};
   return el('div', cls: isReply ? 'comment reply' : 'comment', children: [
-    avatar(ui.nameOf(comment.authorId)),
+    personAvatar(ui, trip, comment.authorId),
     el('div', cls: 'grow', children: [
       el('div', cls: 'small', children: [
         el('span', cls: 'strong', text: ui.nameOf(comment.authorId)),
@@ -174,7 +175,7 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
     storedImage(ui, trip, photo.id, cls: 'full-photo', alt: 'Fotografija s putovanja'),
     el('div', cls: 'head-row', attrs: {'style': 'align-items:center;justify-content:flex-start'},
         children: [
-      avatar(ui.nameOf(photo.addedBy), big: true),
+      personAvatar(ui, trip, photo.addedBy, big: true),
       el('div', cls: 'grow', children: [
         el('div', cls: 'label', text: ui.nameOf(photo.addedBy)),
         el('div', cls: 'small', text: '${weekdayAndDate(photo.day)} u ${_clock(photo.takenAt)}'),
@@ -226,9 +227,9 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
     if (photo.comments.isEmpty)
       el('p', cls: 'soft pad', text: 'Budi prvi koji će nešto napisati.'),
     for (final comment in photo.comments.where((c) => c.replyTo == null)) ...[
-      _commentRow(ui, comment, me, comment.id),
+      _commentRow(ui, trip, comment, me, comment.id),
       for (final reply in photo.comments.where((c) => c.replyTo == comment.id))
-        _commentRow(ui, reply, me, comment.id, isReply: true),
+        _commentRow(ui, trip, reply, me, comment.id, isReply: true),
     ],
     if (ui.replyingTo != null)
       el('div', cls: 'row', children: [
