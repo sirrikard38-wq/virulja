@@ -98,7 +98,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
         button(
           cls: entry.key == tab ? 'tab on' : 'tab',
           text: entry.value,
-          onTap: () => ui.go(ui.tripRoute(trip, entry.key)),
+          onTap: () => ui.swap(ui.tripRoute(trip, entry.key)),
         ),
     ]),
     if (tab == 'slike') galleryTab(ui, trip) else _planTab(ui, trip),

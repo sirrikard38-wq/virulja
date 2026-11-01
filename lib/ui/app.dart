@@ -50,6 +50,7 @@ class ViruljaApp {
       cloud: _cloud,
       anthem: _anthem,
       go: _go,
+      swap: _swap,
       back: _back,
       openTrip: _openTrip,
       rerender: render,
@@ -141,12 +142,19 @@ class ViruljaApp {
   void _arrow() {
     final place = _Place(web.window.location.hash);
     const mainTabs = {null, 'plan', 'naputu', 'slike'};
-    if (place.tripId != null && mainTabs.contains(place.section)) {
-      _trail.clear();
+    if (place.tripId != null &&
+        mainTabs.contains(place.section) &&
+        _trail.isEmpty) {
       _go('#/');
     } else {
       _back();
     }
+  }
+
+  /// Changes the address without a new history step, so the iPhone's back
+  /// swipe skips this screen: tabs of a trip count as one place.
+  void _swap(String route) {
+    web.window.location.replace(route);
   }
 
   /// A tap on a trip in a list. The tap is what lets the phone play sound, so
@@ -155,7 +163,8 @@ class ViruljaApp {
   void _openTrip(Trip trip) {
     _anthem.wake();
     if (!_data.anthemMuted) _playAnthem(trip);
-    _go('#/p/${trip.id}');
+    final fromForm = _Place(web.window.location.hash).page == 'novo';
+    (fromForm ? _swap : _go)('#/p/${trip.id}');
   }
 
   Future<void> _playAnthem(Trip trip) async {

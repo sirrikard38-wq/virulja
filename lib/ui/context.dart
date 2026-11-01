@@ -13,6 +13,7 @@ class Ui {
     required this.cloud,
     required this.anthem,
     required this.go,
+    required this.swap,
     required this.back,
     required this.openTrip,
     required this.rerender,
@@ -27,6 +28,9 @@ class Ui {
 
   /// Moves to a route such as `#/p/<trip>/smjestaj`.
   final void Function(String route) go;
+
+  /// Moves to a route without adding a step to the phone's back history.
+  final void Function(String route) swap;
 
   /// One screen back, like the phone's back button.
   final void Function() back;
