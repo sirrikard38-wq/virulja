@@ -6,6 +6,7 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'join_screen.dart';
 import 'memories_screen.dart';
 import 'widgets.dart';
 
@@ -68,6 +69,15 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
         el('div', cls: 'price', text: '${euros(chosen.pricePerNight)}/noć'),
       ]),
     ],
+    if (ui.cloud != null)
+      button(
+        cls: 'secondary wide',
+        onTap: () => shareInvite(ui, trip),
+        children: [
+          icon('group', size: 20),
+          web.document.createTextNode('Pozovi u grupu'),
+        ],
+      ),
     el('div', cls: 'pad gap-top', children: [
       button(
         cls: 'text-button',
@@ -112,7 +122,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   return el('div', children: [
     el('div', cls: 'hero', children: [
       if (cover != null)
-        storedImage(ui, cover, cls: 'hero-photo', alt: trip.city)
+        storedImage(ui, trip, cover, cls: 'hero-photo', alt: trip.city)
       else
         el('div', cls: 'hero-blank'),
     ]),

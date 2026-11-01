@@ -33,7 +33,7 @@ web.HTMLElement _addExpense(Ui ui, Trip trip) {
   final title = input(placeholder: 'Večera na rivi');
   final amount = numberInput(placeholder: '120');
   final category = select(CostCategory.values, (c) => c.label, selected: CostCategory.food);
-  final payer = select(trip.memberIds, ui.nameOf, selected: ui.meId);
+  final payer = select(trip.memberIds, ui.nameOf, selected: ui.meIn(trip));
   final boxes = {for (final id in trip.memberIds) id: checkInput(checked: true)};
   final error = errorLine();
 
@@ -87,6 +87,7 @@ web.HTMLElement _transferRow(Ui ui, Trip trip, Transfer transfer) => el(
         el('div', cls: 'price', text: euros(transfer.amount)),
         chip('Podmireno', () {
           trip.payments.add(Payment(
+            id: ui.store.newId(),
             fromId: transfer.fromId,
             toId: transfer.toId,
             amount: transfer.amount,

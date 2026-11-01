@@ -29,7 +29,7 @@ web.HTMLElement _addPhotos(Ui ui, Trip trip) {
     ui.toast('Spremam ${photosCount(files.length)}...');
     var failed = 0;
     for (final file in files) {
-      final photo = await importPhoto(ui.store, file, ui.meId);
+      final photo = await importPhoto(ui.store, file, ui.meIn(trip));
       if (photo == null) {
         failed++;
       } else {
@@ -54,7 +54,7 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) => button(
       ariaLabel: 'Fotografija, ${weekdayAndDate(photo.day)}',
       onTap: () => ui.go(ui.tripRoute(trip, 'foto/${photo.id}')),
       children: [
-        storedImage(ui, thumbId(photo.id), cls: ''),
+        storedImage(ui, trip, thumbId(photo.id), cls: ''),
         el('span', cls: 'counts', children: [
           icon('heart', size: 12),
           web.document.createTextNode('${photo.reactions.length}'),
@@ -99,7 +99,8 @@ String _clock(DateTime at) => '${at.hour.toString().padLeft(2, '0')}:'
     '${at.minute.toString().padLeft(2, '0')}';
 
 web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
-  final mine = photo.reactions[ui.meId];
+  final me = ui.meIn(trip);
+  final mine = photo.reactions[me];
   final onCard = trip.coverId == photo.id;
   final message = input(placeholder: 'Napiši komentar');
 
@@ -108,7 +109,7 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
     if (text.isEmpty) return;
     photo.comments.add(Comment(
       id: ui.store.newId(),
-      authorId: ui.meId,
+      authorId: me,
       text: text,
       at: DateTime.now().toUtc(),
     ));
@@ -120,7 +121,7 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
   });
 
   return el('div', children: [
-    storedImage(ui, photo.id, cls: 'full-photo', alt: 'Fotografija s putovanja'),
+    storedImage(ui, trip, photo.id, cls: 'full-photo', alt: 'Fotografija s putovanja'),
     el('div', cls: 'head-row', attrs: {'style': 'align-items:center;justify-content:flex-start'},
         children: [
       avatar(ui.nameOf(photo.addedBy), big: true),
@@ -131,9 +132,11 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
       removeButton('ovu fotografiju', () {
         trip.photos.remove(photo);
         if (onCard) trip.coverId = trip.photos.isEmpty ? null : trip.photos.first.id;
-        ui.store.removeBlob(photo.id);
-        ui.store.removeBlob(thumbId(photo.id));
-        ui.store.save();
+        for (final id in [photo.id, thumbId(photo.id)]) {
+          ui.store.removeBlob(id);
+          ui.cloud?.removeBlob(trip, id);
+        }
+        ui.saved();
         ui.back();
       }),
     ]),
@@ -145,9 +148,9 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
               '${photo.reactions.values.where((r) => r == reaction).length}',
           onTap: () {
             if (mine == reaction) {
-              photo.reactions.remove(ui.meId);
+              photo.reactions.remove(me);
             } else {
-              photo.reactions[ui.meId] = reaction;
+              photo.reactions[me] = reaction;
             }
             ui.changed();
           },

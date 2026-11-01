@@ -79,7 +79,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     }
     final saved = trip ??
         Trip(
-          id: ui.store.newId(),
+          id: ui.store.newSecretId(),
           country: country.value.trim(),
           city: city.value.trim(),
           start: parseDay(from),
@@ -103,7 +103,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
       }
     }
     if (trip == null) ui.data.trips.add(saved);
-    ui.store.save();
+    ui.saved();
     if (trip == null) {
       ui.openTrip(saved);
     } else {
@@ -111,8 +111,11 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     }
   }
 
-  void delete() {
-    if (!web.window.confirm('Obrisati putovanje ${trip!.city} sa svim fotografijama?')) {
+  /// Takes the trip off this phone. For the rest of the group nothing changes,
+  /// so nobody can wipe a shared trip by accident.
+  void remove() {
+    if (!web.window.confirm('Ukloniti putovanje ${trip!.city} s ovog mobitela? '
+        'Ostali u grupi i dalje će ga imati.')) {
       return;
     }
     for (final photo in trip.photos) {
@@ -120,7 +123,9 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
       ui.store.removeBlob(thumbId(photo.id));
     }
     ui.data.trips.remove(trip);
-    ui.store.save();
+    ui.data.identities.remove(trip.id);
+    ui.store.forgetMirror(trip.id);
+    ui.saved();
     ui.go('#/');
   }
 
@@ -154,8 +159,8 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
       el('div', cls: 'pad gap-top', children: [
         button(
           cls: 'text-button danger',
-          text: 'Obriši putovanje',
-          onTap: delete,
+          text: 'Ukloni s ovog mobitela',
+          onTap: remove,
         ),
       ]),
   ]);

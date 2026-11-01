@@ -5,6 +5,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/models.dart';
 import 'anthem.dart';
+import 'cloud.dart';
 import 'context.dart';
 import 'costs_screen.dart';
 import 'dom.dart';
@@ -13,6 +14,7 @@ import 'group_screen.dart';
 import 'home_screen.dart';
 import 'icons.dart';
 import 'install.dart';
+import 'join_screen.dart';
 import 'memories_screen.dart';
 import 'playlist_screen.dart';
 import 'route_screen.dart';
@@ -32,19 +34,22 @@ class _Place {
       section = parts.length > 2 ? parts[2] : null;
       photoId = parts.length > 3 ? parts[3] : null;
     }
+    if (page == 'pridruzi' && parts.length > 1) inviteId = parts[1];
   }
 
   late final String page;
   String? tripId;
   String? section;
   String? photoId;
+  String? inviteId;
 }
 
 /// Mounts the app and redraws the current screen after every change.
 class ViruljaApp {
-  ViruljaApp(this._root, this._store) {
+  ViruljaApp(this._root, this._store, this._cloud) {
     _ui = Ui(
       store: _store,
+      cloud: _cloud,
       anthem: _anthem,
       go: _go,
       back: _back,
@@ -66,19 +71,46 @@ class ViruljaApp {
       }).toJS,
     );
     watchForInstall(render);
+    _cloud?.onChange = _groupChanged;
+    Timer.periodic(_redrawCheck, (_) {
+      if (_redrawWaiting && !_busy) render();
+    });
   }
 
   final web.Element _root;
   final AppStore _store;
+  final CloudSync? _cloud;
   final AnthemPlayer _anthem = AnthemPlayer();
   late final Ui _ui;
   late final web.HTMLElement _toast;
   final List<String> _trail = [];
   web.Element? _ring;
   Timer? _toastTimer;
+  bool _redrawWaiting = false;
 
   /// Ring length of the speaker: the circumference of its circle.
   static const double _ringLength = 125.7;
+  static const Duration _redrawCheck = Duration(seconds: 2);
+
+  /// True while a redraw would get in the way: someone is typing, a form is
+  /// open, or a song is playing in its player.
+  bool get _busy {
+    final active = web.document.activeElement?.tagName;
+    return active == 'INPUT' ||
+        active == 'TEXTAREA' ||
+        active == 'SELECT' ||
+        web.document.querySelector('details[open]') != null ||
+        _ui.playingSongId != null;
+  }
+
+  /// News from the group: shown at once, or as soon as it disturbs nobody.
+  void _groupChanged() {
+    if (_busy) {
+      _redrawWaiting = true;
+    } else {
+      render();
+    }
+  }
 
   AppData get _data => _store.data;
 
@@ -118,7 +150,7 @@ class ViruljaApp {
   Future<void> _playAnthem(Trip trip) async {
     final clip = trip.anthemClipId;
     if (clip == null) return;
-    final wav = await _store.getBlob(clip);
+    final wav = await _store.getBlob(clip) ?? await _cloud?.fetchBlob(trip, clip);
     if (wav != null) await _anthem.play(wav);
   }
 
@@ -228,16 +260,26 @@ class ViruljaApp {
   }
 
   void render() {
+    _redrawWaiting = false;
     _applyTheme();
     final place = _Place(web.window.location.hash);
     final tripId = place.tripId;
     final trip = tripId == null ? null : _data.tripById(tripId);
     if (trip == null && _anthem.isPlaying) _anthem.stop();
+    _cloud?.watch(trip?.id);
     _ring = null;
+
+    final invite = place.inviteId;
+    if (invite != null && _data.tripById(invite) != null) {
+      web.window.location.replace('#/p/$invite');
+      return;
+    }
 
     final web.HTMLElement page;
     if (trip != null) {
       page = _tripPage(trip, place);
+    } else if (invite != null && _data.meId != null) {
+      page = joinScreen(_ui, invite);
     } else if (place.page == 'novo' && _data.meId != null) {
       page = tripForm(_ui);
     } else if (place.page == 'grupa' && _data.meId != null) {
@@ -250,7 +292,7 @@ class ViruljaApp {
 
     final isPhoto = place.section == 'foto';
     final isForm = place.page == 'novo' || place.section == 'uredi';
-    final hasMenu = !isPhoto && !isForm && _data.meId != null;
+    final hasMenu = !isPhoto && !isForm && invite == null && _data.meId != null;
     final hasBack = trip != null || place.page == 'novo';
     final frameClass = isPhoto
         ? 'frame with-composer'

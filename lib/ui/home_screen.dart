@@ -5,7 +5,6 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
-import 'media.dart';
 import 'widgets.dart';
 
 web.HTMLElement _brand() => el('div', cls: 'brand', children: [
@@ -54,7 +53,7 @@ web.HTMLElement _bigPostcard(Ui ui, Trip trip, String when) {
       onTap: () => ui.openTrip(trip),
       children: [
         if (cover != null)
-          storedImage(ui, cover, cls: 'postcard-photo', alt: trip.city)
+          storedImage(ui, trip, cover, cls: 'postcard-photo', alt: trip.city)
         else
           el('span', cls: 'postcard-blank', text: trip.city),
         stamp(trip.city, trip.start.year),
@@ -74,7 +73,7 @@ web.HTMLElement _miniPostcard(Ui ui, Trip trip, String detail) {
     onTap: () => ui.openTrip(trip),
     children: [
       if (cover != null)
-        storedImage(ui, thumbId(cover), cls: 'mini-photo', alt: trip.city)
+        storedImage(ui, trip, thumbId(cover), cls: 'mini-photo', alt: trip.city)
       else
         el('span', cls: 'mini-photo'),
       el('span', cls: 'label', text: trip.city),

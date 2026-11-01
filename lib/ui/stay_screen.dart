@@ -11,7 +11,8 @@ import 'icons.dart';
 import 'widgets.dart';
 
 web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) {
-  final voted = offer.votes.contains(ui.meId);
+  final me = ui.meIn(trip);
+  final voted = offer.votes.contains(me);
   final chosen = trip.chosenOfferId == offer.id;
   final link = offer.link;
   return el('div', cls: 'card', attrs: {
@@ -35,7 +36,7 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
         cls: voted ? 'chip on' : 'chip',
         ariaLabel: 'Glasaj za ${offer.name}, ${offer.votes.length}',
         onTap: () {
-          voted ? offer.votes.remove(ui.meId) : offer.votes.add(ui.meId);
+          voted ? offer.votes.remove(me) : offer.votes.add(me);
           ui.changed();
         },
         children: [

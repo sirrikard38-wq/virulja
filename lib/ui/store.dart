@@ -6,6 +6,8 @@ import 'dart:math';
 import 'package:web/web.dart' as web;
 
 import '../src/domain/models.dart';
+import '../src/domain/session.dart';
+import '../src/domain/tree.dart';
 
 /// IndexedDB, the browser's storage for big things like pictures.
 class _Database {
@@ -87,16 +89,19 @@ class _Database {
 /// Everything saved on this phone: the data of the app and the pictures and
 /// sounds. Where the browser allows no storage (a private window) it all stays
 /// in memory, so the app still runs.
-class AppStore {
-  AppStore._(this.data, this._db);
+class AppStore implements KeyValueStore {
+  AppStore._(this.data, this._mirrors, this._db);
 
   static const String _dataKey = 'app';
+  static const String _mirrorsKey = 'mirrors';
   static const Duration _saveDelay = Duration(milliseconds: 200);
 
   final AppData data;
+  final Map<String, TripMirror> _mirrors;
   final _Database? _db;
   final Random _random = Random.secure();
   final Map<String, web.Blob> _memoryBlobs = {};
+  final Map<String, String> _memoryValues = {};
   final Map<String, String> _addresses = {};
   Timer? _saveTimer;
 
@@ -112,7 +117,19 @@ class AppStore {
         await db?.writeText('damaged-${DateTime.now().millisecondsSinceEpoch}', text);
       }
     }
-    final store = AppStore._(data, db);
+    final mirrors = <String, TripMirror>{};
+    final saved = await db?.readText(_mirrorsKey);
+    if (saved != null) {
+      try {
+        (jsonDecode(saved) as Json).forEach((id, value) {
+          mirrors[id] = TripMirror.fromJson(value as Json);
+        });
+      } on Object {
+        // Without the mirrors the next sync compares everything again.
+        mirrors.clear();
+      }
+    }
+    final store = AppStore._(data, mirrors, db);
     store._keepStorage();
     store._saveWhenLeaving();
     return store;
@@ -145,11 +162,41 @@ class AppStore {
   void _saveNow() {
     _saveTimer?.cancel();
     _db?.writeText(_dataKey, jsonEncode(data.toJson()));
+    _db?.writeText(
+      _mirrorsKey,
+      jsonEncode({
+        for (final entry in _mirrors.entries) entry.key: entry.value.toJson(),
+      }),
+    );
   }
 
-  String newId() => [
-        for (var i = 0; i < 16; i++) _random.nextInt(16).toRadixString(16),
+  /// What this phone last saw of a trip in the cloud.
+  TripMirror mirrorOf(String tripId) => _mirrors[tripId] ??= TripMirror();
+
+  void forgetMirror(String tripId) => _mirrors.remove(tripId);
+
+  String _randomHex(int length) => [
+        for (var i = 0; i < length; i++) _random.nextInt(16).toRadixString(16),
       ].join();
+
+  /// A new id. Ids sort by age, so lists keep their order on every phone.
+  String newId() {
+    final now = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
+    return '${now.padLeft(9, '0')}${_randomHex(8)}';
+  }
+
+  /// An id nobody can guess: having it is what lets someone into a trip.
+  String newSecretId() => _randomHex(32);
+
+  @override
+  Future<String?> readValue(String key) async =>
+      _memoryValues[key] ?? await _db?.readText(key);
+
+  @override
+  Future<void> writeValue(String key, String value) async {
+    _memoryValues[key] = value;
+    await _db?.writeText(key, value);
+  }
 
   Future<void> putBlob(String id, web.Blob blob) async {
     final db = _db;

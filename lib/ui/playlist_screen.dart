@@ -86,7 +86,7 @@ web.HTMLElement _addSong(Ui ui, Trip trip) {
       id: ui.store.newId(),
       title: name.isEmpty ? 'Pjesma (${player.service})' : name,
       link: address,
-      addedBy: ui.meId,
+      addedBy: ui.meIn(trip),
     ));
     ui.changed();
   }

@@ -333,19 +333,27 @@ class Expense {
 
 /// One person paying another back.
 class Payment {
-  Payment({required this.fromId, required this.toId, required this.amount});
+  Payment({
+    String? id,
+    required this.fromId,
+    required this.toId,
+    required this.amount,
+  }) : id = id ?? '$fromId-$toId-$amount';
 
   factory Payment.fromJson(Json json) => Payment(
+        id: json['id'] as String?,
         fromId: json['fromId'] as String,
         toId: json['toId'] as String,
         amount: json['amount'] as int,
       );
 
+  final String id;
   final String fromId;
   final String toId;
   final int amount;
 
-  Json toJson() => {'fromId': fromId, 'toId': toId, 'amount': amount};
+  Json toJson() =>
+      {'id': id, 'fromId': fromId, 'toId': toId, 'amount': amount};
 }
 
 enum Reaction {
@@ -388,6 +396,9 @@ class Comment {
       };
 }
 
+/// The small picture of photo [id] for lists and grids.
+String thumbId(String id) => '$id.t';
+
 /// A photo of the trip. The picture itself is kept apart, under its [id].
 class Photo {
   Photo({
@@ -396,6 +407,7 @@ class Photo {
     required this.addedBy,
     this.latitude,
     this.longitude,
+    this.stored = false,
     Map<String, Reaction>? reactions,
     List<Comment>? comments,
   })  : reactions = reactions ?? {},
@@ -407,6 +419,7 @@ class Photo {
         addedBy: json['addedBy'] as String,
         latitude: (json['latitude'] as num?)?.toDouble(),
         longitude: (json['longitude'] as num?)?.toDouble(),
+        stored: json['stored'] as bool? ?? false,
         reactions: {
           for (final entry
               in (json['reactions'] as Json? ?? const <String, dynamic>{})
@@ -424,6 +437,9 @@ class Photo {
   final double? latitude;
   final double? longitude;
 
+  /// True once the picture is in the cloud, for the rest of the group to see.
+  bool stored;
+
   /// One reaction per person.
   Map<String, Reaction> reactions;
   List<Comment> comments;
@@ -436,6 +452,7 @@ class Photo {
         'addedBy': addedBy,
         'latitude': latitude,
         'longitude': longitude,
+        'stored': stored,
         'reactions': {
           for (final entry in reactions.entries) entry.key: entry.value.name,
         },
@@ -579,6 +596,29 @@ class Trip {
     return TripPhase.active;
   }
 
+  /// Takes over everything from [other], keeping this same object, so a screen
+  /// that is open on this trip keeps working on the real thing.
+  void copyFrom(Trip other) {
+    country = other.country;
+    city = other.city;
+    start = other.start;
+    end = other.end;
+    memberIds = other.memberIds;
+    coverId = other.coverId;
+    chosenOfferId = other.chosenOfferId;
+    anthemTitle = other.anthemTitle;
+    anthemClipId = other.anthemClipId;
+    offers = other.offers;
+    places = other.places;
+    dishes = other.dishes;
+    stops = other.stops;
+    drive = other.drive;
+    expenses = other.expenses;
+    payments = other.payments;
+    photos = other.photos;
+    songs = other.songs;
+  }
+
   Json toJson() => {
         'id': id,
         'country': country,
@@ -620,13 +660,17 @@ class AppData {
     List<Trip>? trips,
     this.theme = ThemeChoice.system,
     this.anthemMuted = false,
+    Map<String, String>? identities,
   })  : people = people ?? [],
-        trips = trips ?? [];
+        trips = trips ?? [],
+        identities = identities ?? {};
 
   factory AppData.fromJson(Json json) => AppData(
         people: _list(json['people'], Person.fromJson),
         meId: json['meId'] as String?,
         trips: _list(json['trips'], Trip.fromJson),
+        identities: (json['identities'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>(),
         theme: ThemeChoice.values
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
         anthemMuted: json['anthemMuted'] as bool? ?? false,
@@ -641,6 +685,10 @@ class AppData {
 
   /// Stays on until the speaker is tapped again.
   bool anthemMuted;
+
+  /// Trip id -> who this phone is on that trip, when someone joined as a name
+  /// that was already on the list.
+  Map<String, String> identities;
 
   Person? personById(String id) {
     for (final person in people) {
@@ -662,5 +710,6 @@ class AppData {
         'trips': [for (final item in trips) item.toJson()],
         'theme': theme.name,
         'anthemMuted': anthemMuted,
+        'identities': identities,
       };
 }

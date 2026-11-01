@@ -4,11 +4,39 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'install.dart';
+import 'join_screen.dart';
 import 'widgets.dart';
 
 bool _inUse(Ui ui, Person person) =>
     person.id == ui.data.meId ||
     ui.data.trips.any((trip) => trip.memberIds.contains(person.id));
+
+/// Pasting the link matters on iPhones: there, a link opens in Safari, not in
+/// the app on the home screen.
+web.HTMLElement _joinByLink(Ui ui) {
+  final link = input(placeholder: 'Zalijepi link pozivnice');
+  final error = errorLine();
+
+  void open() {
+    final id = inviteIdIn(link.value);
+    if (id == null) {
+      error.textContent = 'To nije link pozivnice.';
+    } else {
+      ui.go('#/pridruzi/$id');
+    }
+  }
+
+  return el('div', children: [
+    sectionTitle('Imaš pozivnicu?'),
+    el('div', cls: 'fields', attrs: {'style': 'margin-top:4px'}, children: [
+      field('Link', link, tight: true),
+      el('div', attrs: {'style': 'align-self:end'}, children: [
+        secondaryButton('Otvori', open),
+      ]),
+    ]),
+    error,
+  ]);
+}
 
 web.HTMLElement groupScreen(Ui ui) {
   final name = input(placeholder: 'Ime');
@@ -25,19 +53,14 @@ web.HTMLElement groupScreen(Ui ui) {
   }
 
   final help = installHelp;
+  final cloud = ui.cloud;
   return el('div', children: [
     topBar('Grupa', plain: true),
     for (final person in ui.data.people)
       el('div', cls: 'row', children: [
         avatar(person.name),
         el('div', cls: 'grow', text: person.name),
-        if (person.id == ui.data.meId)
-          el('span', cls: 'small', text: 'ovo si ti')
-        else
-          chip('To sam ja', () {
-            ui.data.meId = person.id;
-            ui.changed();
-          }),
+        if (person.id == ui.data.meId) el('span', cls: 'small', text: 'ovo si ti'),
         if (!_inUse(ui, person))
           removeButton(person.name, () {
             ui.data.people.remove(person);
@@ -51,6 +74,12 @@ web.HTMLElement groupScreen(Ui ui) {
       ]),
     ]),
     error,
+    if (cloud != null) ...[
+      el('p', cls: 'small pad gap-top', text: cloud.reachable
+          ? 'Putovanja se dijele s grupom.'
+          : 'Nema veze: promjene čekaju i poslat će se same.'),
+      _joinByLink(ui),
+    ],
     sectionTitle('Izgled'),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
       for (final theme in ThemeChoice.values)

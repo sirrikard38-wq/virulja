@@ -9,18 +9,16 @@ import '../src/domain/exif.dart';
 import '../src/domain/models.dart';
 import 'store.dart';
 
-/// The copy of a photo the app keeps: sharp on a phone, about 1 MB. The
-/// original stays in the phone's gallery.
-const int _fullSide = 2048;
-const double _fullQuality = 0.82;
-const int _thumbSide = 420;
-const double _thumbQuality = 0.7;
+/// The copy of a photo the app keeps and shares: sharp on a phone, a few hundred
+/// KB, so the group's free storage lasts for thousands of photos. The original
+/// stays in the phone's gallery.
+const int _fullSide = 1280;
+const double _fullQuality = 0.75;
+const int _thumbSide = 360;
+const double _thumbQuality = 0.6;
 
 /// The Exif block is at the very start of a photo file.
 const int _exifBytes = 256 * 1024;
-
-/// The small picture of photo [id] for lists and grids.
-String thumbId(String id) => '$id.t';
 
 Future<web.Blob> _shrink(web.ImageBitmap picture, int maxSide, double quality) {
   final done = Completer<web.Blob>();

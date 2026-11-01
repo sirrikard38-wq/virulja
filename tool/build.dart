@@ -5,6 +5,8 @@ Future<void> main() async {
   final out = Directory('build')..createSync(recursive: true);
   File('web/styles.css').copySync('${out.path}/styles.css');
   File('web/manifest.webmanifest').copySync('${out.path}/manifest.webmanifest');
+  // Where the shared data lives (empty = everything stays on the phone).
+  File('web/online.json').copySync('${out.path}/online.json');
   _copyDir(Directory('web/icons'), Directory('${out.path}/icons'));
 
   // GitHub Pages lets browsers keep files for 10 minutes. A build stamp on the

@@ -27,8 +27,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   midnights.
 - `lib/ui/store.dart`: everything is saved on the phone in IndexedDB: the data as JSON,
   pictures and sound as blobs.
-- `lib/ui/media.dart`: photos are shrunk to about 1 MB; originals stay in the gallery.
+- `lib/ui/media.dart`: photos are shrunk to 1280 px, a few hundred KB; originals stay in
+  the gallery.
 - `lib/ui/anthem.dart`: the trip's anthem.
+- `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
+  `trip_tree.dart` and `session.dart`.
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
@@ -56,14 +59,37 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   do not build a scraper. Google Hotels data through SerpApi (250 free searches a month,
   unofficial) may give automatic prices; whether Booking shows up as a source is untested.
 
+## Sharing between phones
+
+Firebase project `virulja-55da8` on the user's Google account, on the free Spark plan
+with no card: the user wants it free. Spark can never bill; over a limit it just stops.
+Config is in `web/online.json` (public identifiers); an empty file means the app stays
+on the phone. Realtime Database in europe-west1, used through its web interface (no SDK),
+with anonymous sign-in. Rules are in `firebase/database.rules.json`; a change there must
+also be pasted into the Firebase console.
+
+- Whoever has a trip's secret id can open it: the invitation link is the key. `/trips` and
+  `/blobs/<trip>` cannot be listed. So a member cannot be thrown out of a trip.
+- Each value is compared and sent separately (`TripMirror`), so people working at the same
+  moment do not overwrite each other, and offline changes wait on the phone.
+- The open trip follows the database live through `EventSource`; others are read when the
+  app opens or returns to the screen. A redraw waits while someone types, has a form open
+  or plays a song, because it would wipe them.
+- Removing a trip only takes it off that phone, so nobody can wipe it for the group.
+- Pictures and the anthem are base64 strings in `/blobs/<trip>/<id>`, because Cloud
+  Storage needs the Blaze plan and a card. A photo takes about 270 KB, so the free 1 GB
+  holds about 3,500 photos, and the free 10 GB a month of downloads is shared by the
+  group. If they run out, moving pictures to Cloud Storage means Blaze and a card.
+- Test two users with `http://localhost:8090` and `http://127.0.0.1:8090`: different
+  addresses have separate storage. Delete test trips from the cloud afterwards.
+
 ## Not done yet
 
-1. Sharing between phones (accounts, a cloud copy of data and photos). Until then each
-   phone has only its own data. The plan is Firebase through its web interface, as Dartle
-   does. Cloud Storage needs the Blaze plan, so a Google billing account with a card.
-2. Automatic lists of places from Google Places (needs the same billing account), with
-   the key kept behind a server function.
-3. Automatic hotel prices (SerpApi account, server function).
+1. Automatic lists of places from Google Places: needs a billing account with a card, and
+   the key kept behind a server function, which also needs Blaze.
+2. Automatic hotel prices (SerpApi account, server function).
+3. `offerScore` in `lib/src/domain/offers.dart`: the group's weights for the "Preporuka"
+   mark are still the user's to decide.
 
 ## Publishing
 

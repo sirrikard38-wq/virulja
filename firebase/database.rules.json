@@ -1,0 +1,21 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "trips": {
+      "$trip": {
+        ".read": "auth != null && $trip.length >= 16",
+        ".write": "auth != null && $trip.length >= 16"
+      }
+    },
+    "blobs": {
+      "$trip": {
+        "$blob": {
+          ".read": "auth != null && $trip.length >= 16",
+          ".write": "auth != null && $trip.length >= 16",
+          ".validate": "newData.isString() && newData.val().length <= 3000000"
+        }
+      }
+    }
+  }
+}

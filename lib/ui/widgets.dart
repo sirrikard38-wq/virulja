@@ -140,15 +140,17 @@ web.HTMLElement avatar(String name, {bool big = false}) => el(
       attrs: {'aria-hidden': 'true'},
     );
 
-/// A stored picture, which appears as soon as it is read from storage.
+/// A stored picture of [trip], which appears as soon as it is read from storage
+/// or has arrived from the cloud.
 web.HTMLElement storedImage(
   Ui ui,
+  Trip trip,
   String id, {
   required String cls,
   String alt = '',
 }) {
   final image = el('img', cls: cls, attrs: {'alt': alt});
-  ui.store.blobAddress(id).then((address) {
+  ui.imageAddress(trip, id).then((address) {
     if (address != null) image.setAttribute('src', address);
   });
   return image;
