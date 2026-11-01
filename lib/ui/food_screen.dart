@@ -40,6 +40,10 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
   final note = input();
   final link = input(type: 'url');
   final error = errorLine();
+  link.onInput.listen((_) {
+    final found = nameFromLink(link.value);
+    if (found != null && name.value.trim().isEmpty) name.value = found;
+  });
 
   void add() {
     if (name.value.trim().isEmpty) {
@@ -61,13 +65,13 @@ web.HTMLElement _addPlace(Ui ui, Trip trip) {
   }
 
   return adder('Dodaj mjesto', [
+    field('Link', link),
     field('Naziv', name),
     el('div', cls: 'fields', children: [
       field('Ocjena', rating, tight: true),
       field('Cijena po osobi (€)', price, tight: true),
     ]),
     field('Bilješka', note),
-    field('Link', link),
     error,
     primaryButton('Dodaj mjesto', add),
   ]);

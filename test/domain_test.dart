@@ -308,6 +308,19 @@ void main() {
       );
     });
 
+    test('a name is read from Google Maps and Booking links', () {
+      expect(
+        nameFromLink('https://www.google.com/maps/place/Konoba+Stara+Uvala/@43.5,16.4,17z'),
+        'Konoba Stara Uvala',
+      );
+      expect(
+        nameFromLink('https://www.booking.com/hotel/hr/vila-mare.hr.html?aid=1'),
+        'Vila Mare',
+      );
+      expect(nameFromLink('https://maps.app.goo.gl/abc'), isNull);
+      expect(nameFromLink('https://www.airbnb.com/rooms/123'), isNull);
+    });
+
     test('other links are refused', () {
       expect(playerFor('https://example.com/song'), isNull);
       expect(playerFor('nije link'), isNull);

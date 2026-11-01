@@ -74,6 +74,10 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
   final beach = numberInput();
   final link = input(type: 'url');
   final error = errorLine();
+  link.onInput.listen((_) {
+    final found = nameFromLink(link.value);
+    if (found != null && name.value.trim().isEmpty) name.value = found;
+  });
 
   void add() {
     final cents = parseEuros(price.value);
@@ -100,15 +104,13 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
   }
 
   return adder('Dodaj ponudu', [
+    field('Link ponude', link),
     field('Naziv', name),
     el('div', cls: 'fields', children: [
       field('Cijena po noći (€)', price, tight: true),
       field('Ocjena (0 do 5)', rating, tight: true),
     ]),
-    el('div', cls: 'fields', children: [
-      field('Do plaže (m)', beach, tight: true),
-      field('Link ponude', link, tight: true),
-    ]),
+    field('Do plaže (m)', beach),
     error,
     primaryButton('Dodaj ponudu', add),
   ]);

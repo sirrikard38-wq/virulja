@@ -46,6 +46,26 @@ class SongPlayer {
 
 /// The official player for a song link, or null if the link is not one the app
 /// can play.
+String? nameFromLink(String link) {
+  final uri = Uri.tryParse(link.trim());
+  if (uri == null) return null;
+  final parts = uri.pathSegments;
+  final host = uri.host.toLowerCase();
+  final place = parts.indexOf('place');
+  if (host.contains('google.') && place >= 0 && place + 1 < parts.length) {
+    final name = parts[place + 1].replaceAll('+', ' ').trim();
+    return name.isEmpty ? null : name;
+  }
+  if (host.contains('booking.') && parts.length >= 3 && parts.first == 'hotel') {
+    final words = parts[2].split('.').first.split('-');
+    return words
+        .where((word) => word.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+  return null;
+}
+
 SongPlayer? playerFor(String link) {
   final uri = Uri.tryParse(link.trim());
   if (uri == null || !uri.hasAuthority) return null;
