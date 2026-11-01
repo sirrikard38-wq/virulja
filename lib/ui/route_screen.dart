@@ -149,7 +149,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       ]),
     _addStop(ui, trip, day),
     pollsSection(ui, trip),
-    newPollButton(ui, trip),
+    newPoll(ui, trip),
     sectionTitle('Prijevoz'),
     for (final leg in trip.legs)
       el('div', cls: 'row', children: [

@@ -32,27 +32,35 @@ web.HTMLElement pollsSection(Ui ui, Trip trip) => el('div', children: [
       for (final poll in trip.polls) _pollCard(ui, trip, poll),
     ]);
 
-web.HTMLElement newPollButton(Ui ui, Trip trip) => button(
-      cls: 'secondary wide',
-      text: 'Nova anketa',
-      onTap: () => ui.go(ui.tripRoute(trip, 'anketa')),
-    );
-
-web.HTMLElement newPollScreen(Ui ui, Trip trip) {
+/// A new poll: the choices are times, price ranges or locations, as many as
+/// wanted; with none it is a plain yes or no.
+web.HTMLElement newPoll(Ui ui, Trip trip) {
   final title = input();
-  final times = [input(type: 'time'), input(type: 'time'), input(type: 'time')];
+  final choices = <web.HTMLInputElement>[];
+  final rows = el('div');
   final error = errorLine();
 
+  web.HTMLElement more(String label, {String type = 'text'}) => button(
+        cls: 'text-button',
+        text: '+ $label',
+        onTap: () {
+          final choice = input(type: type);
+          choices.add(choice);
+          rows.append(field(label, choice));
+          choice.focus();
+        },
+      );
+
   void add() {
-    final chosen = {
-      for (final time in times)
-        if (time.value.isNotEmpty) time.value,
-    }.toList()
-      ..sort();
-    if (title.value.trim().isEmpty || chosen.length < 2) {
-      error.textContent = 'Upiši naziv i barem dva vremena.';
+    if (title.value.trim().isEmpty) {
+      error.textContent = 'Upiši što odlučujete.';
       return;
     }
+    final filled = {
+      for (final choice in choices)
+        if (choice.value.trim().isNotEmpty) choice.value.trim(),
+    }.toList();
+    final chosen = filled.isEmpty ? ['Da', 'Ne'] : filled;
     trip.polls.add(Poll(
       id: ui.store.newId(),
       title: title.value.trim(),
@@ -61,18 +69,17 @@ web.HTMLElement newPollScreen(Ui ui, Trip trip) {
           PollOption(id: 'o$i', time: chosen[i]),
       ],
     ));
-    ui.saved();
-    ui.back();
+    ui.changed();
   }
 
-  return el('div', children: [
-    topBar('Nova anketa'),
-    field('Za što', title),
-    el('div', cls: 'fields', children: [
-      field('Vrijeme 1', times[0], tight: true),
-      field('Vrijeme 2', times[1], tight: true),
+  return adder('Nova anketa', [
+    field('Što odlučujemo', title),
+    rows,
+    el('div', attrs: {'style': 'display:flex;flex-wrap:wrap;gap:16px;margin-top:12px'}, children: [
+      more('Vrijeme', type: 'time'),
+      more('Raspon cijene'),
+      more('Lokacija'),
     ]),
-    field('Vrijeme 3', times[2]),
     error,
     primaryButton('Napravi anketu', add),
   ]);
