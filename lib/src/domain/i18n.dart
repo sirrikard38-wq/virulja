@@ -183,6 +183,8 @@ const Map<String, List<String>> _texts = {
   'Profilna fotografija': ['Profile photo', 'Profil fotoğrafı'],
   'Profilna fotografija za ovo putovanje': ['Profile photo for this trip', 'Bu gezi için profil fotoğrafı'],
   'Koristi opću fotografiju': ['Use the general photo', 'Genel fotoğrafı kullan'],
+  'Dodaj za ovo putovanje': ['Add for this trip', 'Bu gezi için ekle'],
+  'Sada se ovdje koristi opća fotografija.': ['The general photo is used here now.', 'Burada şu an genel fotoğraf kullanılıyor.'],
   'Dodaj fotografiju': ['Add a photo', 'Fotoğraf ekle'],
   'Promijeni fotografiju': ['Change photo', 'Fotoğrafı değiştir'],
   'Makni fotografiju': ['Remove photo', 'Fotoğrafı kaldır'],

@@ -65,8 +65,15 @@ web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
           text: trip == null ? tr('Profilna fotografija') : tr('Profilna fotografija za ovo putovanje')),
       el('label', cls: 'secondary profile-button', children: [
         picker,
-        web.document.createTextNode(photo == null ? tr('Dodaj fotografiju') : tr('Promijeni fotografiju')),
+        web.document.createTextNode(switch ((trip != null, own != null, photo != null)) {
+          (true, false, _) => tr('Dodaj za ovo putovanje'),
+          (_, _, true) => tr('Promijeni fotografiju'),
+          _ => tr('Dodaj fotografiju'),
+        }),
       ]),
+      if (trip != null && own == null)
+        el('div', cls: 'small', attrs: {'style': 'margin-top:6px'},
+            text: tr('Sada se ovdje koristi opća fotografija.')),
       if (own != null)
         el('div', children: [
           button(
