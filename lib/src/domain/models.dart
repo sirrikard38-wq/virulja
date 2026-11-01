@@ -628,7 +628,7 @@ class Comment {
 /// The small picture of photo [id] for lists and grids.
 String thumbId(String id) => '$id.t';
 
-/// A photo of the trip. The picture itself is kept apart, under its [id].
+/// A photo or a video of the trip. The file itself is kept apart, under its [id].
 class Photo {
   Photo({
     required this.id,
@@ -637,6 +637,8 @@ class Photo {
     this.latitude,
     this.longitude,
     this.stored = false,
+    this.videoType,
+    this.parts = 1,
     Map<String, Set<Reaction>>? reactions,
     List<Comment>? comments,
   })  : reactions = reactions ?? {},
@@ -649,6 +651,8 @@ class Photo {
         latitude: (json['latitude'] as num?)?.toDouble(),
         longitude: (json['longitude'] as num?)?.toDouble(),
         stored: json['stored'] as bool? ?? false,
+        videoType: json['videoType'] as String?,
+        parts: json['parts'] as int? ?? 1,
         reactions: _reactionsFrom(json['reactions']),
         comments: _list(json['comments'], Comment.fromJson),
       );
@@ -664,9 +668,17 @@ class Photo {
   /// True once the picture is in the cloud, for the rest of the group to see.
   bool stored;
 
+  /// The kind of file, when this is a video.
+  final String? videoType;
+
+  /// How many pieces the file takes in the cloud. Only a video needs more than one.
+  final int parts;
+
   /// Anyone can give several reactions.
   Map<String, Set<Reaction>> reactions;
   List<Comment> comments;
+
+  bool get isVideo => videoType != null;
 
   DateTime get day => dayOf(takenAt.year, takenAt.month, takenAt.day);
 
@@ -677,6 +689,8 @@ class Photo {
         'latitude': latitude,
         'longitude': longitude,
         'stored': stored,
+        'videoType': videoType,
+        'parts': parts == 1 ? null : parts,
         'reactions': _reactionsToJson(reactions),
         'comments': [for (final comment in comments) comment.toJson()],
       };

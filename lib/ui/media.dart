@@ -57,6 +57,22 @@ Future<void> storePicture(AppStore store, String id, web.File file) async {
   }
 }
 
+/// Stores a made-small video [clip] and the small picture for the grid.
+Future<void> storeVideo(
+  AppStore store,
+  String id,
+  web.Blob clip,
+  web.ImageBitmap picture,
+) async {
+  try {
+    await store.putBlob(id, clip);
+    await store.putBlob(
+        thumbId(id), await _shrink(picture, _thumbSide, _thumbQuality));
+  } finally {
+    picture.close();
+  }
+}
+
 /// Stores a profile photo: small, as it only ever shows in a little circle.
 Future<void> storeAvatar(AppStore store, String id, web.File file) async {
   final picture = await web.window.createImageBitmap(file).toDart;
@@ -84,6 +100,20 @@ DateTime _wallClock(int millisecondsSinceEpoch) {
   final local = DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch);
   return DateTime.utc(local.year, local.month, local.day, local.hour,
       local.minute, local.second);
+}
+
+bool isVideoFile(web.File file) => file.type.startsWith('video/');
+
+/// When a video was taken: the date is at the start of the file or at its end.
+Future<DateTime> videoTakenAt(web.File file) async {
+  final head = await file.slice(0, _exifBytes).arrayBuffer().toDart;
+  final tail = await file
+      .slice(max(0, file.size.toInt() - _exifBytes), file.size)
+      .arrayBuffer()
+      .toDart;
+  final date = readVideoDate(Uint8List.view(head.toDart)) ??
+      readVideoDate(Uint8List.view(tail.toDart));
+  return _wallClock(date?.millisecondsSinceEpoch ?? file.lastModified);
 }
 
 /// Turns a picked file into a [Photo] of the trip, or null if it is not a

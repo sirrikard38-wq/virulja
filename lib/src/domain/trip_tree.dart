@@ -246,6 +246,15 @@ CloudTrip? tripFromTree(String id, Tree tree) {
   }
 }
 
+/// The database rules refuse a longer text.
+const int maxBlobText = 3000000;
+
+/// How many pieces a file of [bytes] takes in the cloud, as base64 text.
+int piecesFor(int bytes) => (((bytes + 2) ~/ 3) * 4 + maxBlobText - 1) ~/ maxBlobText;
+
+/// What piece [index] of file [id] is called in the cloud.
+String pieceId(String id, int index) => index == 0 ? id : '$id.$index';
+
 /// Every picture and sound of a trip.
 Iterable<String> blobIds(Trip trip) sync* {
   for (final photo in trip.photos) {

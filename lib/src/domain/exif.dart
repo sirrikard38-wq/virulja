@@ -21,6 +21,27 @@ ExifInfo readExif(Uint8List bytes) {
   }
 }
 
+/// When a video was taken, from the `mvhd` box of an MP4 or QuickTime file, which
+/// counts seconds from 1904. Null when [bytes] do not hold it.
+DateTime? readVideoDate(Uint8List bytes) {
+  const name = [0x6D, 0x76, 0x68, 0x64]; // mvhd
+  final data = ByteData.sublistView(bytes);
+  for (var at = 0; at + 16 <= bytes.length; at++) {
+    if (bytes[at] != name[0] ||
+        bytes[at + 1] != name[1] ||
+        bytes[at + 2] != name[2] ||
+        bytes[at + 3] != name[3]) {
+      continue;
+    }
+    final seconds = bytes[at + 4] == 1
+        ? data.getUint32(at + 8) * 4294967296 + data.getUint32(at + 12)
+        : data.getUint32(at + 8);
+    final date = DateTime.utc(1904).add(Duration(seconds: seconds));
+    return date.year < 2000 ? null : date;
+  }
+  return null;
+}
+
 /// Where the TIFF block inside the JPEG's Exif segment starts.
 int? _findTiff(Uint8List bytes) {
   if (bytes.length < 4 || bytes[0] != 0xFF || bytes[1] != 0xD8) return null;

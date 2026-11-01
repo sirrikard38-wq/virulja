@@ -3,10 +3,12 @@ import 'package:web/web.dart' as web;
 import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import '../src/domain/trip_tree.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'media.dart';
+import 'video_work.dart';
 import 'widgets.dart';
 
 const Map<Reaction, String> _reactionIcons = {
@@ -17,31 +19,41 @@ const Map<Reaction, String> _reactionIcons = {
   Reaction.star: 'star',
 };
 
-/// Picks photos from the phone's gallery; the app sorts them by day itself.
+Future<void> _savePictures(Ui ui, Trip trip, List<web.File> files) async {
+  ui.toast(tr('Spremam {0}...', [photosCount(files.length)]));
+  var failed = 0;
+  for (final file in files) {
+    final photo = await importPhoto(ui.store, file, ui.meIn(trip));
+    if (photo == null) {
+      failed++;
+    } else {
+      trip.photos.add(photo);
+      trip.coverId ??= photo.id;
+    }
+  }
+  ui.changed();
+  ui.toast(failed == 0
+      ? tr('Fotografije su spremljene.')
+      : tr('Neke fotografije ne mogu pročitati ({0}).', [failed]));
+}
+
+/// Picks photos and videos from the phone's gallery; the app sorts them by day
+/// itself.
 web.HTMLElement _addPhotos(Ui ui, Trip trip) {
   final picker = el('input', cls: 'file', attrs: {
     'type': 'file',
-    'accept': 'image/*',
+    'accept': 'image/*,video/*',
     'multiple': '',
   }) as web.HTMLInputElement;
   picker.onChange.listen((_) async {
     final files = pickedFiles(picker);
-    if (files.isEmpty) return;
-    ui.toast(tr('Spremam {0}...', [photosCount(files.length)]));
-    var failed = 0;
-    for (final file in files) {
-      final photo = await importPhoto(ui.store, file, ui.meIn(trip));
-      if (photo == null) {
-        failed++;
-      } else {
-        trip.photos.add(photo);
-        trip.coverId ??= photo.id;
-      }
+    final pictures = files.where((file) => !isVideoFile(file)).toList();
+    final videos = files.where(isVideoFile).toList();
+    if (pictures.isNotEmpty) await _savePictures(ui, trip, pictures);
+    if (videos.isNotEmpty) {
+      trip.photos.addAll(await prepareVideos(ui, videos, ui.meIn(trip)));
+      ui.changed();
     }
-    ui.changed();
-    ui.toast(failed == 0
-        ? tr('Fotografije su spremljene.')
-        : tr('Neke fotografije ne mogu pročitati ({0}).', [failed]));
   });
   return el('label', cls: 'secondary', children: [
     picker,
@@ -52,10 +64,14 @@ web.HTMLElement _addPhotos(Ui ui, Trip trip) {
 
 web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) => button(
       cls: 'shot',
-      ariaLabel: tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
+      ariaLabel: photo.isVideo
+          ? tr('Video, {0}', [weekdayAndDate(photo.day)])
+          : tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
       onTap: () => ui.go(ui.tripRoute(trip, 'foto/${photo.id}')),
       children: [
         storedImage(ui, trip, thumbId(photo.id), cls: ''),
+        if (photo.isVideo)
+          el('span', cls: 'shot-play', children: [icon('play', size: 22)]),
         el('span', cls: 'counts', children: [
           icon('heart', size: 12),
           web.document.createTextNode(
@@ -74,13 +90,12 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
   }
   return el('div', children: [
     el('div', cls: 'head-row', attrs: {'style': 'align-items:center'}, children: [
-      el('span', cls: 'soft', text: '${photosCount(trip.photos.length)} · '
-          '${peopleCount(trip.people)}'),
+      el('span', cls: 'soft', text: photosCount(trip.photos.length)),
       _addPhotos(ui, trip),
     ]),
     if (trip.photos.isEmpty)
       el('p', cls: 'soft pad gap-top',
-          text: tr('Dodajte fotografije iz galerije, a aplikacija će ih sama složiti po danima.')),
+          text: tr('Dodajte fotografije i videe iz galerije, a aplikacija će ih sama složiti po danima.')),
     for (final entry in byDay.entries) ...[
       el('div', cls: 'day-title', text: _dayTitle(trip, entry.key)),
       el('div', cls: 'grid', children: [
@@ -147,6 +162,22 @@ web.HTMLElement _commentRow(
   ]);
 }
 
+/// A video, with its picture from the grid until the file has arrived.
+web.HTMLElement _videoPlayer(Ui ui, Trip trip, Photo photo) {
+  final player = el('video', cls: 'full-photo', attrs: {
+    'controls': '',
+    'playsinline': '',
+    'preload': 'metadata',
+  }) as web.HTMLVideoElement;
+  ui.imageAddress(trip, thumbId(photo.id)).then((address) {
+    if (address != null) player.poster = address;
+  });
+  ui.imageAddress(trip, photo.id).then((address) {
+    if (address != null) player.src = address;
+  });
+  return player;
+}
+
 web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
   final me = ui.meIn(trip);
   final mine = photo.reactions[me] ?? const <Reaction>{};
@@ -172,7 +203,10 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
   });
 
   return el('div', children: [
-    storedImage(ui, trip, photo.id, cls: 'full-photo', alt: tr('Fotografija s putovanja')),
+    if (photo.isVideo)
+      _videoPlayer(ui, trip, photo)
+    else
+      storedImage(ui, trip, photo.id, cls: 'full-photo', alt: tr('Fotografija s putovanja')),
     el('div', cls: 'head-row', attrs: {'style': 'align-items:center;justify-content:flex-start'},
         children: [
       personAvatar(ui, trip, photo.addedBy, big: true),
@@ -180,10 +214,16 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
         el('div', cls: 'label', text: ui.nameOf(photo.addedBy)),
         el('div', cls: 'small', text: '${weekdayAndDate(photo.day)} u ${_clock(photo.takenAt)}'),
       ]),
-      removeButton(tr('ovu fotografiju'), () {
+      removeButton(photo.isVideo ? tr('ovaj video') : tr('ovu fotografiju'), () {
         trip.photos.remove(photo);
-        if (onCard) trip.coverId = trip.photos.isEmpty ? null : trip.photos.first.id;
-        for (final id in [photo.id, thumbId(photo.id)]) {
+        if (onCard) {
+          final pictures = trip.photos.where((item) => !item.isVideo);
+          trip.coverId = pictures.isEmpty ? null : pictures.first.id;
+        }
+        for (final id in [
+          for (var i = 0; i < photo.parts; i++) pieceId(photo.id, i),
+          thumbId(photo.id),
+        ]) {
           ui.store.removeBlob(id);
           ui.cloud?.removeBlob(trip, id);
         }
@@ -208,21 +248,22 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
           ],
         ),
     ]),
-    el('div', cls: 'pad', children: [
-      button(
-        cls: 'text-button',
-        onTap: () {
-          trip.coverId = photo.id;
-          ui.changed();
-          ui.toast(tr('Fotografija je na razglednici.'));
-        },
-        children: [
-          icon('photo', size: 20),
-          web.document.createTextNode(
-              onCard ? tr('Ova je fotografija na razglednici') : tr('Stavi na razglednicu')),
-        ],
-      ),
-    ]),
+    if (!photo.isVideo)
+      el('div', cls: 'pad', children: [
+        button(
+          cls: 'text-button',
+          onTap: () {
+            trip.coverId = photo.id;
+            ui.changed();
+            ui.toast(tr('Fotografija je na razglednici.'));
+          },
+          children: [
+            icon('photo', size: 20),
+            web.document.createTextNode(
+                onCard ? tr('Ova je fotografija na razglednici') : tr('Stavi na razglednicu')),
+          ],
+        ),
+      ]),
     sectionTitle(tr('Komentari')),
     if (photo.comments.isEmpty)
       el('p', cls: 'soft pad', text: tr('Budi prvi koji će nešto napisati.')),

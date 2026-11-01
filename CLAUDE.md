@@ -51,6 +51,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Photos: one tap on every phone; each person picks from the gallery and the app sorts
   by day. No automatic gallery reading.
 - Photos have reactions and comments, one reaction per person.
+- Videos are photos with `videoType` (`lib/ui/video_work.dart`). A video from a phone would
+  fill the free storage, so the app keeps the first 30 seconds at 3 to 6 MB. A browser can
+  only do that by playing the video into a canvas and recording it (`MediaRecorder`), so it
+  takes as long as the video, starts with a tap and stops if the app is left. Whether this
+  works on a real iPhone is not tested yet. Longer videos would need Cloud Storage and a
+  card, or a separate free video service.
 - Food planning has both: places with a price per person and dishes with prices. The
   dishes are only in their own category of that row, named Hrana. The sum at the bottom of
   the screen is that of the open category alone, counting what is in the plan.
@@ -101,7 +107,8 @@ also be pasted into the Firebase console.
 - Removing a trip only takes it off that phone, so nobody can wipe it for the group.
 - A person has a general profile photo (`Person.photoId`, global settings) and may set another
   for one trip in that trip's settings (`AppData.tripPhotos`). The group sees `Trip.memberPhotos`.
-- Pictures and the anthem are base64 strings in `/blobs/<trip>/<id>`, because Cloud
+- Pictures, the anthem and videos (in pieces of 3 MB of text, the limit in the rules) are
+  base64 strings in `/blobs/<trip>/<id>`, because Cloud
   Storage needs the Blaze plan and a card. A photo takes about 270 KB, so the free 1 GB
   holds about 3,500 photos, and the free 10 GB a month of downloads is shared by the
   group. If they run out, moving pictures to Cloud Storage means Blaze and a card.

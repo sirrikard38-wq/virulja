@@ -118,10 +118,12 @@ class ViruljaApp {
   static const Duration _redrawCheck = Duration(seconds: 2);
 
   /// True while a redraw would get in the way: someone is typing, a form is
-  /// open, or a song is playing in its player.
+  /// open, or a song or video is playing in its player.
   bool get _busy {
     final active = web.document.activeElement?.tagName;
+    final video = web.document.querySelector('video') as web.HTMLVideoElement?;
     return active == 'INPUT' ||
+        (video != null && !video.paused) ||
         active == 'TEXTAREA' ||
         active == 'SELECT' ||
         web.document.querySelector('details[open]') != null ||

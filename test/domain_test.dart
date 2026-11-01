@@ -611,6 +611,70 @@ void main() {
     });
   });
 
+  group('videos', () {
+    test('a big file is kept in pieces the database accepts', () {
+      expect(piecesFor(100), 1);
+      expect(piecesFor(2250000), 1);
+      expect(piecesFor(2250001), 2);
+      expect(piecesFor(4000000), 2);
+      expect(piecesFor(4600000), 3);
+      expect(pieceId('v', 0), 'v');
+      expect(pieceId('v', 2), 'v.2');
+    });
+
+    test('a video stays a video through saving and the cloud', () {
+      final trip = visTrip()
+        ..photos.add(Photo(
+          id: 'v',
+          takenAt: DateTime.utc(2027, 6, 12, 10),
+          addedBy: 'ana',
+          videoType: 'video/mp4',
+          parts: 2,
+        ))
+        ..photos.add(Photo(id: 'p', takenAt: DateTime.utc(2027, 6, 12), addedBy: 'ana'));
+      final saved = Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json);
+      final tree = unflatten(flatten(tripToTree(trip, (id) => id)));
+      final cloud = tripFromTree(trip.id, jsonDecode(jsonEncode(tree)) as Tree)!.trip;
+      for (final back in [saved, cloud]) {
+        final video = back.photos.firstWhere((photo) => photo.id == 'v');
+        expect(video.isVideo, isTrue);
+        expect(video.videoType, 'video/mp4');
+        expect(video.parts, 2);
+        final picture = back.photos.firstWhere((photo) => photo.id == 'p');
+        expect(picture.isVideo, isFalse);
+        expect(picture.parts, 1);
+      }
+    });
+
+    Uint8List movie(int version, int seconds) {
+      final bytes = ByteData(40);
+      const name = 'mvhd';
+      for (var i = 0; i < 4; i++) {
+        bytes.setUint8(10 + i, name.codeUnitAt(i));
+      }
+      bytes.setUint8(14, version);
+      if (version == 1) {
+        bytes.setUint32(18, 0);
+        bytes.setUint32(22, seconds);
+      } else {
+        bytes.setUint32(18, seconds);
+      }
+      return bytes.buffer.asUint8List();
+    }
+
+    test('reads when a video was taken', () {
+      final taken = DateTime.utc(2027, 6, 12, 10, 30);
+      final seconds = taken.difference(DateTime.utc(1904)).inSeconds;
+      expect(readVideoDate(movie(0, seconds)), taken);
+      expect(readVideoDate(movie(1, seconds)), taken);
+    });
+
+    test('a video without a date has none', () {
+      expect(readVideoDate(movie(0, 0)), isNull);
+      expect(readVideoDate(Uint8List(64)), isNull);
+    });
+  });
+
   group('photo facts', () {
     test('reads the date and position of a JPEG', () {
       final info = readExif(sampleJpeg(littleEndian: true));

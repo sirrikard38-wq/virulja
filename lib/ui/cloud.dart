@@ -67,9 +67,6 @@ class CloudSync {
   static const Duration _streamRetryDelay = Duration(seconds: 5);
   static const Duration _waitingCheck = Duration(seconds: 5);
 
-  /// The database rules refuse anything bigger.
-  static const int _maxBlobLength = 3000000;
-
   final OnlineConfig _config;
   final AppStore _store;
   final JsonHttp _http = BrowserJsonHttp();
@@ -450,8 +447,17 @@ class CloudSync {
         if (blob == null) continue; // someone else's, still on its way
         final bytes = await blob.arrayBuffer().toDart;
         final text = base64Encode(Uint8List.view(bytes.toDart));
-        if (text.length <= _maxBlobLength) {
-          await _send('PUT', _blobPath(trip.id, id), json: text);
+        final pieces = _photoWith(trip, id)?.parts ?? 1;
+        if (text.length <= pieces * maxBlobText) {
+          // The first piece last: whoever finds it knows the rest is there.
+          for (var i = pieces - 1; i >= 0; i--) {
+            final start = i * maxBlobText;
+            await _send(
+              'PUT',
+              _blobPath(trip.id, pieceId(id, i)),
+              json: text.substring(start, min(start + maxBlobText, text.length)),
+            );
+          }
         }
         mirror.uploaded.add(id);
         _store.save();
@@ -468,6 +474,14 @@ class CloudSync {
     }
   }
 
+  /// The photo or video kept under [id], if that is what it is.
+  Photo? _photoWith(Trip trip, String id) {
+    for (final photo in trip.photos) {
+      if (photo.id == id) return photo;
+    }
+    return null;
+  }
+
   /// A picture or sound another phone has put in the cloud. Null when it is not
   /// there yet or there is no connection.
   Future<web.Blob?> fetchBlob(Trip trip, String id) =>
@@ -477,12 +491,19 @@ class CloudSync {
 
   Future<web.Blob?> _fetchBlob(Trip trip, String id) async {
     try {
-      final reply = await _send('GET', _blobPath(trip.id, id));
-      final text = jsonDecode(reply.body);
-      if (text is! String) return null;
+      final photo = _photoWith(trip, id);
+      final text = StringBuffer();
+      for (var i = 0; i < (photo?.parts ?? 1); i++) {
+        final reply = await _send('GET', _blobPath(trip.id, pieceId(id, i)));
+        final piece = jsonDecode(reply.body);
+        if (piece is! String) return null;
+        text.write(piece);
+      }
       final blob = web.Blob(
-        [base64Decode(text).toJS].toJS,
-        web.BlobPropertyBag(type: id == trip.anthemClipId ? 'audio/wav' : 'image/jpeg'),
+        [base64Decode(text.toString()).toJS].toJS,
+        web.BlobPropertyBag(
+          type: photo?.videoType ?? (id == trip.anthemClipId ? 'audio/wav' : 'image/jpeg'),
+        ),
       );
       await _store.putBlob(id, blob);
       _store.mirrorOf(trip.id).uploaded.add(id);
