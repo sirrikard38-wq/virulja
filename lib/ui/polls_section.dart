@@ -3,6 +3,7 @@ import 'package:web/web.dart' as web;
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 import 'widgets.dart';
 
 web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
@@ -67,7 +68,23 @@ web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
         onTap: () {
           final choice = input(type: type);
           choices.add(choice);
-          rows.append(field(label, choice));
+          late final web.HTMLElement row;
+          row = el('div', cls: 'field', children: [
+            el('div', attrs: {'style': 'display:flex;align-items:center;gap:6px'}, children: [
+              button(
+                cls: 'icon-button',
+                ariaLabel: 'Makni: $label',
+                onTap: () {
+                  choices.remove(choice);
+                  row.remove();
+                },
+                children: [icon('minus', size: 20)],
+              ),
+              el('span', text: label),
+            ]),
+            choice,
+          ]);
+          rows.append(row);
           choice.focus();
         },
       );
