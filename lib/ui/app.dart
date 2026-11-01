@@ -53,6 +53,7 @@ class ViruljaApp {
       swap: _swap,
       back: _back,
       openTrip: _openTrip,
+      startAnthem: _startAnthem,
       rerender: render,
       toast: _showToast,
     );
@@ -181,6 +182,15 @@ class ViruljaApp {
       'stroke-dasharray',
       '${(progress * _ringLength).toStringAsFixed(1)} $_ringLength',
     );
+  }
+
+  void _startAnthem(Trip trip) {
+    _anthem.wake();
+    if (!_anthem.isPlaying) _playAnthem(trip);
+    if (_data.anthemMuted) {
+      _data.anthemMuted = false;
+      _ui.changed();
+    }
   }
 
   void _tapSpeaker(Trip trip) {

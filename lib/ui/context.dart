@@ -16,6 +16,7 @@ class Ui {
     required this.swap,
     required this.back,
     required this.openTrip,
+    required this.startAnthem,
     required this.rerender,
     required this.toast,
   });
@@ -37,6 +38,9 @@ class Ui {
 
   /// Opens a trip from a list; this is what starts its anthem.
   final void Function(Trip trip) openTrip;
+
+  /// Plays the anthem unless it is already playing; called inside a tap.
+  final void Function(Trip trip) startAnthem;
 
   final void Function() rerender;
 

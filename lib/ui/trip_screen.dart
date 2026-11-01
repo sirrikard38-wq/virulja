@@ -30,7 +30,13 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
         cls: 'card row',
         onTap: () => ui.go(ui.tripRoute(trip, 'playlista')),
         children: [
-          icon('note'),
+          el('span', attrs: {'style': 'display:flex;padding:10px;margin:-10px'}, children: [icon('note')])
+            ..onClick.listen((event) {
+              // With no anthem yet the tap just opens the playlist.
+              if (trip.anthemClipId == null) return;
+              event.stopPropagation();
+              ui.startAnthem(trip);
+            }),
           el('span', cls: 'grow', children: [
             el('span', cls: 'small', text: 'Himna putovanja',
                 attrs: {'style': 'display:block'}),
