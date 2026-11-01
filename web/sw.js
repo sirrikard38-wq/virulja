@@ -39,6 +39,31 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// A reminder from tool/remind.dart. An iPhone stops delivering if a push shows
+// nothing, so every push shows something.
+self.addEventListener('push', (event) => {
+  const message = event.data ? event.data.json() : { title: 'VIRULJA', body: '', route: '#/' };
+  event.waitUntil(
+    self.registration.showNotification(message.title, {
+      body: message.body,
+      icon: 'icons/icon-192.png',
+      data: { route: message.route },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const address = new URL(event.notification.data.route, self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const open = windows[0];
+      if (!open) return self.clients.openWindow(address);
+      return open.focus().then((client) => client.navigate(address));
+    }),
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;

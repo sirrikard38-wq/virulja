@@ -1,0 +1,24 @@
+name: Trip reminders
+
+# Once a day, in the morning in Croatia, sends the notifications due today
+# (tool/remind.dart). Firebase's own scheduled functions need the Blaze plan and
+# a card; this is free. VAPID_PRIVATE and ROBOT_TOKEN are repository secrets.
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart run tool/remind.dart
+        env:
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}

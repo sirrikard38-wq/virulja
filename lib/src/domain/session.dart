@@ -41,7 +41,7 @@ class OnlineException implements Exception {
 /// Where the shared data lives: a Firebase Realtime Database. Read from
 /// `web/online.json`; without it the app simply stays on this phone.
 class OnlineConfig {
-  const OnlineConfig({required this.databaseUrl, required this.apiKey});
+  const OnlineConfig({required this.databaseUrl, required this.apiKey, this.pushKey});
 
   static const String authBase = 'https://identitytoolkit.googleapis.com';
   static const String tokenBase = 'https://securetoken.googleapis.com';
@@ -52,6 +52,9 @@ class OnlineConfig {
   /// The Firebase web API key. It is not a secret: it only says which project
   /// the sign-in belongs to. The database rules are what protect the data.
   final String apiKey;
+
+  /// The public half of the notification keys. Also not a secret.
+  final String? pushKey;
 
   /// Reads `online.json`. Null when it is empty, unfinished or not valid.
   static OnlineConfig? tryParse(String text) {
@@ -64,7 +67,11 @@ class OnlineConfig {
       }
       final key = ((json['apiKey'] as String?) ?? '').trim();
       if (url.isEmpty || key.isEmpty || !url.startsWith('https://')) return null;
-      return OnlineConfig(databaseUrl: url, apiKey: key);
+      return OnlineConfig(
+        databaseUrl: url,
+        apiKey: key,
+        pushKey: json['pushKey'] as String?,
+      );
     } on Object {
       return null;
     }

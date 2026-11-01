@@ -5,6 +5,7 @@ import 'context.dart';
 import 'dom.dart';
 import 'install.dart';
 import 'join_screen.dart';
+import 'notifications_section.dart';
 import 'widgets.dart';
 
 /// This phone's settings: who you are, and how the app looks.
@@ -39,6 +40,10 @@ web.HTMLElement groupScreen(Ui ui) {
       el('p', cls: 'small pad gap-top', text: cloud.reachable
           ? 'Putovanja se dijele s grupom.'
           : 'Nema veze: promjene čekaju i poslat će se same.'),
+    ],
+    if (cloud?.pushKey != null) ...[
+      sectionTitle('Obavijesti'),
+      notificationsSection(ui),
     ],
     sectionTitle('Izgled'),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [

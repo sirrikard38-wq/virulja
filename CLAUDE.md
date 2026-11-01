@@ -87,6 +87,18 @@ also be pasted into the Firebase console.
 - Test two users with `http://localhost:8090` and `http://127.0.0.1:8090`: different
   addresses have separate storage. Delete test trips from the cloud afterwards.
 
+## Trip reminders
+
+Notifications go out 21, 14, 7, 3, 2 and 1 days before a trip (`lib/src/domain/reminders.dart`).
+Firebase scheduled functions need Blaze, so `.github/workflows/remind.yml` runs
+`tool/remind.dart` once a day, free. It sends standard web push (`tool/web_push.dart`,
+tested against the RFC 8291 example). Each phone that turned them on in Postavke keeps its
+address and trips in `/push/<uid>`, which only that phone and the sender can read. The
+sender is an anonymous Firebase user; its uid is in the rules. Secrets `VAPID_PRIVATE` and
+`ROBOT_TOKEN` live in GitHub only, never in the repo, and run logs are public, so the tool
+prints only counts. iPhones need iOS 16.4+ and the app on the home screen. GitHub turns
+scheduled runs off after 60 days with no activity in the repo.
+
 ## Not done yet
 
 1. Automatic lists of places from Google Places: needs a billing account with a card, and

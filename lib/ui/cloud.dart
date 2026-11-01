@@ -10,6 +10,7 @@ import '../src/domain/models.dart';
 import '../src/domain/session.dart';
 import '../src/domain/tree.dart';
 import '../src/domain/trip_tree.dart';
+import 'push.dart';
 import 'store.dart';
 
 /// Web requests through the browser's `fetch`.
@@ -92,6 +93,36 @@ class CloudSync {
 
   Flat _flat(Trip trip) => flatten(
       tripToTree(trip, _nameOf, (id) => _data.personById(id)?.phone));
+
+  /// Null while notifications are not set up.
+  String? get pushKey => _config.pushKey;
+
+  /// Tells the daily sender about this phone and the trips it is on.
+  Future<void> savePushDevice(Map<String, String> device) async {
+    await _session.token();
+    await _send('PUT', 'push/${_session.uid}', json: {
+      ...device,
+      'trips': {
+        for (final trip in _data.trips)
+          trip.id: {'city': trip.city, 'start': dayKey(trip.start)},
+      },
+    });
+  }
+
+  Future<void> removePushDevice() async {
+    await _session.token();
+    await _send('DELETE', 'push/${_session.uid}');
+  }
+
+  /// Dates change and trips come and go, so this is repeated with every refresh.
+  Future<void> _updatePushDevice() async {
+    try {
+      final device = pushKey == null ? null : await pushDevice();
+      if (device != null) await savePushDevice(device);
+    } on Object {
+      // Only reminders are late; the next refresh tries again.
+    }
+  }
 
   String _meIn(Trip trip) => _data.identities[trip.id] ?? _data.meId!;
 
@@ -215,6 +246,7 @@ class CloudSync {
     final watched = _watched;
     if (watched != null && _stream == null) _openStream(watched);
     await _push();
+    await _updatePushDevice();
   }
 
   /// Sends changes soon, so a burst of changes is one request.
