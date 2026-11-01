@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -20,6 +21,7 @@ class AnthemPlayer {
   /// Clips are small: one channel, enough quality for 10 seconds of music.
   static const int _clipRate = 22050;
   static const Duration _tick = Duration(milliseconds: 100);
+  static const Duration _waking = Duration(seconds: 2);
 
   web.AudioContext? _context;
   web.AudioBufferSourceNode? _source;
@@ -34,6 +36,9 @@ class AnthemPlayer {
   /// is called right inside the tap that opens a trip.
   void wake() {
     try {
+      // Without this an iPhone with its side switch on silent plays nothing.
+      final session = web.window.navigator.getProperty<JSObject?>('audioSession'.toJS);
+      session?.setProperty('type'.toJS, 'playback'.toJS);
       _context ??= web.AudioContext();
       if (_context!.state != 'running') _context!.resume();
     } on Object {
@@ -47,6 +52,9 @@ class AnthemPlayer {
     final context = _context;
     if (context == null) return;
     try {
+      if (context.state != 'running') {
+        await context.resume().toDart.timeout(_waking);
+      }
       final bytes = await wav.arrayBuffer().toDart;
       final sound = await context.decodeAudioData(bytes).toDart;
       final gain = context.createGain();
@@ -54,10 +62,11 @@ class AnthemPlayer {
       // abruptly.
       final begin = context.currentTime;
       final finish = begin + sound.duration;
+      final fadeStart = max(begin + _fadeIn, finish - _fadeOut);
       gain.gain
         ..setValueAtTime(0, begin)
         ..linearRampToValueAtTime(quiet, begin + _fadeIn)
-        ..setValueAtTime(quiet, finish - _fadeOut)
+        ..setValueAtTime(quiet, fadeStart)
         ..linearRampToValueAtTime(0, finish);
       gain.connect(context.destination);
       final source = context.createBufferSource()
