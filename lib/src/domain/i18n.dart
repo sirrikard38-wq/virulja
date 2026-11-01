@@ -180,15 +180,12 @@ const Map<String, List<String>> _texts = {
   '{0} po osobi': ['{0} per person', 'kişi başı {0}'],
 
   // Settings
-  'Profilna fotografija': ['Profile photo', 'Profil fotoğrafı'],
-  'Profilna fotografija za ovo putovanje': ['Profile photo for this trip', 'Bu gezi için profil fotoğrafı'],
   'Koristi opću fotografiju': ['Use the general photo', 'Genel fotoğrafı kullan'],
   'Dodaj za ovo putovanje': ['Add for this trip', 'Bu gezi için ekle'],
   'Koristi se opća fotografija': ['The general photo is in use', 'Genel fotoğraf kullanılıyor'],
   'Vrati natrag profilnu': ['Bring the photo back', 'Fotoğrafı geri getir'],
   'Dodaj fotografiju': ['Add a photo', 'Fotoğraf ekle'],
   'Promijeni fotografiju': ['Change photo', 'Fotoğrafı değiştir'],
-  'Makni fotografiju': ['Remove photo', 'Fotoğrafı kaldır'],
   'Spremljeno.': ['Saved.', 'Kaydedildi.'],
   'Šifre putovanja': ['Trip codes', 'Gezi kodları'],
   'Imaš šifru putovanja?': ['Have a trip code?', 'Gezi kodun var mı?'],

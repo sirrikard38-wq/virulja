@@ -63,30 +63,53 @@ void _takeBack(Ui ui) {
   ui.changed();
 }
 
-/// The person's own photo, kept on this phone and sent with the trips. The app's
-/// settings hold the general one; a [trip]'s settings hold one for that trip only,
-/// which goes back to the general one when removed. The two never change each
-/// other; a trip without its own simply shows the general one.
+/// The name above the photo: a tap turns it into a field. The new name goes to
+/// every trip, on this person's every identity there.
+web.HTMLElement _name(Ui ui, Person me) {
+  final shown = button(cls: 'title profile-name', text: me.name, onTap: () {});
+  shown.onClick.listen((_) {
+    final field = input(value: me.name)..classList.add('profile-name-field');
+    var done = false;
+
+    void save() {
+      if (done) return;
+      done = true;
+      final name = field.value.trim();
+      if (name.isNotEmpty && name != me.name) {
+        me.name = name;
+        for (final id in ui.data.identities.values) {
+          ui.data.personById(id)?.name = name;
+        }
+      }
+      ui.changed();
+    }
+
+    field.onBlur.listen((_) => save());
+    field.onKeyDown.listen((event) {
+      if (event.key == 'Enter') save();
+    });
+    shown.parentElement?.replaceChild(field, shown);
+    field
+      ..focus()
+      ..select();
+  });
+  return shown;
+}
+
+/// The person's name and photo at the top of the settings; a tap on the photo
+/// opens the phone's gallery, camera and files. The app's settings hold the general
+/// photo; a [trip]'s settings hold one for that trip only. The two never change
+/// each other; a trip without its own simply shows the general one.
 web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
   final me = ui.data.personById(ui.meId)!;
   final own = trip == null ? me.photoId : ui.data.tripPhotos[trip.id];
   final photo = own ?? me.photoId;
-  final circle = el('div', cls: 'avatar big profile', text: initials(me.name),
-      attrs: {'aria-hidden': 'true'});
-  if (photo != null) {
-    final image = el('img', cls: 'avatar-photo', attrs: {'alt': ''});
-    circle.append(image);
-    ui.store.blobAddress(photo).then((address) {
-      if (address != null) image.setAttribute('src', address);
-    });
-  }
+  const pickerId = 'profile-photo';
 
-  void replace(String? id) {
+  void replace(String id) {
     _finishUndo(ui);
     if (trip == null) {
       me.photoId = id;
-    } else if (id == null) {
-      ui.data.tripPhotos.remove(trip.id);
     } else {
       ui.data.tripPhotos[trip.id] = id;
     }
@@ -102,6 +125,7 @@ web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
   }
 
   final picker = el('input', cls: 'file', attrs: {
+    'id': pickerId,
     'type': 'file',
     'accept': 'image/*',
   }) as web.HTMLInputElement;
@@ -116,40 +140,45 @@ web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
       ui.toast(tr('Tu fotografiju ne mogu pročitati.'));
     }
   });
-  return el('div', cls: 'row', attrs: {'style': 'border:0'}, children: [
+
+  final circle = el('label', cls: 'avatar big profile', text: initials(me.name),
+      attrs: {'for': pickerId, 'aria-label': tr('Promijeni fotografiju')});
+  if (photo != null) {
+    final image = el('img', cls: 'avatar-photo', attrs: {'alt': ''});
+    circle.append(image);
+    ui.store.blobAddress(photo).then((address) {
+      if (address != null) image.setAttribute('src', address);
+    });
+  }
+
+  return el('div', cls: 'profile', children: [
+    picker,
+    _name(ui, me),
     circle,
-    el('div', cls: 'grow', children: [
-      el('div', cls: 'small',
-          text: trip == null ? tr('Profilna fotografija') : tr('Profilna fotografija za ovo putovanje')),
-      el('label', cls: 'secondary profile-button', children: [
-        picker,
-        web.document.createTextNode(switch ((trip != null, own != null, photo != null)) {
-          (true, false, _) => tr('Dodaj za ovo putovanje'),
-          (_, _, true) => tr('Promijeni fotografiju'),
-          _ => tr('Dodaj fotografiju'),
-        }),
-      ]),
-      if (trip != null && own == null)
-        if (_undo?.trip.id == trip.id)
-          el('div', cls: 'photo-undo', children: [
-            button(
-              cls: 'text-button',
-              text: tr('Vrati natrag profilnu'),
-              onTap: () => _takeBack(ui),
-            ),
-            el('span', cls: 'photo-countdown', text: '${_undo!.left}'),
-          ])
-        else
-          el('div', cls: 'small', attrs: {'style': 'margin-top:6px'},
-              text: tr('Koristi se opća fotografija')),
-      if (own != null)
-        el('div', children: [
+    el('label', cls: 'secondary profile-button', attrs: {'for': pickerId}, children: [
+      web.document.createTextNode(switch ((trip != null, own != null, photo != null)) {
+        (true, false, _) => tr('Dodaj za ovo putovanje'),
+        (_, _, true) => tr('Promijeni fotografiju'),
+        _ => tr('Dodaj fotografiju'),
+      }),
+    ]),
+    if (trip != null && own == null)
+      if (_undo?.trip.id == trip.id)
+        el('div', cls: 'photo-undo', children: [
           button(
             cls: 'text-button',
-            text: trip == null ? tr('Makni fotografiju') : tr('Koristi opću fotografiju'),
-            onTap: () => trip == null ? replace(null) : _useGeneral(ui, trip, own),
+            text: tr('Vrati natrag profilnu'),
+            onTap: () => _takeBack(ui),
           ),
-        ]),
-    ]),
+          el('span', cls: 'photo-countdown', text: '${_undo!.left}'),
+        ])
+      else
+        el('div', cls: 'small', text: tr('Koristi se opća fotografija')),
+    if (trip != null && own != null)
+      button(
+        cls: 'text-button',
+        text: tr('Koristi opću fotografiju'),
+        onTap: () => _useGeneral(ui, trip, own),
+      ),
   ]);
 }
