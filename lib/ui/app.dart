@@ -135,6 +135,18 @@ class ViruljaApp {
         : '#/p/${place.tripId}');
   }
 
+  /// The on-screen arrow: from a trip's main screen it always leaves the trip,
+  /// wherever the person came from.
+  void _arrow() {
+    final place = _Place(web.window.location.hash);
+    if (place.tripId != null && place.section == null) {
+      _trail.clear();
+      _go('#/');
+    } else {
+      _back();
+    }
+  }
+
   /// A tap on a trip in a list. The tap is what lets the phone play sound, so
   /// the anthem starts here, not when the screen changes; moving around inside
   /// the trip later never restarts it.
@@ -199,7 +211,7 @@ class ViruljaApp {
   web.HTMLElement _backButton() => button(
         cls: 'round left',
         ariaLabel: 'Natrag',
-        onTap: _back,
+        onTap: _arrow,
         children: [icon('back')],
       );
 
