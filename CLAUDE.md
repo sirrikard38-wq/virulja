@@ -55,6 +55,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   goes through a gain node of an audio context, started inside the tap that opens the
   trip. Moving around inside a trip never restarts it. It plays on every entry unless the
   speaker is muted; muting is remembered.
+- The audio session is `ambient`: the anthem must not stop music or a video already playing
+  on the phone. So an iPhone on silent does not play it (`playback` would, but it stops
+  other sound).
 - The quiet level on a real iPhone is not tested yet.
 - Booking's API needs a partner contract. Airbnb has no public API and forbids scraping:
   do not build a scraper. Google Hotels data through SerpApi (250 free searches a month,

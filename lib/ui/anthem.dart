@@ -36,9 +36,10 @@ class AnthemPlayer {
   /// is called right inside the tap that opens a trip.
   void wake() {
     try {
-      // Without this an iPhone with its side switch on silent plays nothing.
+      // Plays along with whatever else the phone is playing instead of stopping
+      // it. The price: an iPhone on silent does not play the anthem.
       final session = web.window.navigator.getProperty<JSObject?>('audioSession'.toJS);
-      session?.setProperty('type'.toJS, 'playback'.toJS);
+      session?.setProperty('type'.toJS, 'ambient'.toJS);
       _context ??= web.AudioContext();
       if (_context!.state != 'running') _context!.resume();
     } on Object {
