@@ -14,6 +14,8 @@ import '../src/domain/wav.dart';
 class AnthemPlayer {
   /// Background level, well under the phone's own volume.
   static const double quiet = 0.28;
+  static const double _fadeIn = 1.5;
+  static const double _fadeOut = 5;
 
   /// Clips are small: one channel, enough quality for 10 seconds of music.
   static const int _clipRate = 22050;
@@ -48,7 +50,15 @@ class AnthemPlayer {
       final bytes = await wav.arrayBuffer().toDart;
       final sound = await context.decodeAudioData(bytes).toDart;
       final gain = context.createGain();
-      gain.gain.value = quiet;
+      // Rises gently, then a long fade to silence, so it never starts or stops
+      // abruptly.
+      final begin = context.currentTime;
+      final finish = begin + sound.duration;
+      gain.gain
+        ..setValueAtTime(0, begin)
+        ..linearRampToValueAtTime(quiet, begin + _fadeIn)
+        ..setValueAtTime(quiet, finish - _fadeOut)
+        ..linearRampToValueAtTime(0, finish);
       gain.connect(context.destination);
       final source = context.createBufferSource()
         ..buffer = sound

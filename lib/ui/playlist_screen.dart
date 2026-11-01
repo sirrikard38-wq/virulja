@@ -45,9 +45,6 @@ web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
     el('div', cls: 'small', text: 'Himna putovanja'),
     el('div', cls: 'title', text: title ?? 'Još nema himne',
         attrs: {'style': 'font-size:26px;overflow-wrap:anywhere'}),
-    el('p', cls: 'small', text: title == null
-        ? 'Učitajte pjesmu, a aplikacija će zadržati njezinih prvih 10 sekundi.'
-        : 'Prvih 10 s, tiho, kad otvorite putovanje'),
     el('div', cls: 'gap-top', attrs: {'style': 'display:flex;gap:8px'}, children: [
       if (title != null)
         button(
