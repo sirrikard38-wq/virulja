@@ -194,7 +194,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .badge { display: inline-block; padding: 1px 8px; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 700; }
 
 /* Tabs */
-.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 20px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.tabs { display: grid; grid-template-columns: repeat(4, auto); margin: 6px 20px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .tab { height: 44px; color: var(--soft); text-align: center; }
 .tab.on { color: var(--accent); font-weight: 700; border-bottom: 2px solid var(--accent); }
 

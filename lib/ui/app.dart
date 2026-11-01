@@ -91,7 +91,14 @@ class ViruljaApp {
   static const double _ringLength = 125.7;
 
   /// Sections that are a trip's main screen rather than a category.
-  static const Set<String?> _mainTabs = {null, 'plan', 'naputu', 'slike'};
+  static const Set<String?> _mainTabs = {
+    null,
+    'plan',
+    'naputu',
+    'slike',
+    'ankete',
+    'napad',
+  };
   static const Duration _redrawCheck = Duration(seconds: 2);
 
   /// True while a redraw would get in the way: someone is typing, a form is

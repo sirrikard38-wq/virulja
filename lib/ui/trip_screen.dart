@@ -6,7 +6,9 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import '../src/domain/attack.dart';
 import 'memories_screen.dart';
+import 'polls_section.dart';
 import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
@@ -70,9 +72,44 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
   ]);
 }
 
+/// What comes next, biggest first, then the rest in order.
+web.HTMLElement _attackTab(Trip trip) {
+  final items = planOfAttack(trip, DateTime.now());
+  String when(NextUp item) => [
+        weekdayAndDate(trip.dayAt(item.dayIndex)),
+        if (item.time.isNotEmpty) item.time,
+      ].join(' · ');
+  if (items.isEmpty) {
+    return el('p', cls: 'soft pad gap-top', text: 'Još nema ničega u planu.');
+  }
+  final first = items.first;
+  return el('div', children: [
+    el('div', cls: 'poll card', children: [
+      el('div', cls: 'small', text: when(first)),
+      el('div', cls: 'title', text: first.title),
+      if (first.detail != null) el('div', cls: 'label', text: first.detail),
+    ]),
+    for (final item in items.skip(1))
+      el('div', cls: 'row', children: [
+        el('div', cls: 'grow', children: [
+          el('div', cls: 'label', text: item.title),
+          el('div', cls: 'small', text: [
+            when(item),
+            if (item.detail != null) item.detail!,
+          ].join(' · ')),
+        ]),
+      ]),
+  ]);
+}
+
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final cover = trip.coverId;
-  const tabs = {'plan': 'Plan', 'slike': 'Uspomene'};
+  const tabs = {
+    'plan': 'Plan',
+    'slike': 'Uspomene',
+    'ankete': 'Ankete',
+    'napad': 'Plan napada',
+  };
   return el('div', children: [
     el('div', cls: 'hero', children: [
       if (cover != null)
@@ -109,6 +146,13 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
           onTap: () => ui.swap(ui.tripRoute(trip, entry.key)),
         ),
     ]),
-    if (tab == 'slike') galleryTab(ui, trip) else _planTab(ui, trip),
+    if (tab == 'slike')
+      galleryTab(ui, trip)
+    else if (tab == 'ankete')
+      pollsTab(ui, trip)
+    else if (tab == 'napad')
+      _attackTab(trip)
+    else
+      _planTab(ui, trip),
   ]);
 }

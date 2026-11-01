@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
+import 'package:virulja/src/domain/attack.dart';
 import 'package:virulja/src/domain/budget.dart';
 import 'package:virulja/src/domain/exif.dart';
 import 'package:virulja/src/domain/format.dart';
@@ -262,6 +263,30 @@ void main() {
       expect(factsFor(near, offers, 2).votes, 1);
       expect(factsFor(near, offers, 2).rating, 0);
     });
+  });
+
+  test('plan of attack skips what passed and shows the winning vote', () {
+    final trip = Trip(
+      id: 't',
+      country: 'Hrvatska',
+      city: 'Vis',
+      start: dayOf(2026, 7, 1),
+      end: dayOf(2026, 7, 3),
+      stops: [
+        Stop(id: 'a', dayIndex: 0, title: 'Kava', time: '08:00'),
+        Stop(id: 'b', dayIndex: 0, title: 'Brod', time: '12:00'),
+      ],
+      polls: [
+        Poll(id: 'p', title: 'Plaža', dayIndex: 0, active: true, options: [
+          PollOption(id: 'o0', time: '10:00', votes: {'x'}),
+          PollOption(id: 'o1', time: '11:00', votes: {'x', 'y'}),
+        ]),
+        Poll(id: 'q', title: 'Skriveno', options: [PollOption(id: 'o0', time: '09:00')]),
+      ],
+    );
+    final items = planOfAttack(trip, DateTime(2026, 7, 1, 9));
+    expect(items.map((item) => item.title), ['Plaža', 'Brod']);
+    expect(items.first.time, '11:00');
   });
 
   group('links', () {

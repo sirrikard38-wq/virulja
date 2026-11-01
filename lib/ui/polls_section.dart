@@ -24,17 +24,38 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
           ui.changed();
         }, on: option.votes.contains(me)),
     ]),
+    button(
+      cls: 'text-button',
+      text: poll.active ? 'Makni iz Plana napada' : 'Stavi u Plan napada',
+      onTap: () {
+        poll.active = !poll.active;
+        ui.changed();
+      },
+    ),
   ]);
 }
 
 /// Votes on when to do something: "Na plažu" at 10:00 or 11:30.
-web.HTMLElement pollsSection(Ui ui, Trip trip) => el('div', children: [
-      for (final poll in trip.polls) _pollCard(ui, trip, poll),
-    ]);
+web.HTMLElement pollsTab(Ui ui, Trip trip) {
+  final day = ui.routeDay.clamp(0, trip.dayCount - 1);
+  final polls = trip.polls.where((poll) => poll.dayIndex == day).toList();
+  return el('div', children: [
+    el('div', cls: 'chips', children: [
+      for (var i = 0; i < trip.dayCount; i++)
+        chip('Dan ${i + 1}', () {
+          ui.routeDay = i;
+          ui.rerender();
+        }, on: i == day),
+    ]),
+    if (polls.isEmpty) el('p', cls: 'soft pad', text: 'Za ovaj dan još nema anketa.'),
+    for (final poll in polls) _pollCard(ui, trip, poll),
+    _newPoll(ui, trip, day),
+  ]);
+}
 
 /// A new poll: the choices are times, price ranges or locations, as many as
 /// wanted; with none it is a plain yes or no.
-web.HTMLElement newPoll(Ui ui, Trip trip) {
+web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
   final title = input();
   final choices = <web.HTMLInputElement>[];
   final rows = el('div');
@@ -64,6 +85,7 @@ web.HTMLElement newPoll(Ui ui, Trip trip) {
     trip.polls.add(Poll(
       id: ui.store.newId(),
       title: title.value.trim(),
+      dayIndex: day,
       options: [
         for (var i = 0; i < chosen.length; i++)
           PollOption(id: 'o$i', time: chosen[i]),

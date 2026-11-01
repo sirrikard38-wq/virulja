@@ -71,21 +71,35 @@ class PollOption {
 
 /// A vote on when to do something.
 class Poll {
-  Poll({required this.id, required this.title, required this.options});
+  Poll({
+    required this.id,
+    required this.title,
+    required this.options,
+    this.dayIndex = 0,
+    this.active = false,
+  });
 
   factory Poll.fromJson(Json json) => Poll(
         id: json['id'] as String,
         title: json['title'] as String,
         options: _list(json['options'], PollOption.fromJson),
+        dayIndex: json['dayIndex'] as int? ?? 0,
+        active: json['active'] as bool? ?? false,
       );
 
   final String id;
   final String title;
   final List<PollOption> options;
+  int dayIndex;
+
+  /// Whether its result shows in the plan of attack.
+  bool active;
 
   Json toJson() => {
         'id': id,
         'title': title,
+        'dayIndex': dayIndex,
+        'active': active,
         'options': [for (final option in options) option.toJson()],
       };
 }
