@@ -109,6 +109,9 @@ class FirebaseSession {
     return _token!;
   }
 
+  /// This phone's sign-in id, once signed in.
+  String? get uid => _id;
+
   /// Forgets the token, so the next request gets a fresh one.
   void tokenRefused() {
     _token = null;

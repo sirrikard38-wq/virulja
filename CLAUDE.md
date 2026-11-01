@@ -68,8 +68,11 @@ on the phone. Realtime Database in europe-west1, used through its web interface 
 with anonymous sign-in. Rules are in `firebase/database.rules.json`; a change there must
 also be pasted into the Firebase console.
 
-- Whoever has a trip's secret id can open it: the invitation link is the key. `/trips` and
-  `/blobs/<trip>` cannot be listed. So a member cannot be thrown out of a trip.
+- Each trip has a 10-digit code in `/codes/<code>`; entering it once joins that device.
+  Nobody is added by hand. Changing the code keeps the members. Admins remove people and
+  name admins; `/banned/<trip>/<uid>` locks a removed person out. Names and phone numbers
+  are entered once per device and changed in Postavke. The WhatsApp button is one tap
+  (automatic sending needs the paid Business API). The anthem stays an uploaded file.
 - Each value is compared and sent separately (`TripMirror`), so people working at the same
   moment do not overwrite each other, and offline changes wait on the phone.
 - The open trip follows the database live through `EventSource`; others are read when the

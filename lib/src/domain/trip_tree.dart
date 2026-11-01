@@ -3,12 +3,15 @@ import 'tree.dart';
 
 /// A trip as it arrives from the cloud, with the names of its group.
 class CloudTrip {
-  const CloudTrip(this.trip, this.names);
+  const CloudTrip(this.trip, this.names, [this.phones = const {}]);
 
   final Trip trip;
 
   /// Person id -> name.
   final Map<String, String> names;
+
+  /// Person id -> mobile number.
+  final Map<String, String> phones;
 }
 
 Json _withoutId(Json json) => Map.of(json)..remove('id');
@@ -17,7 +20,29 @@ Map<String, bool> _set(Iterable<String> ids) => {for (final id in ids) id: true}
 
 /// The shape a trip has in the cloud. Lists become maps keyed by id, so that
 /// adding to a list on two phones at once keeps both.
-Tree tripToTree(Trip trip, String Function(String id) nameOf) => {
+Tree tripToTree(
+  Trip trip,
+  String Function(String id) nameOf, [
+  String? Function(String id)? phoneOf,
+]) =>
+    {
+      'code': trip.code,
+      'admins': _set(trip.adminIds),
+      // The database rules read this to let admins lock someone out.
+      'adminUids': _set([
+        for (final id in trip.adminIds)
+          if (trip.uids[id] != null) trip.uids[id]!,
+      ]),
+      'polls': {
+        for (final poll in trip.polls)
+          poll.id: {
+            'title': poll.title,
+            'options': {
+              for (final option in poll.options)
+                option.id: {'time': option.time, 'votes': _set(option.votes)},
+            },
+          },
+      },
       'country': trip.country,
       'city': trip.city,
       'start': dayKey(trip.start),
@@ -29,7 +54,12 @@ Tree tripToTree(Trip trip, String Function(String id) nameOf) => {
       'drive': trip.drive.toJson(),
       'people': {
         for (var i = 0; i < trip.memberIds.length; i++)
-          trip.memberIds[i]: {'name': nameOf(trip.memberIds[i]), 'order': i},
+          trip.memberIds[i]: {
+            'name': nameOf(trip.memberIds[i]),
+            'order': i,
+            'phone': phoneOf?.call(trip.memberIds[i]),
+            'uid': trip.uids[trip.memberIds[i]],
+          },
       },
       'offers': {
         for (final offer in trip.offers)
@@ -109,6 +139,24 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       start: parseDay(tree['start'] as String),
       end: parseDay(tree['end'] as String),
       memberIds: order,
+      code: tree['code'] as String?,
+      adminIds: _keys(tree['admins'])..sort(),
+      uids: {
+        for (final person in order)
+          if ((people[person] as Map)['uid'] != null)
+            person: (people[person] as Map)['uid'] as String,
+      },
+      polls: _items(tree, 'polls', (json) {
+        final options = _items(
+            json,
+            'options',
+            (option) => PollOption.fromJson(
+                {...option, 'votes': _keys(option['votes'])}));
+        return Poll(
+            id: json['id'] as String,
+            title: json['title'] as String,
+            options: options);
+      }),
       coverId: tree['coverId'] as String?,
       chosenOfferId: tree['chosenOfferId'] as String?,
       anthemTitle: tree['anthemTitle'] as String?,
@@ -135,6 +183,10 @@ CloudTrip? tripFromTree(String id, Tree tree) {
     return CloudTrip(trip, {
       for (final person in order)
         person: (people[person] as Map)['name'] as String? ?? 'Netko',
+    }, {
+      for (final person in order)
+        if ((people[person] as Map)['phone'] != null)
+          person: (people[person] as Map)['phone'] as String,
     });
   } on Object {
     return null;

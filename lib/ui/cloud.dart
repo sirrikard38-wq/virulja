@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
@@ -89,7 +90,54 @@ class CloudSync {
 
   String _nameOf(String id) => _data.personById(id)?.name ?? 'Netko';
 
-  Flat _flat(Trip trip) => flatten(tripToTree(trip, _nameOf));
+  Flat _flat(Trip trip) => flatten(
+      tripToTree(trip, _nameOf, (id) => _data.personById(id)?.phone));
+
+  String _meIn(Trip trip) => _data.identities[trip.id] ?? _data.meId!;
+
+  /// Ten random digits.
+  String newCode() {
+    final random = Random.secure();
+    return [for (var i = 0; i < 10; i++) random.nextInt(10)].join();
+  }
+
+  /// Gives a trip what sharing needs: a code, an admin, and this phone's id.
+  Future<void> _prepare(Trip trip) async {
+    await _session.token();
+    final me = _meIn(trip);
+    trip.code ??= newCode();
+    if (trip.adminIds.isEmpty) trip.adminIds = [me];
+    final uid = _session.uid;
+    if (uid != null) trip.uids[me] = uid;
+  }
+
+  /// A new code for [trip]; the old one stops working, members stay.
+  Future<void> changeCode(Trip trip) async {
+    final old = trip.code;
+    trip.code = newCode();
+    _store.save();
+    if (old != null) {
+      await _send('DELETE', 'codes/$old');
+    }
+    await _push();
+  }
+
+  /// Removes someone from the trip and locks them out of it.
+  Future<void> removeMember(Trip trip, String personId) async {
+    final uid = trip.uids[personId];
+    if (uid != null) await _send('PUT', 'banned/${trip.id}/$uid', json: true);
+    trip.memberIds.remove(personId);
+    trip.adminIds.remove(personId);
+    trip.uids.remove(personId);
+    _store.save();
+    await _push();
+  }
+
+  /// The trip behind a code. Null when no trip has that code.
+  Future<({CloudTrip trip, Tree tree})?> findTrip(String code) async {
+    final id = jsonDecode((await _send('GET', 'codes/$code')).body);
+    return id is String ? fetchTrip(id) : null;
+  }
 
   Future<Uri> _address(String path) async =>
       Uri.parse('${_config.databaseUrl}/$path.json')
@@ -136,8 +184,14 @@ class CloudSync {
   Future<void> _refresh() async {
     try {
       for (final trip in _data.trips.toList()) {
-        final reply = await _send('GET', 'trips/${trip.id}');
-        _receive(trip, 'put', '/', jsonDecode(reply.body));
+        // Asked with a fresh token, a refusal can only mean a locked door.
+        _session.tokenRefused();
+        final reply = await _http.send('GET', await _address('trips/${trip.id}'));
+        if (reply.status == 401) {
+          _forget(trip);
+        } else if (reply.ok) {
+          _receive(trip, 'put', '/', jsonDecode(reply.body));
+        }
       }
       reachable = true;
     } on Object {
@@ -162,12 +216,20 @@ class CloudSync {
     _pushing = true;
     try {
       for (final trip in _data.trips.toList()) {
+        await _prepare(trip);
         final mirror = _store.mirrorOf(trip.id);
         final pending = mirror.pending(_flat(trip));
-        if (pending.isEmpty) continue;
-        await _send('PATCH', 'trips/${trip.id}', json: pending);
-        mirror.confirm(pending);
-        _store.save();
+        if (pending.isNotEmpty) {
+          await _send('PATCH', 'trips/${trip.id}', json: pending);
+          mirror.confirm(pending);
+          _store.save();
+        }
+        final codeMark = 'code:${trip.code}';
+        if (!mirror.uploaded.contains(codeMark)) {
+          await _send('PUT', 'codes/${trip.code}', json: trip.id);
+          mirror.uploaded.add(codeMark);
+          _store.save();
+        }
       }
       await _uploadBlobs();
       reachable = true;
@@ -198,8 +260,21 @@ class CloudSync {
     if (sameFlat(before, merged)) return;
     final cloud = tripFromTree(trip.id, unflatten(merged));
     if (cloud == null) return;
+    if (!cloud.trip.memberIds.contains(_meIn(trip))) {
+      _forget(trip);
+      return;
+    }
     trip.copyFrom(cloud.trip);
     _learnNames(cloud.names);
+    cloud.phones.forEach((id, phone) => _data.personById(id)?.phone = phone);
+    onChange?.call();
+  }
+
+  /// An admin has removed this person: the trip leaves this phone.
+  void _forget(Trip trip) {
+    _data.trips.remove(trip);
+    _store.forgetMirror(trip.id);
+    _store.save();
     onChange?.call();
   }
 
@@ -287,15 +362,12 @@ class CloudSync {
     return cloud == null ? null : (trip: cloud, tree: tree.cast<String, dynamic>());
   }
 
-  /// Puts an invited trip on this phone. [claimedId] is the name on the list that
-  /// the person says is theirs; without it, they join as themselves.
-  void join(({CloudTrip trip, Tree tree}) invited, {String? claimedId}) {
+  /// Puts a trip on this phone: the right code is all it takes to be in it.
+  void join(({CloudTrip trip, Tree tree}) invited) {
     final trip = invited.trip.trip;
     _learnNames(invited.trip.names);
     _store.mirrorOf(trip.id).server = flatten(invited.tree);
-    if (claimedId != null) {
-      _data.identities[trip.id] = claimedId;
-    } else if (!trip.memberIds.contains(_data.meId)) {
+    if (!trip.memberIds.contains(_data.meId)) {
       trip.memberIds.add(_data.meId!);
     }
     _data.trips.add(trip);
@@ -341,6 +413,7 @@ class CloudSync {
       _session.tokenRefused();
       _closeStream();
       _reopenLater();
+      if (event.type == 'cancel') _refresh(); // the rules no longer let us in
     }
 
     listen('put');

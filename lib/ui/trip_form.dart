@@ -4,20 +4,72 @@ import '../src/domain/countries.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'join_screen.dart';
 import 'media.dart';
+import 'range_picker.dart';
 import 'widgets.dart';
+
+/// The group of a trip: nobody is added by hand, people appear when they enter
+/// the code. Admins can remove people and make others admins.
+web.HTMLElement _members(Ui ui, Trip trip) {
+  final amAdmin = trip.adminIds.contains(ui.meIn(trip));
+  return el('div', children: [
+    sectionTitle('Šifra putovanja'),
+    el('div', cls: 'row', children: [
+      el('div', cls: 'grow title', text: trip.code ?? 'Priprema se...'),
+    ]),
+    el('div', cls: 'two', children: [
+      secondaryButton('Pošalji na WhatsApp', () => sendCodeOnWhatsApp(trip)),
+      secondaryButton('Kopiraj', () => copyCode(ui, trip)),
+    ]),
+    el('div', cls: 'pad gap-top', children: [
+      button(cls: 'text-button', text: 'Promijeni šifru', onTap: () async {
+        if (!web.window.confirm('Promijeniti šifru? Članovi ostaju na putovanju.')) {
+          return;
+        }
+        try {
+          await ui.cloud?.changeCode(trip);
+        } on Object {
+          ui.toast('Nema veze. Pokušaj ponovno.');
+        }
+        ui.rerender();
+      }),
+    ]),
+    sectionTitle('Grupa'),
+    for (final id in trip.memberIds)
+      el('div', cls: 'row', children: [
+        avatar(ui.nameOf(id)),
+        el('div', cls: 'grow', children: [
+          el('div', text: ui.nameOf(id)),
+          el('div', cls: 'small', text: [
+            if (trip.adminIds.contains(id)) 'admin',
+            if (ui.data.personById(id)?.phone?.isNotEmpty ?? false)
+              ui.data.personById(id)!.phone!,
+          ].join(' · ')),
+        ]),
+        if (amAdmin && !trip.adminIds.contains(id))
+          chip('Daj admina', () {
+            trip.adminIds.add(id);
+            ui.changed();
+          }),
+        if (amAdmin && id != ui.meIn(trip))
+          removeButton(ui.nameOf(id), () async {
+            try {
+              await ui.cloud?.removeMember(trip, id);
+            } on Object {
+              ui.toast('Nema veze. Pokušaj ponovno.');
+            }
+            ui.rerender();
+          }),
+      ]),
+  ]);
+}
 
 /// Makes a new trip, or changes [trip] when there is one.
 web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
-  final country = input(
-    value: trip?.country ?? 'Hrvatska',
-    list: 'drzave',
-    placeholder: 'Hrvatska',
-  );
-  final city = input(value: trip?.city ?? '', placeholder: 'Vis');
-  final start = input(type: 'date', value: trip == null ? '' : dayKey(trip.start));
-  final end = input(type: 'date', value: trip == null ? '' : dayKey(trip.end));
-  final newPerson = input(placeholder: 'Ime');
+  final country = input(value: trip?.country ?? 'Hrvatska', list: 'drzave');
+  final city = input(value: trip?.city ?? '');
+  final dates = RangePicker(start: trip?.start, end: trip?.end);
   final error = errorLine();
   final cover = el('input', cls: 'file', attrs: {
     'type': 'file',
@@ -28,53 +80,17 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     if (pickedFiles(cover).isNotEmpty) coverName.textContent = 'Fotografija odabrana';
   });
 
-  final boxes = <String, web.HTMLInputElement>{
-    for (final person in ui.data.people)
-      person.id: checkInput(
-        checked: trip == null
-            ? person.id == ui.meId
-            : trip.memberIds.contains(person.id),
-      ),
-  };
-  final people = el('div', cls: 'checks', children: [
-    for (final person in ui.data.people)
-      checkbox(person.name, boxes[person.id]!),
-  ]);
-
-  void addPerson() {
-    final name = newPerson.value.trim();
-    if (name.isEmpty) return;
-    final person = Person(id: ui.store.newId(), name: name);
-    ui.data.people.add(person);
-    final box = checkInput(checked: true);
-    boxes[person.id] = box;
-    people.appendChild(checkbox(person.name, box));
-    newPerson.value = '';
-    ui.store.save();
-  }
-
   Future<void> save() async {
-    final from = start.value, to = end.value;
+    final from = dates.start, to = dates.end;
     final message = city.value.trim().isEmpty
         ? 'Upiši grad.'
         : country.value.trim().isEmpty
             ? 'Upiši državu.'
-            : from.isEmpty || to.isEmpty
-                ? 'Odaberi datume putovanja.'
-                : parseDay(to).isBefore(parseDay(from))
-                    ? 'Povratak ne može biti prije polaska.'
-                    : null;
+            : from == null || to == null
+                ? 'Odaberi polazak i povratak u kalendaru.'
+                : null;
     if (message != null) {
       error.textContent = message;
-      return;
-    }
-    addPerson();
-    final members = [
-      for (final person in ui.data.people)
-        if (boxes[person.id]?.checked ?? false) person.id,
-    ];
-    if (members.isEmpty) {
-      error.textContent = 'U grupi mora biti barem jedna osoba.';
       return;
     }
     final saved = trip ??
@@ -82,16 +98,16 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
           id: ui.store.newSecretId(),
           country: country.value.trim(),
           city: city.value.trim(),
-          start: parseDay(from),
-          end: parseDay(to),
-          memberIds: members,
+          start: from!,
+          end: to!,
+          memberIds: [ui.meId],
+          adminIds: [ui.meId],
         );
     saved
       ..country = country.value.trim()
       ..city = city.value.trim()
-      ..start = parseDay(from)
-      ..end = parseDay(to)
-      ..memberIds = members;
+      ..start = from!
+      ..end = to!;
     final files = pickedFiles(cover);
     if (files.isNotEmpty) {
       final id = ui.store.newId();
@@ -136,18 +152,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     ]),
     field('Država', country),
     field('Grad', city),
-    el('div', cls: 'fields', children: [
-      field('Polazak', start, tight: true),
-      field('Povratak', end, tight: true),
-    ]),
-    el('p', cls: 'label pad gap-top', text: 'Tko ide?'),
-    people,
-    el('div', cls: 'fields', children: [
-      field('Dodaj osobu', newPerson, tight: true),
-      el('div', attrs: {'style': 'align-self:end'}, children: [
-        secondaryButton('Dodaj', addPerson),
-      ]),
-    ]),
+    dates.element,
     el('p', cls: 'label pad gap-top', text: 'Fotografija za razglednicu'),
     el('label', cls: 'secondary wide', attrs: {'style': 'margin-top:6px'}, children: [
       cover,
@@ -155,6 +160,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     ]),
     error,
     primaryButton(trip == null ? 'Napravi putovanje' : 'Spremi', save),
+    if (trip != null && ui.cloud != null) _members(ui, trip),
     if (trip != null)
       el('div', cls: 'pad gap-top', children: [
         button(

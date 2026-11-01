@@ -36,15 +36,58 @@ DateTime parseDay(String key) {
 }
 
 class Person {
-  Person({required this.id, required this.name});
+  Person({required this.id, required this.name, this.phone});
 
-  factory Person.fromJson(Json json) =>
-      Person(id: json['id'] as String, name: json['name'] as String);
+  factory Person.fromJson(Json json) => Person(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        phone: json['phone'] as String?,
+      );
 
   final String id;
   String name;
+  String? phone;
 
-  Json toJson() => {'id': id, 'name': name};
+  Json toJson() => {'id': id, 'name': name, 'phone': phone};
+}
+
+/// One time people can vote for.
+class PollOption {
+  PollOption({required this.id, required this.time, Set<String>? votes})
+      : votes = votes ?? {};
+
+  factory PollOption.fromJson(Json json) => PollOption(
+        id: json['id'] as String,
+        time: json['time'] as String,
+        votes: _strings(json['votes']).toSet(),
+      );
+
+  final String id;
+  final String time;
+  Set<String> votes;
+
+  Json toJson() => {'id': id, 'time': time, 'votes': votes.toList()};
+}
+
+/// A vote on when to do something.
+class Poll {
+  Poll({required this.id, required this.title, required this.options});
+
+  factory Poll.fromJson(Json json) => Poll(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        options: _list(json['options'], PollOption.fromJson),
+      );
+
+  final String id;
+  final String title;
+  final List<PollOption> options;
+
+  Json toJson() => {
+        'id': id,
+        'title': title,
+        'options': [for (final option in options) option.toJson()],
+      };
 }
 
 /// A place to stay the group is comparing.
@@ -503,6 +546,10 @@ class Trip {
     this.chosenOfferId,
     this.anthemTitle,
     this.anthemClipId,
+    this.code,
+    List<String>? adminIds,
+    Map<String, String>? uids,
+    List<Poll>? polls,
     List<Offer>? offers,
     List<Place>? places,
     List<Dish>? dishes,
@@ -512,7 +559,10 @@ class Trip {
     List<Payment>? payments,
     List<Photo>? photos,
     List<Song>? songs,
-  })  : offers = offers ?? [],
+  })  : adminIds = adminIds ?? [],
+        uids = uids ?? {},
+        polls = polls ?? [],
+        offers = offers ?? [],
         places = places ?? [],
         dishes = dishes ?? [],
         stops = stops ?? [],
@@ -533,6 +583,11 @@ class Trip {
         chosenOfferId: json['chosenOfferId'] as String?,
         anthemTitle: json['anthemTitle'] as String?,
         anthemClipId: json['anthemClipId'] as String?,
+        code: json['code'] as String?,
+        adminIds: _strings(json['adminIds']),
+        uids: (json['uids'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>(),
+        polls: _list(json['polls'], Poll.fromJson),
         offers: _list(json['offers'], Offer.fromJson),
         places: _list(json['places'], Place.fromJson),
         dishes: _list(json['dishes'], Dish.fromJson),
@@ -562,6 +617,16 @@ class Trip {
   /// The song that opens the trip, and its stored first 10 seconds.
   String? anthemTitle;
   String? anthemClipId;
+
+  /// The 10 digits that let someone into the trip.
+  String? code;
+
+  /// Who can remove people and make others admins.
+  List<String> adminIds;
+
+  /// Person id -> their sign-in id, needed to lock someone out.
+  Map<String, String> uids;
+  List<Poll> polls;
 
   List<Offer> offers;
   List<Place> places;
@@ -608,6 +673,10 @@ class Trip {
     chosenOfferId = other.chosenOfferId;
     anthemTitle = other.anthemTitle;
     anthemClipId = other.anthemClipId;
+    code = other.code;
+    adminIds = other.adminIds;
+    uids = other.uids;
+    polls = other.polls;
     offers = other.offers;
     places = other.places;
     dishes = other.dishes;
@@ -630,6 +699,10 @@ class Trip {
         'chosenOfferId': chosenOfferId,
         'anthemTitle': anthemTitle,
         'anthemClipId': anthemClipId,
+        'code': code,
+        'adminIds': adminIds,
+        'uids': uids,
+        'polls': [for (final item in polls) item.toJson()],
         'offers': [for (final item in offers) item.toJson()],
         'places': [for (final item in places) item.toJson()],
         'dishes': [for (final item in dishes) item.toJson()],

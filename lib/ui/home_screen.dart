@@ -5,6 +5,7 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'join_screen.dart';
 import 'widgets.dart';
 
 web.HTMLElement _brand() => el('div', cls: 'brand', children: [
@@ -14,15 +15,16 @@ web.HTMLElement _brand() => el('div', cls: 'brand', children: [
 
 /// The first visit: the app only needs to know who is holding the phone.
 web.HTMLElement _welcome(Ui ui) {
-  final name = input(placeholder: 'Ana');
+  final name = input();
+  final phone = input(type: 'tel');
   final error = errorLine();
   void start() {
     final text = name.value.trim();
-    if (text.isEmpty) {
-      error.textContent = 'Upiši svoje ime.';
+    if (text.isEmpty || phone.value.trim().isEmpty) {
+      error.textContent = 'Upiši ime i broj mobitela.';
       return;
     }
-    final me = Person(id: ui.store.newId(), name: text);
+    final me = Person(id: ui.store.newId(), name: text, phone: phone.value.trim());
     ui.data.people.add(me);
     ui.data.meId = me.id;
     ui.changed();
@@ -35,6 +37,7 @@ web.HTMLElement _welcome(Ui ui) {
       el('p', cls: 'soft gap-top', text: 'Vaša putovanja, od plana do uspomena.'),
     ]),
     field('Kako se zoveš?', name),
+    field('Broj mobitela', phone),
     error,
     primaryButton('Kreni', start),
   ]);
@@ -134,6 +137,10 @@ web.HTMLElement homeScreen(Ui ui) {
         web.document.createTextNode('Novo putovanje'),
       ],
     ),
+    if (ui.cloud != null) ...[
+      sectionTitle('Imaš šifru putovanja?'),
+      codeField(ui),
+    ],
   ]);
 }
 

@@ -14,7 +14,6 @@ import 'group_screen.dart';
 import 'home_screen.dart';
 import 'icons.dart';
 import 'install.dart';
-import 'join_screen.dart';
 import 'memories_screen.dart';
 import 'playlist_screen.dart';
 import 'route_screen.dart';
@@ -34,14 +33,12 @@ class _Place {
       section = parts.length > 2 ? parts[2] : null;
       photoId = parts.length > 3 ? parts[3] : null;
     }
-    if (page == 'pridruzi' && parts.length > 1) inviteId = parts[1];
   }
 
   late final String page;
   String? tripId;
   String? section;
   String? photoId;
-  String? inviteId;
 }
 
 /// Mounts the app and redraws the current screen after every change.
@@ -218,7 +215,7 @@ class ViruljaApp {
     return el('nav', cls: 'nav', children: [
       item('#/', 'compass', 'Putovanja', page != 'uspomene' && page != 'grupa'),
       item('#/uspomene', 'photo', 'Uspomene', page == 'uspomene'),
-      item('#/grupa', 'group', 'Grupa', page == 'grupa'),
+      item('#/grupa', 'group', 'Postavke', page == 'grupa'),
     ]);
   }
 
@@ -269,17 +266,9 @@ class ViruljaApp {
     _cloud?.watch(trip?.id);
     _ring = null;
 
-    final invite = place.inviteId;
-    if (invite != null && _data.tripById(invite) != null) {
-      web.window.location.replace('#/p/$invite');
-      return;
-    }
-
     final web.HTMLElement page;
     if (trip != null) {
       page = _tripPage(trip, place);
-    } else if (invite != null && _data.meId != null) {
-      page = joinScreen(_ui, invite);
     } else if (place.page == 'novo' && _data.meId != null) {
       page = tripForm(_ui);
     } else if (place.page == 'grupa' && _data.meId != null) {
@@ -292,7 +281,7 @@ class ViruljaApp {
 
     final isPhoto = place.section == 'foto';
     final isForm = place.page == 'novo' || place.section == 'uredi';
-    final hasMenu = !isPhoto && !isForm && invite == null && _data.meId != null;
+    final hasMenu = !isPhoto && !isForm && _data.meId != null;
     final hasBack = trip != null || place.page == 'novo';
     final frameClass = isPhoto
         ? 'frame with-composer'

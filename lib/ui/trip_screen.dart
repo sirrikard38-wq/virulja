@@ -6,8 +6,8 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
-import 'join_screen.dart';
 import 'memories_screen.dart';
+import 'polls_section.dart';
 import 'widgets.dart';
 
 /// The tab a trip opens on: what matters at this moment.
@@ -72,10 +72,10 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
     if (ui.cloud != null)
       button(
         cls: 'secondary wide',
-        onTap: () => shareInvite(ui, trip),
+        onTap: () => ui.go(ui.tripRoute(trip, 'uredi')),
         children: [
           icon('group', size: 20),
-          web.document.createTextNode('Pozovi u grupu'),
+          web.document.createTextNode('Grupa i šifra'),
         ],
       ),
     el('div', cls: 'pad gap-top', children: [
@@ -105,6 +105,7 @@ web.HTMLElement _onTheRoadTab(Ui ui, Trip trip) {
         el('div', cls: 'label', text: stop.time),
         el('div', cls: 'grow', text: stop.title),
       ]),
+    pollsSection(ui, trip),
     el('div', cls: 'two', children: [
       secondaryButton('Dodaj fotografije', () => ui.go(ui.tripRoute(trip, 'slike'))),
       secondaryButton('Dodaj trošak', () => ui.go(ui.tripRoute(trip, 'troskovi'))),

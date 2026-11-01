@@ -4,16 +4,30 @@
     ".write": false,
     "trips": {
       "$trip": {
-        ".read": "auth != null && $trip.length >= 16",
-        ".write": "auth != null && $trip.length >= 16"
+        ".read": "auth != null && $trip.length >= 16 && !root.child('banned').child($trip).child(auth.uid).exists()",
+        ".write": "auth != null && $trip.length >= 16 && !root.child('banned').child($trip).child(auth.uid).exists()"
       }
     },
     "blobs": {
       "$trip": {
         "$blob": {
-          ".read": "auth != null && $trip.length >= 16",
-          ".write": "auth != null && $trip.length >= 16",
+          ".read": "auth != null && $trip.length >= 16 && !root.child('banned').child($trip).child(auth.uid).exists()",
+          ".write": "auth != null && $trip.length >= 16 && !root.child('banned').child($trip).child(auth.uid).exists()",
           ".validate": "newData.isString() && newData.val().length <= 3000000"
+        }
+      }
+    },
+    "codes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && $code.length == 10",
+        ".validate": "newData.isString() && newData.val().length >= 16"
+      }
+    },
+    "banned": {
+      "$trip": {
+        "$uid": {
+          ".write": "auth != null && root.child('trips').child($trip).child('adminUids').child(auth.uid).exists()"
         }
       }
     }
