@@ -225,46 +225,52 @@ void main() {
       expect(parts.values.reduce((a, b) => a + b), 1000);
     });
 
-    test('balances add up to zero', () {
-      final trip = visTrip()
-        ..expenses.add(spent(10000, 'ana', ['ana', 'marko', 'iva']))
-        ..expenses.add(spent(2999, 'marko', ['marko', 'iva']));
-      final result = balances(trip);
-      expect(result.values.reduce((a, b) => a + b), 0);
-      expect(result['ana'], 6666);
+    List<String> owed(Trip trip) =>
+        debts(trip).map((t) => '${t.fromId}>${t.toId}:${t.amount}').toList();
+
+    test('one person paying leaves two debts to them', () {
+      final trip = visTrip()..expenses.add(spent(9000, 'ana', ['ana', 'marko', 'iva']));
+      expect(owed(trip), ['marko>ana:3000', 'iva>ana:3000']);
     });
 
-    test('one person paying leaves two payments to them', () {
-      final trip = visTrip()..expenses.add(spent(9000, 'ana', ['ana', 'marko', 'iva']));
-      final transfers = settle(balances(trip));
-      expect(transfers.map((t) => '${t.fromId}>${t.toId}:${t.amount}'),
-          ['marko>ana:3000', 'iva>ana:3000']);
+    test('shows every pair that owes something', () {
+      final trip = visTrip()
+        ..memberIds = ['a', 'b', 'c', 'd']
+        ..expenses.add(spent(4000, 'a', ['a', 'b', 'c', 'd']))
+        ..expenses.add(spent(2000, 'b', ['a', 'b', 'c', 'd']));
+      expect(owed(trip), ['b>a:500', 'c>a:1000', 'c>b:500', 'd>a:1000', 'd>b:500']);
+    });
+
+    test('what two people owe each other cancels out', () {
+      final trip = visTrip()
+        ..expenses.add(spent(2000, 'ana', ['ana', 'marko']))
+        ..expenses.add(spent(2000, 'marko', ['ana', 'marko']));
+      expect(owed(trip), isEmpty);
     });
 
     test('a payment that was made is no longer owed', () {
       final trip = visTrip()
         ..expenses.add(spent(9000, 'ana', ['ana', 'marko', 'iva']))
         ..payments.add(Payment(fromId: 'marko', toId: 'ana', amount: 3000));
-      final transfers = settle(balances(trip));
-      expect(transfers.single.fromId, 'iva');
+      expect(owed(trip), ['iva>ana:3000']);
     });
 
-    test('settling really clears every balance', () {
+    test('paying every debt clears them all', () {
       final trip = visTrip()
         ..memberIds = ['a', 'b', 'c', 'd', 'e']
         ..expenses.add(spent(12345, 'a', ['a', 'b', 'c', 'd', 'e']))
         ..expenses.add(spent(777, 'b', ['b', 'c']))
         ..expenses.add(spent(5001, 'd', ['a', 'd', 'e']));
-      final left = balances(trip);
-      for (final transfer in settle(left)) {
-        left[transfer.fromId] = left[transfer.fromId]! + transfer.amount;
-        left[transfer.toId] = left[transfer.toId]! - transfer.amount;
+      expect(owed(trip), isNotEmpty);
+      for (final debt in debts(trip)) {
+        trip.payments
+            .add(Payment(fromId: debt.fromId, toId: debt.toId, amount: debt.amount));
       }
-      expect(left.values, everyElement(0));
+      expect(debts(trip), isEmpty);
     });
 
     test('nothing spent means nothing to settle', () {
-      expect(settle(balances(visTrip())), isEmpty);
+      expect(debts(visTrip()), isEmpty);
     });
   });
 

@@ -1,6 +1,6 @@
 import 'models.dart';
 
-/// One payment that evens out the group.
+/// What one person owes another.
 class Transfer {
   const Transfer({required this.fromId, required this.toId, required this.amount});
 
@@ -20,49 +20,28 @@ Map<String, int> splitEqually(int amount, List<String> sharers) {
   };
 }
 
-/// What each person is owed (positive) or owes (negative), after all expenses
-/// and all payments so far. The numbers always add up to zero.
-Map<String, int> balances(Trip trip) {
-  final result = {for (final id in trip.memberIds) id: 0};
-  void add(String id, int amount) => result[id] = (result[id] ?? 0) + amount;
+/// Everything anyone owes anyone, each pair once: what their expenses and payments
+/// leave between the two of them. Debts in both directions cancel out.
+List<Transfer> debts(Trip trip) {
+  final owes = <String, Map<String, int>>{};
+  void add(String from, String to, int amount) {
+    (owes[from] ??= {}).update(to, (sum) => sum + amount, ifAbsent: () => amount);
+    (owes[to] ??= {}).update(from, (sum) => sum - amount, ifAbsent: () => -amount);
+  }
 
   for (final expense in trip.expenses) {
-    add(expense.payerId, expense.amount);
-    splitEqually(expense.amount, expense.sharedBy)
-        .forEach((id, share) => add(id, -share));
+    splitEqually(expense.amount, expense.sharedBy).forEach((id, share) {
+      if (id != expense.payerId) add(id, expense.payerId, share);
+    });
   }
   for (final payment in trip.payments) {
-    add(payment.fromId, payment.amount);
-    add(payment.toId, -payment.amount);
+    add(payment.toId, payment.fromId, payment.amount);
   }
-  return result;
-}
-
-/// The few payments that bring every balance to zero: the one who owes the most
-/// pays the one who is owed the most, until nobody owes anything.
-List<Transfer> settle(Map<String, int> balances) {
-  final order = balances.keys.toList();
-  final left = Map.of(balances);
-  final transfers = <Transfer>[];
-
-  String? largest(bool Function(int) wanted) {
-    String? best;
-    for (final id in order) {
-      if (!wanted(left[id]!)) continue;
-      if (best == null || left[id]!.abs() > left[best]!.abs()) best = id;
-    }
-    return best;
-  }
-
-  while (true) {
-    final debtor = largest((amount) => amount < 0);
-    final creditor = largest((amount) => amount > 0);
-    if (debtor == null || creditor == null) return transfers;
-    final amount = (-left[debtor]!) < left[creditor]!
-        ? -left[debtor]!
-        : left[creditor]!;
-    transfers.add(Transfer(fromId: debtor, toId: creditor, amount: amount));
-    left[debtor] = left[debtor]! + amount;
-    left[creditor] = left[creditor]! - amount;
-  }
+  final people = {...trip.memberIds, ...owes.keys};
+  return [
+    for (final from in people)
+      for (final to in people)
+        if ((owes[from]?[to] ?? 0) > 0)
+          Transfer(fromId: from, toId: to, amount: owes[from]![to]!),
+  ];
 }

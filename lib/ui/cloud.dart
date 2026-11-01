@@ -159,12 +159,11 @@ class CloudSync {
         .join();
   }
 
-  /// Gives a trip what sharing needs: a code, an admin, and this phone's id.
+  /// Gives a trip what sharing needs: a code and this phone's id.
   Future<void> _prepare(Trip trip) async {
     await _session.token();
     final me = _meIn(trip);
     trip.code ??= newCode();
-    if (trip.adminIds.isEmpty) trip.adminIds = [me];
     final uid = _session.uid;
     if (uid != null) trip.uids[me] = uid;
   }
@@ -177,17 +176,6 @@ class CloudSync {
     if (old != null) {
       await _send('DELETE', 'codes/$old');
     }
-    await _push();
-  }
-
-  /// Removes someone from the trip and locks them out of it.
-  Future<void> removeMember(Trip trip, String personId) async {
-    final uid = trip.uids[personId];
-    if (uid != null) await _send('PUT', 'banned/${trip.id}/$uid', json: true);
-    trip.memberIds.remove(personId);
-    trip.adminIds.remove(personId);
-    trip.uids.remove(personId);
-    _store.save();
     await _push();
   }
 
@@ -257,20 +245,14 @@ class CloudSync {
     _store.save();
   }
 
-  /// Takes out whoever has enough votes. Only an admin may lock them out as well;
-  /// without that they can still ask to come back, and the group decides again.
+  /// Takes out whoever has enough votes. They can still ask to come back, and the
+  /// group decides again.
   void _kickVotedOut(Trip trip) {
     for (final person in trip.kickVotes.keys.toList()) {
       if (!trip.memberIds.contains(person)) {
         trip.kickVotes.remove(person);
       } else if (trip.kickVotesAgainst(person) >= trip.kickVotesNeeded) {
-        final uid = trip.uids[person];
-        if (uid != null) {
-          _send('PUT', 'banned/${trip.id}/$uid', json: true).catchError(
-              (Object _) => const HttpReply(0, ''));
-        }
         trip.memberIds.remove(person);
-        trip.adminIds.remove(person);
         trip.uids.remove(person);
         trip.kickVotes.remove(person);
       }
@@ -418,7 +400,7 @@ class CloudSync {
     onChange?.call();
   }
 
-  /// An admin has removed this person: the trip leaves this phone.
+  /// This person is no longer in the group: the trip leaves this phone.
   void _forget(Trip trip) {
     _data.trips.remove(trip);
     _store.forgetMirror(trip.id);

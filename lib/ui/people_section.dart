@@ -6,33 +6,6 @@ import 'context.dart';
 import 'dom.dart';
 import 'widgets.dart';
 
-/// Asks first: only that person can give it up again.
-void _giveAdmin(Ui ui, Trip trip, String id) {
-  if (web.window.confirm(tr('Dati admina: {0}?', [ui.nameOf(id)]))) {
-    trip.adminIds.add(id);
-    ui.changed();
-  }
-}
-
-/// Being an admin can only be given up by that person, and a trip must keep one.
-void _stepDown(Ui ui, Trip trip, String me) {
-  if (trip.adminIds.length == 1) {
-    ui.toast(tr('Prvo daj admina nekome drugome.'));
-  } else if (web.window.confirm(tr('Maknuti admina sa sebe?'))) {
-    trip.adminIds.remove(me);
-    ui.changed();
-  }
-}
-
-Future<void> _removeMember(Ui ui, Trip trip, String id) async {
-  try {
-    await ui.cloud?.removeMember(trip, id);
-  } on Object {
-    ui.toast(tr('Nema veze. Pokušaj ponovno.'));
-  }
-  ui.rerender();
-}
-
 /// A vote to put [id] out of the group; a second tap takes the vote back.
 void _voteToKick(Ui ui, Trip trip, String id) {
   final me = ui.meIn(trip);
@@ -63,23 +36,16 @@ web.HTMLElement kickCard(Ui ui, Trip trip, String id) {
   ]);
 }
 
-/// One person of the group, the same wherever the group is shown. An admin can
-/// make others admins and remove people who are not admins; admins cannot touch
-/// each other, only step down themselves.
+/// One person of the group, the same wherever the group is shown. Everyone has
+/// the same rights: anyone can vote anyone else out.
 web.HTMLElement memberRow(Ui ui, Trip trip, String id) {
   final me = ui.meIn(trip);
-  final amAdmin = trip.adminIds.contains(me);
-  final isAdmin = trip.adminIds.contains(id);
-  final canGive = amAdmin && !isAdmin;
   final phone = ui.data.personById(id)?.phone;
   return el('div', cls: 'row', children: [
     personAvatar(ui, trip, id),
     el('div', cls: 'grow', children: [
       el('div', text: ui.nameOf(id)),
-      el('div', cls: 'small', text: [
-        if (isAdmin) tr('admin'),
-        if (phone != null && phone.isNotEmpty) phone,
-      ].join(' · ')),
+      if (phone != null && phone.isNotEmpty) el('div', cls: 'small', text: phone),
       if (id != me)
         el('div', attrs: {'style': 'margin-top:6px'}, children: [
           chip(
@@ -88,13 +54,6 @@ web.HTMLElement memberRow(Ui ui, Trip trip, String id) {
             on: trip.kickVotes[id]?.contains(me) ?? false,
           ),
         ]),
-    ])
-      ..onClick.listen((_) {
-        if (canGive) _giveAdmin(ui, trip, id);
-      }),
-    if (canGive) chip(tr('Daj admina'), () => _giveAdmin(ui, trip, id)),
-    if (id == me && isAdmin) chip(tr('Makni admina'), () => _stepDown(ui, trip, me)),
-    if (canGive)
-      removeButton(ui.nameOf(id), () => _removeMember(ui, trip, id)),
+    ]),
   ]);
 }

@@ -722,7 +722,6 @@ class Trip {
     this.anthemTitle,
     this.anthemClipId,
     this.code,
-    List<String>? adminIds,
     Map<String, String>? uids,
     List<Poll>? polls,
     List<Offer>? offers,
@@ -739,8 +738,7 @@ class Trip {
     List<Payment>? payments,
     List<Photo>? photos,
     List<Song>? songs,
-  })  : adminIds = adminIds ?? [],
-        uids = uids ?? {},
+  })  : uids = uids ?? {},
         polls = polls ?? [],
         offers = offers ?? [],
         places = places ?? [],
@@ -769,7 +767,6 @@ class Trip {
         anthemTitle: json['anthemTitle'] as String?,
         anthemClipId: json['anthemClipId'] as String?,
         code: json['code'] as String?,
-        adminIds: _strings(json['adminIds']),
         uids: (json['uids'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
         polls: _list(json['polls'], Poll.fromJson),
@@ -813,10 +810,7 @@ class Trip {
   /// The 10 digits that let someone into the trip.
   String? code;
 
-  /// Who can remove people and make others admins.
-  List<String> adminIds;
-
-  /// Person id -> their sign-in id, needed to lock someone out.
+  /// Person id -> their sign-in id, which tells whose phone is whose.
   Map<String, String> uids;
   List<Poll> polls;
 
@@ -850,8 +844,8 @@ class Trip {
   /// group, so someone alone on a trip decides alone.
   int get approvalsNeeded => min(2, memberIds.length);
 
-  /// At least half of everyone except the person in question.
-  int get kickVotesNeeded => memberIds.length ~/ 2;
+  /// Half of the whole group, rounded down; never none, or old votes would count.
+  int get kickVotesNeeded => max(1, memberIds.length ~/ 2);
 
   /// The votes against [person] that count: those of members, not their own.
   int kickVotesAgainst(String person) => (kickVotes[person] ?? const <String>{})
@@ -887,7 +881,6 @@ class Trip {
     anthemTitle = other.anthemTitle;
     anthemClipId = other.anthemClipId;
     code = other.code;
-    adminIds = other.adminIds;
     uids = other.uids;
     polls = other.polls;
     offers = other.offers;
@@ -918,7 +911,6 @@ class Trip {
         'anthemTitle': anthemTitle,
         'anthemClipId': anthemClipId,
         'code': code,
-        'adminIds': adminIds,
         'uids': uids,
         'polls': [for (final item in polls) item.toJson()],
         'offers': [for (final item in offers) item.toJson()],

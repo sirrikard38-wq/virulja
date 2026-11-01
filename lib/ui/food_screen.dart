@@ -266,9 +266,17 @@ List<_Tab> _inOrder(List<_Tab> tabs, List<String> order) {
 const Duration _holdTime = Duration(milliseconds: 380);
 const double _holdWander = 8;
 
+/// Where the row of categories stays after a drop, instead of going to the chosen
+/// category.
+double? _rowKept;
+
 /// A long press picks a category up, the others wobble as icons do on a phone,
-/// and it goes where the finger drops it. [save] gets the new order.
-void _reorderOnHold(web.HTMLElement row, void Function(List<String> keys) save) {
+/// and it goes where the finger drops it. The green goes with it, as it is the
+/// one being worked on. [save] gets the new order and the one that moved.
+void _reorderOnHold(
+  web.HTMLElement row,
+  void Function(List<String> keys, String moved) save,
+) {
   Timer? hold;
   web.HTMLElement? held;
   var lifted = false;
@@ -311,7 +319,7 @@ void _reorderOnHold(web.HTMLElement row, void Function(List<String> keys) save) 
     save([
       for (var i = 0; i < chips.length; i++)
         (chips.item(i) as web.Element).getAttribute('data-tab')!,
-    ]);
+    ], chip.getAttribute('data-tab')!);
   }
 
   row.addEventListener('touchstart', ((web.TouchEvent event) {
@@ -326,6 +334,8 @@ void _reorderOnHold(web.HTMLElement row, void Function(List<String> keys) save) 
     hold?.cancel();
     hold = Timer(_holdTime, () {
       lifted = true;
+      row.querySelector('.chip.on')?.classList.remove('on');
+      chip.classList.add('on');
       chip.classList.add('lifted');
       row.classList.add('arranging');
       try {
@@ -469,9 +479,11 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
         children: [icon(ui.addingKind ? 'minus' : 'plus', size: 18)],
       ),
   ]);
-  _reorderOnHold(chipRow, (keys) {
+  _reorderOnHold(chipRow, (keys, moved) {
     ui.data.kindOrder[trip.id] = keys;
     ui.store.save();
+    _rowKept = chipRow.scrollLeft.toDouble();
+    choose(tabs.firstWhere((item) => item.key == moved));
     ui.rerender();
   });
   final page = el('div', cls: 'swipe-area', children: [
@@ -494,7 +506,9 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   scheduleMicrotask(() {
     final row = _chipRow, chosen = _chosenChip;
     if (row == null || chosen == null || row.classList.contains('gliding')) return;
-    row.scrollLeft = ui.addingKind ? row.scrollWidth : _centredLeft(row, chosen);
+    row.scrollLeft =
+        _rowKept ?? (ui.addingKind ? row.scrollWidth : _centredLeft(row, chosen));
+    _rowKept = null;
   });
   return page;
 }

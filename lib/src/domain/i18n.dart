@@ -36,7 +36,6 @@ List<String>? translationsOf(String text) => _texts[text];
 const Map<String, List<String>> _texts = {
   // Who and what
   'Netko': ['Someone', 'Biri'],
-  'admin': ['admin', 'yönetici'],
   'Jezik': ['Language', 'Dil'],
   'Natrag': ['Back', 'Geri'],
   'Putovanja': ['Trips', 'Geziler'],
@@ -260,11 +259,6 @@ const Map<String, List<String>> _texts = {
   'Pošalji komentar': ['Send comment', 'Yorumu gönder'],
 
   // People
-  'Dati admina: {0}?': ['Make {0} an admin?', '{0} yönetici yapılsın mı?'],
-  'Prvo daj admina nekome drugome.': ['First make someone else an admin.', 'Önce başka birini yönetici yap.'],
-  'Maknuti admina sa sebe?': ['Stop being an admin?', 'Yöneticilikten çıkılsın mı?'],
-  'Daj admina': ['Make admin', 'Yönetici yap'],
-  'Makni admina': ['Stop being admin', 'Yöneticilikten çık'],
 
   'Glasati za izbacivanje: {0}?': ['Vote to remove {0}?', '{0} için çıkarma oyu verilsin mi?'],
   'Glasanje za izbacivanje: {0}': ['Vote to remove: {0}', 'Çıkarma oylaması: {0}'],

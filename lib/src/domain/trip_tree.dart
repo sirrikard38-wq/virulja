@@ -36,12 +36,6 @@ Tree tripToTree(
 ]) =>
     {
       'code': trip.code,
-      'admins': _set(trip.adminIds),
-      // The database rules read this to let admins lock someone out.
-      'adminUids': _set([
-        for (final id in trip.adminIds)
-          if (trip.uids[id] != null) trip.uids[id]!,
-      ]),
       'polls': {
         for (final poll in trip.polls)
           poll.id: {
@@ -183,7 +177,6 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       end: parseDay(tree['end'] as String),
       memberIds: order,
       code: tree['code'] as String?,
-      adminIds: _keys(tree['admins'])..sort(),
       uids: {
         for (final person in order)
           if ((people[person] as Map)['uid'] != null)

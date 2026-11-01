@@ -77,9 +77,17 @@ void main() {
   });
 
   group('voting someone out', () {
-    test('takes half of everyone else, rounded up', () {
+    test('takes half of the whole group, rounded down', () {
       expect([2, 3, 4, 5, 6].map((n) => _trip([for (var i = 0; i < n; i++) 'p$i']).kickVotesNeeded),
           [1, 1, 2, 2, 3]);
+    });
+
+    test('old votes cannot put out the last person', () {
+      final trip = _trip(['a'])
+        ..kickVotes = {
+          'a': {'gone'},
+        };
+      expect(trip.kickVotesAgainst('a') >= trip.kickVotesNeeded, isFalse);
     });
 
     test('counts only other members', () {

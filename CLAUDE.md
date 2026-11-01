@@ -84,9 +84,11 @@ also be pasted into the Firebase console.
 - Each trip has a code of 10 mixed characters (older trips: 10 digits) in `/codes/<code>`; entering it once joins that device.
   Nobody is added by hand: two members must accept a newcomer, or the only member if alone
   (`JoinRequest`, kept inside the trip, so no rule change). This is checked by the app, not
-  by the database: the code stays the real lock. Half of everyone else can vote a person out (`kickVotes`); only an admin's phone can also
-  lock them out, so someone voted out may ask to come back. Changing the code keeps the members. Admins remove people and
-  name admins; `/banned/<trip>/<uid>` locks a removed person out. Names and phone numbers
+  by the database: the code stays the real lock. Everyone on a trip has the same rights;
+  there are no admins. Half of the whole group, rounded down, can vote a person out
+  (`kickVotes`), and they may ask to come back, so the group decides again. Changing the
+  code keeps the members. `/banned/<trip>/<uid>` and its rule are left from when admins
+  could lock someone out; nothing writes there now. Names and phone numbers
   are entered once per device and changed in Postavke. The WhatsApp button is one tap
   (automatic sending needs the paid Business API). The anthem stays an uploaded file.
 - Each value is compared and sent separately (`TripMirror`), so people working at the same

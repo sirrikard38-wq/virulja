@@ -100,7 +100,7 @@ web.HTMLElement _transferRow(Ui ui, Trip trip, Transfer transfer) => el(
 
 web.HTMLElement costsScreen(Ui ui, Trip trip) {
   final budget = Budget.of(trip);
-  final transfers = settle(balances(trip));
+  final transfers = debts(trip);
   final recent = trip.expenses.reversed.take(20);
   return el('div', children: [
     topBar(tr('Troškovi')),

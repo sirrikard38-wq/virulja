@@ -78,7 +78,6 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
           start: from!,
           end: to!,
           memberIds: [ui.meId],
-          adminIds: [ui.meId],
         );
     saved
       ..country = country.value.trim()
