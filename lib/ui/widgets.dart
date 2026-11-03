@@ -74,6 +74,20 @@ web.HTMLInputElement checkInput({bool checked = false}) =>
 web.HTMLElement chip(String label, void Function() onTap, {bool on = false}) =>
     button(onTap: onTap, text: label, cls: on ? 'chip on' : 'chip');
 
+/// A grey box and grey words; ticked, the words and the tick turn green.
+web.HTMLElement tick(String label, bool on, void Function() onTap, {bool locked = false}) =>
+    button(
+      cls: ['tick', if (on) 'on', if (locked) 'locked'].join(' '),
+      onTap: locked ? () {} : onTap,
+      children: [
+        el('span', cls: 'tick-box', children: [icon('check', size: 18)]),
+        el('span', text: label),
+      ],
+    )
+      ..setAttribute('role', 'checkbox')
+      ..setAttribute('aria-checked', '$on')
+      ..setAttribute('aria-disabled', '$locked');
+
 /// A folded-away form with a plus in its title.
 web.HTMLElement adder(String title, List<web.Node> children) => el(
       'details',
@@ -119,6 +133,23 @@ web.HTMLElement linkIcon(String address, String label) => el(
         'aria-label': label,
       },
       children: [icon('link', size: 20)],
+    );
+
+/// Takes [item] out of [list] at once, with a moment to take that back.
+web.HTMLElement removeWithUndo<T>(Ui ui, List<T> list, T item, String what) => button(
+      cls: 'icon-button',
+      ariaLabel: tr('Ukloni: {0}', [what]),
+      onTap: () {
+        final at = list.indexOf(item);
+        if (at < 0) return;
+        list.removeAt(at);
+        ui.changed();
+        ui.offerUndo(tr('Uklonjeno: {0}', [what]), () {
+          list.insert(min(at, list.length), item);
+          ui.changed();
+        });
+      },
+      children: [icon('close', size: 20)],
     );
 
 web.HTMLElement removeButton(String what, void Function() onConfirmed) => button(

@@ -14,6 +14,7 @@ const Map<String, List<String>> _icons = {
   'minus': ['M5 12h14'],
   'plus': ['M12 5v14', 'M5 12h14'],
   'close': ['M6 6l12 12', 'M18 6L6 18'],
+  'check': ['M5 12.5l4.5 4.5L19 7.5'],
   'send': ['M5 12h14', 'M13 6l6 6-6 6'],
   'compass': ['M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M15.5 8.5l-2 5-5 2 2-5z'],
   'photo': [

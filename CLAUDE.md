@@ -61,6 +61,17 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   dishes are only in their own category of that row, named Hrana. The sum at the bottom of
   the screen is that of the open category alone, counting what is in the plan.
 - First version also has: drive calculation, actual costs, who owes whom, voting.
+- The group agrees when at least half picks the same, and both when there are two
+  (`Trip.votesToAgree`). A poll the group votes through goes into Plan napada by itself; the
+  "Plan napada" box in Ankete and the button in Hrana i piće put things there by hand. A
+  place and the yes or no poll about it are one thing in Plan napada (`placeInAttack`).
+  Polls have no day any more: people pick days on each thing in Plan napada, and the chips
+  Sve, Dan 1, Dan 2 show what is agreed for a day (`agreedDays`); a stop also keeps its own day.
+- In Troškovi, something in Plan napada with a price is planned until its agreed day is over,
+  then spent, unless a real cost of the same name was written down. A paid debt stays in the
+  list, green, where it stood.
+- Removing a food place, a dish, a cost or something in Plan napada, and settling a debt, are
+  undone within 5 seconds instead of asking first. Other remove buttons still ask.
 - The postcard has a round seal with no background, as the user asked, so its ink follows
   the photo: dark on a bright corner, light with a shadow otherwise (`lib/src/domain/seal.dart`).
 
@@ -132,8 +143,14 @@ Dart here does not trust the certificate of Apple's push service.
 Instant sending would need a server, so `.github/workflows/events.yml` runs
 `tool/remind.dart --events` every 5 minutes, which GitHub often stretches: news arrives
 late, not at once. It compares each trip with `/push/_robot/<trip>` and tells the group
-about new polls, Plan napada items, and each person about reactions and comments on
-their photos and comments (`lib/src/domain/trip_events.dart`).
+about new polls, Plan napada items, votes and days agreed, new photos (one message per
+person), people coming and going, and each person about reactions and comments on
+their photos and comments (`lib/src/domain/trip_events.dart`, `newsFor`).
+
+Each kind (`Notice`) can be turned off for every trip in Postavke (`/push/<uid>/off`) or for
+one trip in its settings (`/push/<uid>/trips/<trip>/off`); the phone keeps the choice in
+`AppData.noticesOff` and `tripNoticesOff` and sends it with its address. A kind added later
+needs a new `newsVersion` mark, or the first run would send the whole past of every trip.
 
 ## Not done yet
 

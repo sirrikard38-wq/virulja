@@ -45,10 +45,7 @@ web.HTMLElement groupScreen(Ui ui) {
       if (cloud.reachable)
         el('p', cls: 'small pad gap-top', text: tr('Putovanja se dijele s grupom.')),
     ],
-    if (cloud?.pushKey != null) ...[
-      sectionTitle(tr('Obavijesti')),
-      notificationsSection(ui),
-    ],
+    if (cloud?.pushKey != null) notificationsSection(ui),
     sectionTitle(tr('Izgled')),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
       for (final theme in ThemeChoice.values)

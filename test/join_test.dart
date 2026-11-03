@@ -110,7 +110,8 @@ void main() {
       });
       final copy = Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json);
       expect(copy.kickVotes['c'], {'a'});
-      final event = tripEvents(trip, const {'c': 'Mate'}).single;
+      final event = tripEvents(trip, const {'c': 'Mate'})
+          .singleWhere((event) => event.notice == Notice.leaves);
       expect(event.text, 'Glasanje za izbacivanje: Mate');
       expect(event.from, 'c');
     });
@@ -139,7 +140,8 @@ void main() {
     test('the group hears about a request', () {
       final trip = _trip(['a', 'b'])
         ..requests = [JoinRequest(id: 'uid1', name: 'Mate')];
-      final event = tripEvents(trip, const {}).single;
+      final event = tripEvents(trip, const {})
+          .singleWhere((event) => event.key.startsWith('request:'));
       expect(event.text, 'Mate želi na putovanje');
       expect(event.to, isNull);
       expect(event.from, isNull);

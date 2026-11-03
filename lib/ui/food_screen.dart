@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/attack.dart';
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
@@ -31,7 +32,7 @@ String _placeFacts(Place place) => [
 web.HTMLElement _voteChip(Ui ui, Trip trip, String name) {
   bool same(Poll poll) => poll.single && poll.title == name;
   final polled = trip.polls.any(same);
-  return chip(polled ? tr('U anketi') : tr('Glasaj'), () {
+  return chip(polled ? tr('Anketa') : tr('Glasaj'), () {
     polled ? trip.polls.removeWhere(same) : addYesNoPoll(ui, trip, name);
     ui.changed();
   }, on: polled);
@@ -39,23 +40,21 @@ web.HTMLElement _voteChip(Ui ui, Trip trip, String name) {
 
 web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
   final link = place.link;
+  final inAttack = placeInAttack(trip, place);
   return el('div', cls: 'row', children: [
     el('div', cls: 'grow', children: [
       el('div', cls: 'label', text: place.name),
       el('div', cls: 'small', text: _placeFacts(place)),
       el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
-        chip(place.planned ? tr('U planu') : tr('Dodaj u plan'), () {
-          place.planned = !place.planned;
+        chip(tr('Plan napada'), () {
+          setPlaceInAttack(trip, place, !inAttack, ui.meIn(trip));
           ui.changed();
-        }, on: place.planned),
+        }, on: inAttack),
         _voteChip(ui, trip, place.name),
       ]),
     ]),
     if (link != null) linkIcon(link, tr('Otvori {0}', [place.name])),
-    removeButton(place.name, () {
-      trip.places.remove(place);
-      ui.changed();
-    }),
+    removeWithUndo(ui, trip.places, place, place.name),
   ]);
 }
 
@@ -123,10 +122,7 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
     ]),
     el('div', cls: 'price', text: euros(dish.price * dish.servings)),
     _voteChip(ui, trip, dish.name),
-    removeButton(dish.name, () {
-      trip.dishes.remove(dish);
-      ui.changed();
-    }),
+    removeWithUndo(ui, trip.dishes, dish, dish.name),
   ]);
 }
 

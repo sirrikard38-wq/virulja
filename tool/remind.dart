@@ -122,21 +122,16 @@ Future<void> main(List<String> args) async {
           final device = devices[uid] as Map;
           if (!((device['trips'] as Map?) ?? const {}).containsKey(id)) continue;
           language = _languageOf(device);
-          for (final event in tripEvents(trip, cloud.names)) {
-            if (told.contains(event.key)) continue;
-            final isSender = event.from != null && trip.uids[event.from] == uid;
-            final isForThem = event.to == null || trip.uids[event.to] == uid;
-            if (!isSender && isForThem) {
-              (inbox[uid] ??= []).add({
-                'title': trip.city,
-                'body': event.text,
-                'route': '#/p/$id/${event.route}',
-              });
-            }
+          for (final news in newsFor(uid as String, id, trip, cloud.names, told, device)) {
+            (inbox[uid] ??= []).add({
+              'title': trip.city,
+              'body': news.body,
+              'route': '#/p/$id/${news.route}',
+            });
           }
         }
       }
-      final keys = jsonEncode([for (final event in found) event.key]);
+      final keys = jsonEncode([newsVersion, for (final event in found) event.key]);
       if (keys != known) {
         await _call('PUT', address('push/$_seenKey/$id'),
             headers: {'Content-Type': 'application/json'},
@@ -155,13 +150,14 @@ Future<void> main(List<String> args) async {
       if (events) ...?inbox[entry.key],
       if (!testing && !events)
         for (final trip in trips.entries)
-          if (reminderText(parseDay((trip.value as Map)['start'] as String), now)
-              case final text?)
-            {
-              'title': (trip.value as Map)['city'],
-              'body': text,
-              'route': '#/p/${trip.key}',
-            },
+          if (wantsNotice(device, trip.key as String, Notice.reminders))
+            if (reminderText(parseDay((trip.value as Map)['start'] as String), now)
+                case final text?)
+              {
+                'title': (trip.value as Map)['city'],
+                'body': text,
+                'route': '#/p/${trip.key}',
+              },
     ];
     for (final message in messages) {
       final status = await _send(device, message, privateKey);

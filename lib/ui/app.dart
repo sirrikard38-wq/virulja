@@ -104,7 +104,7 @@ class ViruljaApp {
 
   /// Ring length of the speaker: the circumference of its circle.
   static const double _ringLength = 125.7;
-  static const Duration _undoTime = Duration(seconds: 3);
+  static const Duration _undoTime = Duration(seconds: 5);
 
   /// Sections that are a trip's main screen rather than a category.
   static const Set<String?> _mainTabs = {

@@ -8,6 +8,10 @@
   --on-accent: #F7F5F0;
   --line: #CFCBC0;
   --danger: #9A2F1F;
+  --bar: #3B4128;
+  --on-bar: #F2F0E8;
+  --bar-action: #D6DDB0;
+  --settled: #DCE3C4;
   --display: 'Cormorant Garamond', Georgia, serif;
   --body: 'Karla', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --logo: 'Bodoni Moda', Georgia, serif;
@@ -27,11 +31,19 @@
     --on-accent: #171914;
     --line: #3A3D32;
     --danger: #E59A86;
+    --bar: #2E3324;
+    --on-bar: #E8E5DB;
+    --bar-action: #B7C08C;
+    --settled: #2C3322;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
+  --bar: #2E3324;
+  --on-bar: #E8E5DB;
+  --bar-action: #B7C08C;
+  --settled: #2C3322;
   --bg: #171914;
   --card: #23261E;
   --ink: #E8E5DB;
@@ -400,8 +412,10 @@ details.adder .wide { width: 100%; }
   transform: translateX(-50%);
   max-width: calc(100% - 40px);
   padding: 10px 14px;
-  background: var(--ink);
-  color: var(--bg);
+  border-radius: 10px;
+  background: var(--bar);
+  color: var(--on-bar);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
   font-size: 14px;
   opacity: 0;
   pointer-events: none;
@@ -456,15 +470,39 @@ details.adder .wide { width: 100%; }
   gap: 12px;
   padding: 2px 4px 2px 14px;
   border-radius: 10px;
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--bar);
+  color: var(--on-bar);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
   font-size: 14px;
   opacity: 0;
   pointer-events: none;
   transition: opacity .2s;
 }
 .undo-bar.show { opacity: 1; pointer-events: auto; }
-.undo-bar button { min-height: 44px; padding: 0 12px; font-weight: 700; }
+.undo-bar button { min-height: 44px; padding: 0 12px; font-weight: 700; color: var(--bar-action); }
+
+/* A box to tick: grey, and green once ticked; the box itself stays grey. */
+.tick { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--soft); font-size: 15px; font-weight: 600; text-align: left; }
+.tick-box { flex: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--soft); border-radius: 6px; }
+.tick-box .icon { visibility: hidden; color: var(--accent); stroke-width: 3; }
+.tick.on { color: var(--accent); }
+.tick.on .tick-box .icon { visibility: visible; }
+.tick.locked { opacity: .45; }
+.ticks { display: flex; flex-direction: column; align-items: flex-start; padding: 0 20px; }
+.ticks .tick { width: 100%; }
+
+/* A day enough of the group can go. */
+.chip.agreed:not(.on) { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.attack-card { display: flex; gap: 8px; }
+
+/* A debt that was paid stays in the list, green. */
+.row.settled { margin: 6px 20px 0; padding: 8px 10px; border: 0; border-radius: 10px; background: var(--settled); }
+
+/* A heading that folds a list open. */
+.fold { display: flex; align-items: center; justify-content: space-between; width: calc(100% - 40px); margin: 0 20px; text-align: left; }
+.fold .section { padding-left: 0; padding-right: 0; }
+.fold .icon { color: var(--accent); transition: transform 160ms ease; }
+.fold.open .icon { transform: rotate(45deg); }
 
 .past { opacity: 0.45; }
 

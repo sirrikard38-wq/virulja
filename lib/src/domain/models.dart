@@ -74,6 +74,20 @@ Map<int, Set<String>> dayVotesFrom(Object? raw) {
   return days;
 }
 
+/// Day votes as the cloud keeps them: each person a key of their own, so that
+/// two people voting at once both count.
+Json dayVotesToJson(Map<int, Set<String>> votes) => {
+      for (final entry in votes.entries)
+        'd${entry.key}': {for (final person in entry.value) person: true},
+    };
+
+/// Adds [person] to those who can go on [day], or takes them off.
+void toggleDayVote(Map<int, Set<String>> votes, int day, String person) {
+  final people = votes[day] ??= {};
+  if (!people.remove(person)) people.add(person);
+  if (people.isEmpty) votes.remove(day);
+}
+
 /// One time people can vote for.
 class PollOption {
   PollOption({required this.id, required this.time, Set<String>? votes})
@@ -121,6 +135,9 @@ class Poll {
   final String id;
   final String title;
   final List<PollOption> options;
+
+  /// The day a poll was made for in older versions, or -1: now the group picks
+  /// days in Plan napada.
   int dayIndex;
 
   /// Whether its result shows in the plan of attack.
@@ -133,22 +150,8 @@ class Poll {
   /// Who put it in the plan of attack.
   String? activeBy;
 
-  /// For a place from Hrana i piće: the days people can go.
+  /// The days people can go, once it is in Plan napada.
   Map<int, Set<String>> dayVotes;
-
-  /// The day with the most people, the earliest of equals, or else its own day.
-  int get plannedDay {
-    var best = dayIndex;
-    var most = 0;
-    for (final day in dayVotes.keys.toList()..sort()) {
-      final people = dayVotes[day]!.length;
-      if (people > most) {
-        best = day;
-        most = people;
-      }
-    }
-    return best;
-  }
 
   Json toJson() => {
         'id': id,
@@ -260,8 +263,10 @@ class Place {
     this.note,
     this.link,
     this.planned = false,
+    this.plannedBy,
     this.customKindId,
-  });
+    Map<int, Set<String>>? dayVotes,
+  }) : dayVotes = dayVotes ?? {};
 
   factory Place.fromJson(Json json) => Place(
         id: json['id'] as String,
@@ -275,6 +280,8 @@ class Place {
         note: json['note'] as String?,
         link: json['link'] as String?,
         planned: json['planned'] as bool? ?? false,
+        plannedBy: json['plannedBy'] as String?,
+        dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
@@ -293,7 +300,13 @@ class Place {
   int? priceHigh;
   String? note;
   String? link;
+
+  /// Whether it is in Plan napada, and who put it there.
   bool planned;
+  String? plannedBy;
+
+  /// The days people can go.
+  Map<int, Set<String>> dayVotes;
 
   Json toJson() => {
         'id': id,
@@ -307,6 +320,8 @@ class Place {
         'note': note,
         'link': link,
         'planned': planned,
+        'plannedBy': plannedBy,
+        'dayVotes': dayVotesToJson(dayVotes),
       };
 }
 
@@ -353,7 +368,8 @@ class Stop {
     this.cost = 0,
     this.addedBy,
     this.hiddenInAttack = false,
-  });
+    Map<int, Set<String>>? dayVotes,
+  }) : dayVotes = dayVotes ?? {};
 
   factory Stop.fromJson(Json json) => Stop(
         id: json['id'] as String,
@@ -363,6 +379,7 @@ class Stop {
         cost: json['cost'] as int? ?? 0,
         addedBy: json['addedBy'] as String?,
         hiddenInAttack: json['hiddenInAttack'] as bool? ?? false,
+        dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
@@ -377,6 +394,9 @@ class Stop {
   /// Taken out of the plan of attack; it stays on the day plan.
   bool hiddenInAttack;
 
+  /// Other days people can go, besides [dayIndex].
+  Map<int, Set<String>> dayVotes;
+
   Json toJson() => {
         'id': id,
         'dayIndex': dayIndex,
@@ -385,6 +405,7 @@ class Stop {
         'cost': cost,
         'addedBy': addedBy,
         'hiddenInAttack': hiddenInAttack ? true : null,
+        'dayVotes': dayVotesToJson(dayVotes),
       };
 }
 
@@ -751,6 +772,7 @@ class Trip {
     List<CustomKind>? customKinds,
     Map<String, Set<String>>? kickVotes,
     Map<String, String>? memberPhotos,
+    Map<String, String>? gone,
     Drive? drive,
     List<Expense>? expenses,
     List<Payment>? payments,
@@ -767,6 +789,7 @@ class Trip {
         customKinds = customKinds ?? [],
         kickVotes = kickVotes ?? {},
         memberPhotos = memberPhotos ?? {},
+        gone = gone ?? {},
         drive = drive ?? Drive(),
         expenses = expenses ?? [],
         payments = payments ?? [],
@@ -799,6 +822,7 @@ class Trip {
             .map((person, voters) => MapEntry(person, _strings(voters).toSet())),
         memberPhotos: (json['memberPhotos'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
+        gone: (json['gone'] as Json? ?? const <String, dynamic>{}).cast<String, String>(),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -845,6 +869,9 @@ class Trip {
 
   /// Person -> the profile photo they use on this trip.
   Map<String, String> memberPhotos;
+
+  /// Person -> name, for those voted out of the group.
+  Map<String, String> gone;
   Drive drive;
   List<Expense> expenses;
   List<Payment> payments;
@@ -864,6 +891,13 @@ class Trip {
 
   /// Half of the whole group, rounded down; never none, or old votes would count.
   int get kickVotesNeeded => max(1, memberIds.length ~/ 2);
+
+  /// How many must pick the same answer or day for the group to agree: at least
+  /// half, both of two, and never none.
+  int get votesToAgree => max(1, max((memberIds.length + 1) ~/ 2, min(2, memberIds.length)));
+
+  /// Those of [people] who are in the group.
+  int membersAmong(Set<String> people) => people.where(memberIds.contains).length;
 
   /// The votes against [person] that count: those of members, not their own.
   int kickVotesAgainst(String person) => (kickVotes[person] ?? const <String>{})
@@ -910,6 +944,7 @@ class Trip {
     customKinds = other.customKinds;
     kickVotes = other.kickVotes;
     memberPhotos = other.memberPhotos;
+    gone = other.gone;
     drive = other.drive;
     expenses = other.expenses;
     payments = other.payments;
@@ -942,6 +977,7 @@ class Trip {
           for (final entry in kickVotes.entries) entry.key: entry.value.toList(),
         },
         'memberPhotos': memberPhotos,
+        'gone': gone,
         'drive': drive.toJson(),
         'expenses': [for (final item in expenses) item.toJson()],
         'payments': [for (final item in payments) item.toJson()],
@@ -1013,7 +1049,11 @@ class AppData {
     Map<String, List<String>>? kindOrder,
     Map<String, String>? tripPhotos,
     this.chosenLanguage = Language.hr,
-  })  : kindOrder = kindOrder ?? {},
+    Set<String>? noticesOff,
+    Map<String, Set<String>>? tripNoticesOff,
+  })  : noticesOff = noticesOff ?? {},
+        tripNoticesOff = tripNoticesOff ?? {},
+        kindOrder = kindOrder ?? {},
         tripPhotos = tripPhotos ?? {},
         people = people ?? [],
         trips = trips ?? [],
@@ -1034,6 +1074,9 @@ class AppData {
             .map((trip, order) => MapEntry(trip, _strings(order))),
         chosenLanguage:
             Language.values.asNameMap()[json['language']] ?? Language.hr,
+        noticesOff: _strings(json['noticesOff']).toSet(),
+        tripNoticesOff: (json['tripNoticesOff'] as Json? ?? const <String, dynamic>{})
+            .map((trip, kinds) => MapEntry(trip, _strings(kinds).toSet())),
         theme: ThemeChoice.values
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
         anthemMuted: json['anthemMuted'] as bool? ?? false,
@@ -1064,6 +1107,12 @@ class AppData {
 
   Language chosenLanguage;
 
+  /// The kinds of notification this phone does not want from any trip.
+  Set<String> noticesOff;
+
+  /// Trip id -> the kinds it does not want from that trip.
+  Map<String, Set<String>> tripNoticesOff;
+
   Person? personById(String id) {
     for (final person in people) {
       if (person.id == id) return person;
@@ -1089,5 +1138,9 @@ class AppData {
         'kindOrder': kindOrder,
         'tripPhotos': tripPhotos,
         'language': chosenLanguage.name,
+        'noticesOff': noticesOff.toList(),
+        'tripNoticesOff': {
+          for (final entry in tripNoticesOff.entries) entry.key: entry.value.toList(),
+        },
       };
 }

@@ -64,6 +64,12 @@ class Ui {
   String? customKindId;
   bool addingKind = false;
   int routeDay = 0;
+
+  /// Trip id -> the day its Plan napada shows; without one, all of them.
+  final Map<String, int> attackDays = {};
+
+  /// Whether the list of kinds of notification is open.
+  bool noticesOpen = false;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;

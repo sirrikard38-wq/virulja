@@ -105,15 +105,22 @@ class CloudSync {
   /// Null while notifications are not set up.
   String? get pushKey => _config.pushKey;
 
-  /// Tells the daily sender about this phone and the trips it is on.
+  /// Tells the daily sender about this phone, the trips it is on and what it
+  /// does not want to hear about.
   Future<void> savePushDevice(Map<String, String> device) async {
+    Map<String, bool> kinds(Set<String>? off) => {for (final kind in off ?? const <String>{}) kind: true};
     await _session.token();
     await _send('PUT', 'push/${_session.uid}', json: {
       ...device,
       'lang': language.name,
+      'off': kinds(_data.noticesOff),
       'trips': {
         for (final trip in _data.trips)
-          trip.id: {'city': trip.city, 'start': dayKey(trip.start)},
+          trip.id: {
+            'city': trip.city,
+            'start': dayKey(trip.start),
+            'off': kinds(_data.tripNoticesOff[trip.id]),
+          },
       },
     });
   }
@@ -249,6 +256,7 @@ class CloudSync {
       if (!trip.memberIds.contains(person)) {
         trip.kickVotes.remove(person);
       } else if (trip.kickVotesAgainst(person) >= trip.kickVotesNeeded) {
+        trip.gone[person] = _nameOf(person);
         trip.memberIds.remove(person);
         trip.uids.remove(person);
         trip.kickVotes.remove(person);
@@ -266,6 +274,7 @@ class CloudSync {
       _learnNames({person: request.name});
       _data.personById(person)?.phone ??= request.phone;
       if (!trip.memberIds.contains(person)) trip.memberIds.add(person);
+      trip.gone.remove(person);
       trip.uids[person] = request.id;
       trip.requests.remove(request);
     }

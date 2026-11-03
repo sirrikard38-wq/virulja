@@ -7,6 +7,7 @@ import 'country_names.dart';
 import 'dom.dart';
 import 'join_screen.dart';
 import 'media.dart';
+import 'notifications_section.dart';
 import 'people_section.dart';
 import 'profile_section.dart';
 import 'range_picker.dart';
@@ -137,6 +138,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     error,
     primaryButton(trip == null ? tr('Napravi putovanje') : tr('Spremi'), save),
     if (trip != null && ui.cloud != null) _members(ui, trip),
+    if (trip != null && ui.cloud?.pushKey != null) notificationsSection(ui, trip: trip),
     if (trip != null)
       el('div', cls: 'pad gap-top', children: [
         button(

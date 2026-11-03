@@ -4,6 +4,7 @@ import 'package:test/test.dart';
 import 'package:virulja/src/domain/format.dart';
 import 'package:virulja/src/domain/i18n.dart';
 import 'package:virulja/src/domain/models.dart';
+import 'package:virulja/src/domain/trip_events.dart';
 
 void main() {
   tearDown(() => language = Language.hr);
@@ -93,6 +94,12 @@ void main() {
     language = Language.en;
     expect(PlaceKind.cafe.label, 'Cafés');
     expect(CostCategory.values.first.label, 'Stay');
+  });
+
+  test('every kind of notification has its name in each language', () {
+    for (final notice in Notice.values) {
+      expect(isTranslated(notice.label), isTrue, reason: notice.label);
+    }
   });
 
   test('every kind of place has its estimate in each language', () {

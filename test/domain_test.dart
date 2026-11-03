@@ -13,6 +13,7 @@ import 'package:virulja/src/domain/models.dart';
 import 'package:virulja/src/domain/offers.dart';
 import 'package:virulja/src/domain/seal.dart';
 import 'package:virulja/src/domain/settlement.dart';
+import 'package:virulja/src/domain/trip_events.dart';
 import 'package:virulja/src/domain/wav.dart';
 
 Trip visTrip() => Trip(
@@ -346,13 +347,13 @@ void main() {
   });
 
   group('places in the plan of attack', () {
-    Trip trip() => Trip(
+    Trip trip({List<String> members = const ['x', 'y', 'z']}) => Trip(
           id: 't',
           country: 'Hrvatska',
           city: 'Vis',
           start: dayOf(2026, 7, 1),
           end: dayOf(2026, 7, 4),
-          memberIds: [],
+          memberIds: members,
           stops: [Stop(id: 's', dayIndex: 0, title: 'Skok', hiddenInAttack: true)],
           polls: [
             Poll(
@@ -360,7 +361,10 @@ void main() {
               title: 'Konoba',
               active: true,
               single: true,
-              options: [PollOption(id: 'o0', time: 'Da', votes: {'x'})],
+              options: [
+                PollOption(id: 'o0', time: 'Da', votes: {'x'}),
+                PollOption(id: 'o1', time: 'Ne'),
+              ],
               dayVotes: {
                 2: {'x', 'y'},
                 1: {'x'},
@@ -369,21 +373,35 @@ void main() {
           ],
         );
 
-    test('a yes or no shows no result and takes the day with most votes', () {
+    test('a yes or no shows no answer, and the days half the group can go', () {
       final item = planOfAttack(trip(), DateTime(2026, 7, 1, 9)).single;
       expect(item.detail, isNull);
-      expect(item.dayIndex, 2);
+      expect(item.days, [2]);
       expect(item.past, isFalse);
     });
 
-    test('equal votes take the earliest day, no votes the poll own day', () {
-      final even = trip()..polls.single.dayVotes[1]!.add('y');
-      expect(even.polls.single.plannedDay, 1);
-      final none = trip()..polls.single.dayVotes.clear();
-      expect(none.polls.single.plannedDay, 0);
+    test('at least half must agree, and both when there are two', () {
+      Trip of(int people) => trip(members: [for (var i = 0; i < people; i++) 'm$i']);
+      expect([1, 2, 3, 4, 5, 6].map((people) => of(people).votesToAgree), [1, 2, 2, 2, 3, 3]);
+      final two = trip(members: ['x', 'y']);
+      final poll = two.polls.single;
+      expect(agreedDays(two, poll.dayVotes), [2]);
+      expect(agreedOption(two, poll), isNull);
+      poll.options.first.votes.add('y');
+      expect(agreedOption(two, poll)?.time, 'Da');
     });
 
-    test('it goes grey only once its day has gone by', () {
+    test('a no is never agreed, and votes of those not in the group do not count', () {
+      final group = trip(members: ['x', 'y']);
+      final poll = group.polls.single;
+      poll.options.first.votes.clear();
+      poll.options.last.votes.addAll({'x', 'y'});
+      expect(agreedOption(group, poll), isNull);
+      poll.options.first.votes.addAll({'x', 'gone'});
+      expect(agreedOption(group, poll), isNull);
+    });
+
+    test('it goes grey only once its last agreed day has gone by', () {
       expect(planOfAttack(trip(), DateTime(2026, 7, 3, 23)).single.past, isFalse);
       expect(planOfAttack(trip(), DateTime(2026, 7, 4, 0, 5)).single.past, isTrue);
     });
@@ -393,14 +411,218 @@ void main() {
       expect(remainingDays(trip(), DateTime(2026, 7, 3, 12)), [2, 3]);
     });
 
-    test('day votes survive the cloud with their days', () {
-      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip(), (id) => id)))));
+    test('a stop keeps its own day and takes the days voted for', () {
+      final plan = trip()
+        ..stops.add(Stop(id: 'b', dayIndex: 0, title: 'Brod', dayVotes: {
+          3: {'x', 'z'},
+          1: {'y'},
+        }));
+      final stop = planOfAttack(plan, DateTime(2026, 6, 1)).firstWhere((i) => i.stop != null);
+      expect(stop.days, [0, 3]);
+    });
+
+    test('a place is in the plan once, whether through its poll or itself', () {
+      final plan = trip()
+        ..places.add(Place(id: 'k', kind: PlaceKind.restaurant, name: 'Konoba', pricePerPerson: 2000));
+      final poll = plan.polls.single;
+      final only = planOfAttack(plan, DateTime(2026, 7, 1, 9)).single;
+      expect(only.place?.id, 'k');
+      expect(only.cost, 6000);
+      setPollInAttack(plan, poll, false, 'x');
+      expect(planOfAttack(plan, DateTime(2026, 7, 1, 9)), isEmpty);
+      expect(pollInAttack(plan, poll), isFalse);
+      setPollInAttack(plan, poll, true, 'y');
+      expect(plan.places.single.planned, isTrue);
+      expect(plan.places.single.plannedBy, 'y');
+      expect(poll.active, isFalse);
+      expect(planOfAttack(plan, DateTime(2026, 7, 1, 9)).single.place?.id, 'k');
+    });
+
+    test('a poll with times shows the time, a yes or no never shows its yes', () {
+      final plan = trip()
+        ..polls.add(Poll(id: 'q', title: 'Plaža', active: true, options: [
+          PollOption(id: 'o0', time: 'Da', votes: {'x', 'y'}),
+          PollOption(id: 'o1', time: 'Ne'),
+        ]))
+        ..polls.add(Poll(id: 'r', title: 'Brod', active: true, options: [
+          PollOption(id: 'o0', time: '10:00', votes: {'x'}),
+          PollOption(id: 'o1', time: '11:30', votes: {'x', 'y'}),
+        ]));
+      final items = {for (final item in planOfAttack(plan, DateTime(2026, 6, 1))) item.title: item};
+      expect(items['Plaža']!.detail, isNull);
+      expect(items['Brod']!.time, '11:30');
+    });
+
+    test('day votes and who left survive saving and the cloud', () {
+      final plan = trip()
+        ..places.add(Place(
+          id: 'k',
+          kind: PlaceKind.restaurant,
+          name: 'Kafe',
+          planned: true,
+          plannedBy: 'x',
+          dayVotes: {
+            1: {'x'},
+          },
+        ))
+        ..gone['w'] = 'Wanda';
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(plan, (id) => id)))));
       final back = tripFromTree('t', (tree as Map).cast<String, dynamic>())!.trip;
       expect(back.polls.single.dayVotes, {
         1: {'x'},
         2: {'x', 'y'},
       });
+      expect(back.places.single.dayVotes, {
+        1: {'x'},
+      });
+      expect(back.places.single.plannedBy, 'x');
+      expect(back.gone, {'w': 'Wanda'});
       expect(back.stops.single.hiddenInAttack, isTrue);
+      final saved = Trip.fromJson(jsonDecode(jsonEncode(plan.toJson())) as Json);
+      expect(saved.places.single.dayVotes, {
+        1: {'x'},
+      });
+      expect(saved.gone, {'w': 'Wanda'});
+    });
+  });
+
+  group('the plan of attack in Troškovi', () {
+    Trip trip() => Trip(
+          id: 't',
+          country: 'Hrvatska',
+          city: 'Vis',
+          start: dayOf(2026, 7, 1),
+          end: dayOf(2026, 7, 4),
+          memberIds: ['x', 'y'],
+          places: [
+            Place(
+              id: 'k',
+              kind: PlaceKind.restaurant,
+              name: 'Konoba',
+              pricePerPerson: 2000,
+              planned: true,
+              dayVotes: {
+                1: {'x', 'y'},
+              },
+            ),
+            Place(id: 'n', kind: PlaceKind.cafe, name: 'Bez dana', pricePerPerson: 500, planned: true),
+          ],
+          stops: [Stop(id: 'b', dayIndex: 0, title: 'Brod', cost: 3000)],
+        );
+
+    test('is planned before its day and spent once the day is over', () {
+      final before = Budget.of(trip(), DateTime(2026, 6, 30));
+      expect(before.line(CostCategory.food).planned, 5000);
+      expect(before.actualTotal, 0);
+      final after = Budget.of(trip(), DateTime(2026, 7, 3));
+      expect(after.line(CostCategory.food).actual, 4000);
+      expect(after.line(CostCategory.activities).actual, 3000);
+      expect(after.plannedTotal, before.plannedTotal);
+    });
+
+    test('a real cost of the same name counts instead of the estimate', () {
+      final paid = trip()
+        ..expenses.add(Expense(
+          id: 'e',
+          title: 'konoba ',
+          amount: 5500,
+          payerId: 'x',
+          sharedBy: ['x', 'y'],
+          category: CostCategory.food,
+        ));
+      expect(Budget.of(paid, DateTime(2026, 7, 3)).line(CostCategory.food).actual, 5500);
+    });
+
+    test('something with no agreed day is never spent', () {
+      final over = Budget.of(trip(), DateTime(2026, 8, 1));
+      expect(over.line(CostCategory.food).actual, 4000);
+    });
+  });
+
+  group('news', () {
+    final names = {'a': 'Ana', 'b': 'Bruno'};
+    final device = <String, dynamic>{
+      'trips': {'t': <String, dynamic>{}},
+    };
+    Trip trip() => Trip(
+          id: 't',
+          country: 'Hrvatska',
+          city: 'Vis',
+          start: dayOf(2026, 7, 1),
+          end: dayOf(2026, 7, 4),
+          memberIds: ['a', 'b'],
+          uids: {'a': 'ua', 'b': 'ub'},
+          polls: [
+            Poll(id: 'p', title: 'Plaža', addedBy: 'a', options: [
+              PollOption(id: 'o0', time: 'Da'),
+              PollOption(id: 'o1', time: 'Ne'),
+            ]),
+          ],
+          photos: [
+            Photo(id: 'f1', takenAt: DateTime(2026, 7, 1), addedBy: 'a'),
+            Photo(id: 'f2', takenAt: DateTime(2026, 7, 2), addedBy: 'a'),
+          ],
+        );
+    Set<Object?> allOf(Trip trip) =>
+        {newsVersion, for (final event in tripEvents(trip, names)) event.key};
+    List<String> bodies(List<({String body, String route})> news) =>
+        [for (final item in news) item.body];
+
+    test('the photos of one person come as one message', () {
+      expect(bodies(newsFor('ub', 't', trip(), names, {newsVersion}, device)),
+          containsAll(['Nova anketa: Plaža', 'Ana dodaje nove uspomene (2)']));
+    });
+
+    test('nobody is told what they did', () {
+      expect(bodies(newsFor('ua', 't', trip(), names, {newsVersion}, device)),
+          ['Bruno je sada na putovanju']);
+    });
+
+    test('a kind turned off everywhere or for one trip is not sent', () {
+      final none = <String, dynamic>{
+        'off': {'polls': true},
+        'trips': {'t': <String, dynamic>{}},
+      };
+      expect(bodies(newsFor('ub', 't', trip(), names, allOf(trip())..remove('poll:p'), none)),
+          isEmpty);
+      final quiet = <String, dynamic>{
+        'trips': {
+          't': {
+            'off': {'photos': true},
+          },
+        },
+      };
+      expect(bodies(newsFor('ub', 't', trip(), names, {newsVersion}, quiet)),
+          isNot(contains('Ana dodaje nove uspomene (2)')));
+      expect(wantsNotice(quiet, 'other', Notice.photos), isTrue);
+      expect(wantsNotice(none, 'other', Notice.polls), isFalse);
+    });
+
+    test('kinds new in this version are not news the first time', () {
+      final told = {for (final event in tripEvents(trip(), names)) event.key}
+        ..removeWhere((key) => key.startsWith('photo:'));
+      expect(newsFor('ub', 't', trip(), names, told, device), isEmpty);
+    });
+
+    test('a poll the group voted through is told once, as voted', () {
+      final voted = trip();
+      final poll = voted.polls.single..options.first.votes.addAll({'a', 'b'});
+      setPollInAttack(voted, poll, true, 'a');
+      final keys = [for (final event in tripEvents(voted, names)) event.key];
+      expect(keys, contains('passed:p'));
+      expect(keys, isNot(contains('attack:p')));
+    });
+
+    test('a day agreed on and someone leaving are news', () {
+      final before = trip()
+        ..places.add(Place(id: 'k', kind: PlaceKind.restaurant, name: 'Konoba', planned: true));
+      final after = trip()
+        ..places.add(Place(id: 'k', kind: PlaceKind.restaurant, name: 'Konoba', planned: true, dayVotes: {
+          1: {'a', 'b'},
+        }))
+        ..gone['c'] = 'Cvita';
+      expect(bodies(newsFor('ub', 't', after, names, allOf(before), device)),
+          ['Dogovoreno: Konoba, četvrtak, 2. srpnja', 'Cvita više nije na putovanju']);
     });
   });
 

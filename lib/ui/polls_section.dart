@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/attack.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
@@ -7,11 +8,37 @@ import 'dom.dart';
 import 'icons.dart';
 import 'widgets.dart';
 
+/// Casts or takes back the vote of [me]. The vote that makes the group agree
+/// puts the poll in Plan napada.
+void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
+  final agreedBefore = agreedOption(trip, poll) != null;
+  final had = option.votes.contains(me);
+  if (poll.single) {
+    for (final other in poll.options) {
+      other.votes.remove(me);
+    }
+  } else {
+    option.votes.remove(me);
+  }
+  if (!had) option.votes.add(me);
+  if (!agreedBefore && agreedOption(trip, poll) != null && !pollInAttack(trip, poll)) {
+    setPollInAttack(trip, poll, true, me);
+    ui.toast(tr('Izglasano! Dodano u Plan napada.'));
+  }
+  ui.changed();
+}
+
 web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
+  final inAttack = pollInAttack(trip, poll);
   return el('div', cls: 'poll card', children: [
     el('div', attrs: {'style': 'display:flex;align-items:center'}, children: [
-      el('div', cls: 'label grow', text: poll.title),
+      el('div', cls: 'grow', children: [
+        el('div', cls: 'label', text: poll.title),
+        if (agreedOption(trip, poll) != null)
+          el('div', cls: 'small', attrs: {'style': 'color:var(--accent);font-weight:700'},
+              text: tr('Izglasano')),
+      ]),
       removeButton(poll.title, () {
         trip.polls.remove(poll);
         ui.changed();
@@ -19,46 +46,26 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     ]),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)
-        chip('${tr(option.time)} · ${option.votes.length}', () {
-          final had = option.votes.contains(me);
-          if (poll.single) {
-            for (final other in poll.options) {
-              other.votes.remove(me);
-            }
-          } else {
-            option.votes.remove(me);
-          }
-          if (!had) option.votes.add(me);
-          ui.changed();
-        }, on: option.votes.contains(me)),
+        chip('${tr(option.time)} · ${option.votes.length}',
+            () => _vote(ui, trip, poll, option, me),
+            on: option.votes.contains(me)),
     ]),
-    button(
-      cls: 'text-button',
-      text: poll.active ? tr('Makni iz Plana napada') : tr('Stavi u Plan napada'),
-      onTap: () {
-        poll.active = !poll.active;
-        poll.activeBy = poll.active ? me : null;
+    el('div', attrs: {'style': 'margin-top:6px'}, children: [
+      tick(tr('Plan napada'), inAttack, () {
+        setPollInAttack(trip, poll, !inAttack, me);
         ui.changed();
-      },
-    ),
+      }),
+    ]),
   ]);
 }
 
-/// Votes on when to do something: "Na plažu" at 10:00 or 11:30.
+/// Votes on what to do and when: "Na plažu" at 10:00 or 11:30. The days are
+/// picked in Plan napada.
 web.HTMLElement pollsTab(Ui ui, Trip trip) {
-  final day = ui.routeDay.clamp(0, trip.dayCount - 1);
-  final polls = trip.polls.where((poll) => poll.dayIndex == day).toList();
   return el('div', children: [
-    el('div', cls: 'chips', children: [
-      for (var i = 0; i < trip.dayCount; i++)
-        chip(tr('Dan {0}', [i + 1]), () {
-          ui.routeDay = i;
-          ui.rerender();
-        }, on: i == day),
-    ]),
-    if (polls.isEmpty) el('p', cls: 'soft pad', text: tr('Za ovaj dan još nema anketa.')),
-    for (final poll in polls) _pollCard(ui, trip, poll),
-    _newPoll(ui, trip, day),
+    if (trip.polls.isEmpty) el('p', cls: 'soft pad gap-top', text: tr('Još nema anketa.')),
+    for (final poll in trip.polls) _pollCard(ui, trip, poll),
+    _newPoll(ui, trip),
   ]);
 }
 
@@ -68,7 +75,7 @@ void addYesNoPoll(Ui ui, Trip trip, String title) {
   trip.polls.add(Poll(
     id: ui.store.newId(),
     title: title,
-    dayIndex: ui.routeDay.clamp(0, trip.dayCount - 1),
+    dayIndex: -1,
     single: true,
     addedBy: ui.meIn(trip),
     options: [
@@ -81,7 +88,7 @@ void addYesNoPoll(Ui ui, Trip trip, String title) {
 
 /// A new poll: the choices are times, price ranges or locations, as many as
 /// wanted; with none it is a plain yes or no.
-web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
+web.HTMLElement _newPoll(Ui ui, Trip trip) {
   final title = input();
   final choices = <web.HTMLInputElement>[];
   final rows = el('div');
@@ -127,7 +134,7 @@ web.HTMLElement _newPoll(Ui ui, Trip trip, int day) {
     trip.polls.add(Poll(
       id: ui.store.newId(),
       title: title.value.trim(),
-      dayIndex: day,
+      dayIndex: -1,
       addedBy: ui.meIn(trip),
       options: [
         for (var i = 0; i < chosen.length; i++)

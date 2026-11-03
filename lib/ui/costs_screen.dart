@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
@@ -79,24 +81,72 @@ web.HTMLElement _addExpense(Ui ui, Trip trip) {
   ]);
 }
 
+String _between(Ui ui, String from, String to) => '${ui.nameOf(from)} → ${ui.nameOf(to)}';
+
 web.HTMLElement _transferRow(Ui ui, Trip trip, Transfer transfer) => el(
       'div',
       cls: 'row',
       children: [
-        el('div', cls: 'grow', text: '${ui.nameOf(transfer.fromId)} → '
-            '${ui.nameOf(transfer.toId)}'),
+        el('div', cls: 'grow', text: _between(ui, transfer.fromId, transfer.toId)),
         el('div', cls: 'price', text: euros(transfer.amount)),
         chip(tr('Podmireno'), () {
-          trip.payments.add(Payment(
+          final payment = Payment(
             id: ui.store.newId(),
             fromId: transfer.fromId,
             toId: transfer.toId,
             amount: transfer.amount,
-          ));
+          );
+          trip.payments.add(payment);
           ui.changed();
+          ui.offerUndo(tr('Podmireno: {0}', [euros(transfer.amount)]), () {
+            trip.payments.remove(payment);
+            ui.changed();
+          });
         }),
       ],
     );
+
+/// A debt that was paid: it stays, green, so that everyone sees who gave whom
+/// what. A tap takes it back.
+web.HTMLElement _paidRow(Ui ui, Trip trip, Payment payment) => el(
+      'div',
+      cls: 'row settled',
+      children: [
+        el('div', cls: 'grow', text: _between(ui, payment.fromId, payment.toId)),
+        el('div', cls: 'price', text: euros(payment.amount)),
+        chip(tr('Podmireno'), () {
+          final at = trip.payments.indexOf(payment);
+          if (at < 0) return;
+          trip.payments.removeAt(at);
+          ui.changed();
+          ui.offerUndo(tr('Više nije podmireno: {0}', [euros(payment.amount)]), () {
+            trip.payments.insert(min(at, trip.payments.length), payment);
+            ui.changed();
+          });
+        }, on: true),
+      ],
+    );
+
+/// Debts and payments in the order of the group, each pair together, so that a
+/// debt that is paid turns green where it stood.
+List<web.HTMLElement> _byPair(
+  Trip trip,
+  List<({String from, String to, web.HTMLElement row})> rows,
+) {
+  int place(String id) {
+    final at = trip.memberIds.indexOf(id);
+    return at < 0 ? trip.memberIds.length : at;
+  }
+
+  final order = List.generate(rows.length, (i) => i)
+    ..sort((a, b) {
+      final from = place(rows[a].from).compareTo(place(rows[b].from));
+      if (from != 0) return from;
+      final to = place(rows[a].to).compareTo(place(rows[b].to));
+      return to != 0 ? to : a.compareTo(b);
+    });
+  return [for (final i in order) rows[i].row];
+}
 
 web.HTMLElement costsScreen(Ui ui, Trip trip) {
   final budget = Budget.of(trip);
@@ -114,7 +164,13 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
     sectionTitle(tr('Tko kome duguje')),
     if (transfers.isEmpty)
       el('p', cls: 'soft pad', text: tr('Svi su računi podmireni.')),
-    for (final transfer in transfers) _transferRow(ui, trip, transfer),
+    for (final row in _byPair(trip, [
+      for (final transfer in transfers)
+        (from: transfer.fromId, to: transfer.toId, row: _transferRow(ui, trip, transfer)),
+      for (final payment in trip.payments)
+        (from: payment.fromId, to: payment.toId, row: _paidRow(ui, trip, payment)),
+    ]))
+      row,
     _addExpense(ui, trip),
     if (recent.isNotEmpty) sectionTitle(tr('Plaćeno')),
     for (final expense in recent)
@@ -125,10 +181,7 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
               '${expense.category.label}'),
         ]),
         el('div', cls: 'price', text: euros(expense.amount)),
-        removeButton(expense.title, () {
-          trip.expenses.remove(expense);
-          ui.changed();
-        }),
+        removeWithUndo(ui, trip.expenses, expense, expense.title),
       ]),
   ]);
 }
