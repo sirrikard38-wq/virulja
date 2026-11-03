@@ -23,7 +23,8 @@ machine has Dart and git, but no Node, Python or `gh`.
 
 ## How it is built
 
-The stack and the deploy come from the user's Dartle project: Dart compiled to
+The stack and the deploy were copied from the user's Dartle project as a pattern; nothing
+links the two, and each has its own repo and site. Dart compiled to
 JavaScript with `package:web`, no framework, screens built with `el()` from
 `lib/ui/dom.dart`, a full redraw of the screen after every change, GitHub Pages
 through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
@@ -70,8 +71,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - In Troškovi, something in Plan napada with a price is planned until its agreed day is over,
   then spent, unless a real cost of the same name was written down. A paid debt stays in the
   list, green, where it stood.
-- Removing a food place, a dish, a cost or something in Plan napada, and settling a debt, are
-  undone within 5 seconds instead of asking first. Other remove buttons still ask.
+- Removing anything, and settling a debt, is
+  undone within 5 seconds instead of asking first. Only a photo or video still asks, as its
+  file is deleted at once.
 - The postcard has a round seal with no background, as the user asked, so its ink follows
   the photo: dark on a bright corner, light with a shadow otherwise (`lib/src/domain/seal.dart`).
 

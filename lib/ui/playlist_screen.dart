@@ -172,10 +172,9 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
         el('div', cls: 'small', text: '${isList ? tr('YouTube playlista') : player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
       ])
         ..onClick.listen((_) => toggle()),
-      removeButton(song.title, () {
-        trip.songs.remove(song);
+      removeWithUndo(ui, trip.songs, song, song.title, also: () {
         if (playing) ui.playingSongId = null;
-        ui.changed();
+        return () {};
       }),
     ]),
     if (playing && player != null) _player(player),

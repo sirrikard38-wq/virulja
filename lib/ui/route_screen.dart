@@ -143,10 +143,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
         if (stop.time.isNotEmpty) el('div', cls: 'label', text: stop.time),
         el('div', cls: 'grow', text: stop.title),
         if (stop.cost > 0) el('div', cls: 'price', text: euros(stop.cost)),
-        removeButton(stop.title, () {
-          trip.stops.remove(stop);
-          ui.changed();
-        }),
+        removeWithUndo(ui, trip.stops, stop, stop.title),
       ]),
     _addStop(ui, trip, day),
     sectionTitle(tr('Prijevoz')),
@@ -154,10 +151,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', text: leg.title),
         if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
-        removeButton(leg.title, () {
-          trip.legs.remove(leg);
-          ui.changed();
-        }),
+        removeWithUndo(ui, trip.legs, leg, leg.title),
       ]),
     if (trip.drive.totalCost > 0)
       el('div', cls: 'row', children: [

@@ -51,10 +51,11 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
       }, on: chosen),
       el('span', cls: 'grow'),
       if (link != null) linkIcon(link, tr('Otvori ponudu')),
-      removeButton(offer.name, () {
-        trip.offers.remove(offer);
+      removeWithUndo(ui, trip.offers, offer, offer.name, also: () {
         if (chosen) trip.chosenOfferId = null;
-        ui.changed();
+        return () {
+          if (chosen) trip.chosenOfferId = offer.id;
+        };
       }),
     ]),
   ]);

@@ -136,16 +136,26 @@ web.HTMLElement linkIcon(String address, String label) => el(
     );
 
 /// Takes [item] out of [list] at once, with a moment to take that back.
-web.HTMLElement removeWithUndo<T>(Ui ui, List<T> list, T item, String what) => button(
+/// [also] runs with the removal and gives back what puts the rest as it was.
+web.HTMLElement removeWithUndo<T>(
+  Ui ui,
+  List<T> list,
+  T item,
+  String what, {
+  void Function() Function()? also,
+}) =>
+    button(
       cls: 'icon-button',
       ariaLabel: tr('Ukloni: {0}', [what]),
       onTap: () {
         final at = list.indexOf(item);
         if (at < 0) return;
         list.removeAt(at);
+        final restore = also?.call();
         ui.changed();
         ui.offerUndo(tr('Uklonjeno: {0}', [what]), () {
           list.insert(min(at, list.length), item);
+          restore?.call();
           ui.changed();
         });
       },

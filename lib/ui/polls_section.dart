@@ -39,10 +39,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
           el('div', cls: 'small', attrs: {'style': 'color:var(--accent);font-weight:700'},
               text: tr('Izglasano')),
       ]),
-      removeButton(poll.title, () {
-        trip.polls.remove(poll);
-        ui.changed();
-      }),
+      removeWithUndo(ui, trip.polls, poll, poll.title),
     ]),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)
