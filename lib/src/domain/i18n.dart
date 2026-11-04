@@ -456,6 +456,7 @@ const Map<String, List<String>> _texts = {
   'Otvori ponudu ili lokaciju': ['Open the offer or the location', 'Teklifi veya konumu aç'],
   'Adresa ili link s Google Mapsa': ['An address or a Google Maps link', 'Adres veya Google Haritalar bağlantısı'],
   'Upiši cijenu po noći.': ['Type the price per night.', 'Gecelik fiyatı yaz.'],
+  'Upiši naziv.': ['Type the name.', 'Adı yaz.'],
   'Naziv smještaja': ['Name of the stay', 'Konaklamanın adı'],
   'Uredi smještaj': ['Change the stay', 'Konaklamayı değiştir'],
   'Pješice do smještaja': ['On foot to the stay', 'Konaklamaya yürüyerek'],

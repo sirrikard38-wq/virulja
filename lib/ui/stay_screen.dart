@@ -177,11 +177,11 @@ web.HTMLElement _offerEdit(Ui ui, Offer offer) {
   return el('div', cls: 'offer-edit', children: [
     field(tr('Link ponude'), link),
     field(tr('Lokacija'), location),
+    field(tr('Do plaže (m)'), beach),
     el('div', cls: 'fields', children: [
       field(tr('Cijena po noći (€)'), price, tight: true),
       field(tr('Ocjena (0 do 5)'), rating, tight: true),
     ]),
-    field(tr('Do plaže (m)'), beach),
     error,
     el('div', attrs: {'style': 'display:flex;gap:12px;align-items:center;margin-top:10px'}, children: [
       primaryButton(tr('Spremi'), save, wide: false),
@@ -276,8 +276,15 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
 
   void add() {
     final cents = parseEuros(price.value);
-    if (name.value.trim().isEmpty || cents == null || cents == 0) {
-      error.textContent = tr('Upiši naziv i cijenu po noći.');
+    final noName = name.value.trim().isEmpty;
+    final noPrice = cents == null || cents == 0;
+    // Only what is missing is asked for.
+    if (noName || noPrice) {
+      error.textContent = noName && noPrice
+          ? tr('Upiši naziv i cijenu po noći.')
+          : noName
+              ? tr('Upiši naziv.')
+              : tr('Upiši cijenu po noći.');
       return;
     }
     final stars = double.tryParse(rating.value.trim().replaceAll(',', '.'));
@@ -301,14 +308,14 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
   }
 
   return adder(tr('Dodaj ponudu'), [
-    field(tr('Link ponude'), link),
     field(tr('Naziv'), name),
+    field(tr('Link ponude'), link),
     field(tr('Lokacija'), location),
+    field(tr('Do plaže (m)'), beach),
     el('div', cls: 'fields', children: [
       field(tr('Cijena po noći (€)'), price, tight: true),
       field(tr('Ocjena (0 do 5)'), rating, tight: true),
     ]),
-    field(tr('Do plaže (m)'), beach),
     error,
     primaryButton(tr('Dodaj ponudu'), add),
   ]);
