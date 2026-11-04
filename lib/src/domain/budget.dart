@@ -3,11 +3,30 @@ import 'models.dart';
 
 /// Plan and reality of one kind of cost.
 class BudgetLine {
-  const BudgetLine(this.category, {required this.planned, required this.actual});
+  const BudgetLine(this.category, {required this.planned, required this.actual, this.ahead = 0});
 
   final CostCategory category;
   final int planned;
   final int actual;
+
+  /// Planirano: what is planned and has not happened yet, nor been written down.
+  final int ahead;
+}
+
+/// Places of Hrana i piće in Plan napada whose day has come and whose real cost
+/// is not written yet: Troškovi asks to split each.
+List<Place> toSplit(Trip trip, [DateTime? now]) {
+  final day = today(now).difference(trip.start).inDays;
+  final written = {for (final cost in trip.expenses) _same(cost.title)};
+  return [
+    for (final item in planOfAttack(trip, now ?? DateTime.now()))
+      if (item.place case final place?)
+        if (item.days.isNotEmpty &&
+            item.days.first <= day &&
+            !trip.expenses.any((cost) => cost.id == place.expenseId) &&
+            !written.contains(_same(place.name)))
+          place,
+  ];
 }
 
 /// What a trip should cost and what it has cost so far at [now]. Something in
@@ -29,10 +48,34 @@ class Budget {
         actual[CostCategory.stay] = actual[CostCategory.stay]! + offer.pricePerNight * trip.nights;
       }
     }
-    for (final item in planOfAttack(trip, now ?? DateTime.now())) {
+    // What is still to come: each planned thing that has not happened and has
+    // no real cost of its name.
+    final ahead = {for (final category in CostCategory.values) category: 0};
+    void later(CostCategory category, String title, int cost) {
+      if (!written.contains(_same(title))) ahead[category] = ahead[category]! + cost;
+    }
+
+    final plan = planOfAttack(trip, now ?? DateTime.now());
+    for (final item in plan) {
       if (item.happened && !written.contains(_same(item.title))) {
         actual[item.category] = actual[item.category]! + item.cost;
       }
+      if (!item.happened) later(item.category, item.title, item.cost);
+    }
+    final inPlan = {for (final item in plan) _same(item.title)};
+    for (final dish in trip.dishes) {
+      if (!inPlan.contains(_same(dish.name))) later(CostCategory.food, dish.name, dish.price * dish.servings);
+    }
+    if (!trip.offers.any((offer) => offer.reserved)) {
+      final chosen = trip.chosenOffer;
+      if (chosen != null) later(CostCategory.stay, chosen.name, chosen.pricePerNight * trip.nights);
+    }
+    for (final leg in trip.legs) {
+      if (!leg.reserved) later(CostCategory.transport, leg.title, leg.cost);
+    }
+    ahead[CostCategory.transport] = ahead[CostCategory.transport]! + trip.drive.totalCost;
+    for (final stop in trip.stops) {
+      if (stop.hiddenInAttack) later(CostCategory.activities, stop.title, stop.cost);
     }
     return Budget._([
       for (final category in CostCategory.values)
@@ -40,6 +83,7 @@ class Budget {
           category,
           planned: plannedCost(trip, category),
           actual: actual[category]!,
+          ahead: ahead[category]!,
         ),
     ], trip.people);
   }
@@ -50,6 +94,8 @@ class Budget {
   int get plannedTotal => lines.fold(0, (sum, line) => sum + line.planned);
 
   int get actualTotal => lines.fold(0, (sum, line) => sum + line.actual);
+
+  int get aheadTotal => lines.fold(0, (sum, line) => sum + line.ahead);
 
   /// What the trip costs [person]: their part of each written cost they share,
   /// and an equal part of what is planned and not yet written down.

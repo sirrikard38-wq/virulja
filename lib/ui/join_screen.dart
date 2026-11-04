@@ -4,6 +4,7 @@ import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 import '../src/domain/i18n.dart';
+import '../src/domain/trip_tree.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -52,6 +53,27 @@ web.HTMLElement codeRow(Trip trip) {
   );
 }
 
+/// The member of [cloud] who has this phone's name, whatever its capitals, and
+/// its phone number: the same person on another phone, or after the app was
+/// put on again. Numbers count by their last eight digits, so +385 91 and
+/// 091 match.
+String? _sameMember(Ui ui, CloudTrip cloud) {
+  final me = ui.data.personById(ui.meId);
+  String digits(String? text) {
+    final all = (text ?? '').replaceAll(RegExp(r'\D'), '');
+    return all.length > 8 ? all.substring(all.length - 8) : all;
+  }
+
+  if (me == null || digits(me.phone).length < 6) return null;
+  for (final id in cloud.trip.memberIds) {
+    if ((cloud.names[id] ?? '').trim().toLowerCase() == me.name.trim().toLowerCase() &&
+        digits(cloud.phones[id]) == digits(me.phone)) {
+      return id;
+    }
+  }
+  return null;
+}
+
 /// Enter a code once and the trip stays on this phone.
 Future<void> joinByCode(Ui ui, String code, web.Element error) async {
   final cloud = ui.cloud;
@@ -63,6 +85,13 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
       return;
     }
     final trip = found.trip.trip;
+    final same = _sameMember(ui, found.trip);
+    if (ui.data.tripById(trip.id) == null && same != null) {
+      cloud.rejoin(found, same);
+      ui.toast(tr('Već si dio ovog prekrasnog putovanja'), long: true);
+      ui.openTrip(ui.data.tripById(trip.id)!);
+      return;
+    }
     if (ui.data.tripById(trip.id) == null) {
       if (trip.approvalsNeeded > 0) {
         await cloud.askToJoin(found);

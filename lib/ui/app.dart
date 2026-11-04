@@ -579,12 +579,12 @@ class ViruljaApp {
     _undoTimer = Timer(_undoTime, () => _undoBar.classList.remove('show'));
   }
 
-  void _showToast(String message, {bool short = false}) {
+  void _showToast(String message, {bool short = false, bool long = false}) {
     _toast.textContent = message;
     _toast.classList.add('show');
     _toastTimer?.cancel();
     _toastTimer = Timer(
-      Duration(milliseconds: short ? 1300 : 2600),
+      Duration(milliseconds: short ? 1300 : long ? 4000 : 2600),
       () => _toast.classList.remove('show'),
     );
   }

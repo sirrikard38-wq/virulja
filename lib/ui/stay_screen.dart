@@ -14,7 +14,11 @@ import 'widgets.dart';
 /// and an offer on Booking or Airbnb.
 void _chooseWhere(Offer offer) {
   late final web.HTMLElement sheet;
-  void close() => sheet.remove();
+  final letGo = holdPage();
+  void close() {
+    sheet.remove();
+    letGo();
+  }
   web.HTMLElement away(String label, String address) => el('a', cls: 'secondary wide', text: label, attrs: {
         'href': address,
         'target': '_blank',
@@ -51,7 +55,11 @@ void _reserve(Ui ui, Trip trip, Offer offer) {
   final total = offer.pricePerNight * trip.nights;
   final card = el('div', cls: 'sheet-card card');
   late final web.HTMLElement sheet;
-  void close() => sheet.remove();
+  final letGo = holdPage();
+  void close() {
+    sheet.remove();
+    letGo();
+  }
 
   void book() {
     if (shared.isEmpty) {

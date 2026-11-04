@@ -167,6 +167,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .tick.shop-item.on .tick-box .icon { color: var(--soft); }
 .tick.shop-item.on span:last-child { text-decoration: line-through; }
 .shop-next { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.shop-fold { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 16px; font-weight: 700; text-align: left; }
+.shop-fold .icon { flex: none; color: var(--accent); }
+.shop-actions { display: flex; gap: 8px; margin-top: 10px; }
+.shop-list .shop-item-row, .shop-list .shop-next, .shop-list .shop-actions { padding-left: 28px; }
 .time-picker select { flex: 1; min-width: 0; }
 .cost-edit .field, .cost-edit .fields, .cost-edit .checks, .cost-edit .error { margin-left: 0; margin-right: 0; }
 .brush-small { color: var(--accent); }

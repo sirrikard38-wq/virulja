@@ -169,13 +169,22 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
 - Dućan (`shop_screen.dart`, `Trip.shopLists`): named lists of things to buy, each with a
-  tick that greys and strikes it out. Kupljeno asks the amount and whom it is for (all
+  tick that greys and strikes it out. A list folds as "+ Naziv"; while wishes are typed
+  it shows "Dodaj želju" and Spremi, then Dodaj and Kupljeno; its brush opens the names
+  of the list and its things for changing, with an x each. No box lets the page behind
+  it scroll (`holdPage`). Kupljeno asks the amount and whom it is for (all
   ticked at first) and writes it in Troškovi under Dućan, paid by whoever tapped; a tap
   on it in Troškovi changes it (`ShopList.expenseId`). Adding to
   or taking off a list is news of the kind Notice.shop; what was taken off is kept in
   `ShopList.removed` for the robot, and undo takes it out again (news mark `#3`).
 - Times are picked on two wheels, minutes in steps of 5 (`timePicker`): a phone's own
   time field offers every minute.
+- Troškovi shows Potrošeno, Planirano (planned and not yet spent, `BudgetLine.ahead`) and
+  Ukupno, and each kind as "Potrošeno X · Planirano Y". A place of Hrana i piće in Plan
+  napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what
+  it really cost, who paid and whom it is for (`Place.expenseId`).
+- Entering a code with the name (any capitals) and phone number of someone already in
+  that trip brings this phone in as that person, at once (`_sameMember`, `rejoin`).
 - A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).
 - The trip's header shows "tvoj trošak": your part of each written cost you share, and an
   equal part of what is planned and not yet written (`Budget.shareOf`).

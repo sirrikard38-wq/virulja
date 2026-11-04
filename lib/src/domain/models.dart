@@ -297,6 +297,7 @@ class Place {
     this.planned = false,
     this.plannedBy,
     this.customKindId,
+    this.expenseId,
     Map<int, Set<String>>? dayVotes,
   }) : dayVotes = dayVotes ?? {};
 
@@ -313,6 +314,7 @@ class Place {
         link: json['link'] as String?,
         planned: json['planned'] as bool? ?? false,
         plannedBy: json['plannedBy'] as String?,
+        expenseId: json['expenseId'] as String?,
         dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
@@ -337,6 +339,9 @@ class Place {
   bool planned;
   String? plannedBy;
 
+  /// Its real cost in Troškovi, once Razdijeli wrote it.
+  String? expenseId;
+
   /// The days people can go.
   Map<int, Set<String>> dayVotes;
 
@@ -353,6 +358,7 @@ class Place {
         'link': link,
         'planned': planned,
         'plannedBy': plannedBy,
+        'expenseId': expenseId,
         'dayVotes': dayVotesToJson(dayVotes),
       };
 }

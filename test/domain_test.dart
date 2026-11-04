@@ -276,6 +276,25 @@ void main() {
       expect(Budget.of(trip).line(CostCategory.shop).planned, 2300);
     });
 
+    test('a place whose day has come waits to be split, until its cost is written', () {
+      final trip = visTrip()
+        ..places.add(Place(id: 'k', kind: PlaceKind.restaurant, name: 'Konoba', pricePerPerson: 2000, planned: true, dayVotes: {
+          1: {'ana', 'marko'},
+        }));
+      expect(toSplit(trip, DateTime(2027, 6, 12, 12)), isEmpty);
+      expect(toSplit(trip, DateTime(2027, 6, 13, 12)).map((place) => place.name), ['Konoba']);
+      trip.expenses.add(Expense(id: 'e', title: 'Konoba', amount: 5500, payerId: 'ana', sharedBy: ['ana', 'marko'], category: CostCategory.food));
+      trip.places.single.expenseId = 'e';
+      expect(toSplit(trip, DateTime(2027, 6, 13, 12)), isEmpty);
+      trip.places.add(Place(id: 'p', kind: PlaceKind.restaurant, name: 'Pizza', pricePerPerson: 1000, planned: true, dayVotes: {
+        3: {'ana'},
+      }));
+      final line = Budget.of(trip, DateTime(2027, 6, 13, 12)).line(CostCategory.food);
+      // Konoba cost 55 € for real; only the pizza is still ahead.
+      expect(line.actual, 5500);
+      expect(line.ahead, 3000);
+    });
+
     test('a reserved stay is planned and spent', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));

@@ -9,6 +9,7 @@ import '../src/domain/models.dart';
 import '../src/domain/settlement.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 import 'widgets.dart';
 
 /// The kinds of cost that always show, even at nothing yet.
@@ -19,21 +20,103 @@ const Set<CostCategory> _always = {
   CostCategory.shop,
 };
 
+/// Asks what [place] really cost, who paid and whom it is for, everyone at
+/// first, and writes it in Troškovi.
+void _split(Ui ui, Trip trip, Place place) {
+  final amount = numberInput();
+  final guess = (place.pricePerPerson ?? 0) * trip.people;
+  if (guess > 0) amount.value = (guess / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
+  var payer = ui.meIn(trip);
+  final shared = {...trip.memberIds};
+  final card = el('div', cls: 'sheet-card card');
+  late final web.HTMLElement sheet;
+  final letGo = holdPage();
+  void close() {
+    sheet.remove();
+    letGo();
+  }
+
+  void save() {
+    final cents = parseEuros(amount.value);
+    if (cents == null || cents == 0) {
+      ui.toast(tr('Upiši iznos.'));
+      return;
+    }
+    if (shared.isEmpty) {
+      ui.toast(tr('Odaberi barem jednu osobu.'));
+      return;
+    }
+    final cost = Expense(
+      id: ui.store.newId(),
+      title: place.name,
+      amount: cents,
+      payerId: payer,
+      sharedBy: [for (final id in trip.memberIds) if (shared.contains(id)) id],
+      category: CostCategory.food,
+    );
+    trip.expenses.add(cost);
+    place.expenseId = cost.id;
+    close();
+    ui.changed();
+  }
+
+  void draw() {
+    final typed = amount.value;
+    card.textContent = '';
+    for (final part in [
+      button(cls: 'icon-button sheet-x', ariaLabel: tr('Zatvori'), onTap: close,
+          children: [icon('close', size: 20)]),
+      el('p', cls: 'label', text: tr('Koliko je zapravo bilo?')),
+      el('p', cls: 'small', text: place.name),
+      field(tr('Iznos (€)'), amount..value = typed),
+      el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Tko je platio?')),
+      el('div', cls: 'checks', attrs: {'style': 'margin:0'}, children: [
+        for (final id in trip.memberIds)
+          chip(ui.nameOf(id), () {
+            payer = id;
+            draw();
+          }, on: payer == id),
+      ]),
+      el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Na koga se odnosi?')),
+      el('div', cls: 'ticks', children: [
+        for (final id in trip.memberIds)
+          tick(ui.nameOf(id), shared.contains(id), () {
+            shared.contains(id) ? shared.remove(id) : shared.add(id);
+            draw();
+          }),
+      ]),
+      primaryButton(tr('Razdijeli'), save),
+    ]) {
+      card.append(part);
+    }
+  }
+
+  sheet = el('div', cls: 'sheet', attrs: {'role': 'dialog', 'aria-modal': 'true'}, children: [card]);
+  sheet.onClick.listen((event) {
+    if (event.target == sheet) close();
+  });
+  web.document.body!.append(sheet);
+  draw();
+}
+
 web.HTMLElement _total(String label, int cents) => el('div', cls: 'tile card', children: [
       el('span', cls: 'small', text: label),
       el('span', cls: 'value', text: euros(cents)),
     ]);
 
+/// One kind of cost: what was spent, and what is planned and not spent yet.
+/// The bar fills with what was spent of the two together.
 web.HTMLElement _line(BudgetLine line) {
-  final share = line.planned == 0 ? 0 : line.actual / line.planned;
+  final whole = line.actual + line.ahead;
+  final share = whole == 0 ? 0 : line.actual / whole;
   return el('div', cls: 'line', children: [
     el('div', attrs: {'style': 'display:flex;justify-content:space-between;gap:12px'},
         children: [
       el('span', cls: 'strong', text: line.category.label),
-      el('span', cls: 'small', text: '${euros(line.actual)} od ${euros(line.planned)}'),
+      el('span', cls: 'small', text: tr('Potrošeno {0} · Planirano {1}', [euros(line.actual), euros(line.ahead)])),
     ]),
     el('div', cls: 'bar', children: [
-      el('div', cls: share > 1 ? 'over' : null, attrs: {
+      el('div', attrs: {
         'style': 'width:${(share.clamp(0, 1) * 100).round()}%',
       }),
     ]),
@@ -222,12 +305,23 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
   return el('div', children: [
     topBar(tr('Troškovi')),
     el('div', cls: 'three', children: [
-      _total(tr('Plan'), budget.plannedTotal),
       _total(tr('Potrošeno'), budget.actualTotal),
-      _total(tr('Ostaje'), budget.plannedTotal - budget.actualTotal),
+      _total(tr('Planirano'), budget.aheadTotal),
+      _total(tr('Ukupno'), budget.actualTotal + budget.aheadTotal),
     ]),
     for (final line in budget.lines)
       if (line.planned > 0 || line.actual > 0 || _always.contains(line.category)) _line(line),
+    if (toSplit(trip).isNotEmpty) ...[
+      sectionTitle(tr('Za razdijeliti')),
+      for (final place in toSplit(trip))
+        el('div', cls: 'row', children: [
+          el('div', cls: 'grow', children: [
+            el('div', text: place.name),
+            el('div', cls: 'small', text: tr('Procjena {0}', [euros((place.pricePerPerson ?? 0) * trip.people)])),
+          ]),
+          chip(tr('Razdijeli'), () => _split(ui, trip, place)),
+        ]),
+    ],
     sectionTitle(tr('Tko kome duguje')),
     if (transfers.isEmpty)
       el('p', cls: 'soft pad', text: tr('Svi su računi podmireni.')),

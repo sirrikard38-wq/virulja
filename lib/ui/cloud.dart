@@ -545,6 +545,19 @@ class CloudSync {
   }
 
   /// Puts a trip on this phone: the right code is all it takes to be in it.
+  /// Comes into [invited] as [person], who is already a member: the same name
+  /// and number on another phone. The first push gives that person this
+  /// phone's id, so its notifications come here.
+  void rejoin(({CloudTrip trip, Tree tree}) invited, String person) {
+    final trip = invited.trip.trip;
+    _learnPeople(trip, invited.trip);
+    _store.mirrorOf(trip.id).server = flatten(invited.tree);
+    _data.identities[trip.id] = person;
+    _data.trips.add(trip);
+    _store.save();
+    pushSoon();
+  }
+
   void join(({CloudTrip trip, Tree tree}) invited) {
     final trip = invited.trip.trip;
     _learnPeople(trip, invited.trip);

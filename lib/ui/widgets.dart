@@ -1,3 +1,4 @@
+import 'dart:js_interop';
 import 'dart:math';
 
 import 'package:web/web.dart' as web;
@@ -160,6 +161,26 @@ web.HTMLElement linkIcon(String address, String label) => el(
 
 /// Takes [item] out of [list] at once, with a moment to take that back.
 /// [also] runs with the removal and gives back what puts the rest as it was.
+/// Holds the page still behind a box that is open, as a phone would otherwise
+/// scroll it under the finger. Gives what lets it go again, where it was.
+void Function() holdPage() {
+  final at = web.window.scrollY;
+  final body = web.document.body!;
+  body.style
+    ..position = 'fixed'
+    ..top = '-${at}px'
+    ..left = '0'
+    ..right = '0';
+  return () {
+    body.style
+      ..position = ''
+      ..top = ''
+      ..left = ''
+      ..right = '';
+    web.window.scrollTo(0.toJS, at);
+  };
+}
+
 /// A name that a tap opens for typing, like any text; [rename] hears the new
 /// one once the keyboard closes, if it changed and is not empty.
 web.HTMLElement editableName(String name, String label, void Function(String name) rename) {

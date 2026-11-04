@@ -51,7 +51,7 @@ class Ui {
 
   /// A short message that disappears by itself.
   /// Shows [message] for a moment; [short] for half as long.
-  final void Function(String message, {bool short}) toast;
+  final void Function(String message, {bool short, bool long}) toast;
 
   /// A short message with a way to take back what was just done.
   final void Function(String message, void Function() undo) offerUndo;
@@ -91,6 +91,12 @@ class Ui {
 
   /// The paid cost being changed.
   String? editingExpense;
+
+  /// Shopping lists unfolded, those with their field for wishes open, and the
+  /// one whose names are being changed.
+  final Set<String> shopOpen = {};
+  final Set<String> shopAdding = {};
+  String? shopEditing;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;

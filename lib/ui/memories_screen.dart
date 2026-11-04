@@ -118,7 +118,7 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
           text: tr('Dodajte fotografije i videe iz galerije, a aplikacija će ih sama složiti po danima.')),
     if (trip.photos.isNotEmpty) ...[
       el('p', cls: 'small pad', attrs: {'style': 'margin-top:16px'},
-          text: tr('Drži prst na fotografiji i povuci je na drugi dan.')),
+          text: tr('Povuci uspomenu na drugi dan.')),
       for (var day = -1; day <= trip.dayCount; day++)
         el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
           el('div', cls: 'day-title', text: photoDayTitle(trip, day)),
