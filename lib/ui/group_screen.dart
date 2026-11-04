@@ -13,19 +13,74 @@ import 'notifications_section.dart';
 import 'profile_section.dart';
 import 'widgets.dart';
 
-/// The trips whose codes are listed: the next one on top, then each after it,
-/// then those gone by, the longest ago last.
-List<Trip> _shownCodes(Ui ui) {
+/// The trips whose codes are listed, [hidden] or not: the next one on top, then
+/// each after it, then those gone by, the longest ago last.
+List<Trip> _codes(Ui ui, {bool hidden = false}) {
   final now = today();
   final trips = [
     for (final trip in ui.data.trips)
-      if (trip.code != null && !ui.data.hiddenCodes.contains(trip.id)) trip,
+      if (trip.code != null && ui.data.hiddenCodes.contains(trip.id) == hidden) trip,
   ];
   final coming = trips.where((trip) => !trip.end.isBefore(now)).toList()
     ..sort((a, b) => a.start.compareTo(b.start));
   final gone = trips.where((trip) => trip.end.isBefore(now)).toList()
     ..sort((a, b) => b.end.compareTo(a.end));
   return [...coming, ...gone];
+}
+
+/// Šifre putovanja. With codes hidden, a tap on the heading folds them open
+/// under the others, faded, each with Prikaži to bring it back.
+List<web.HTMLElement> _codesSection(Ui ui) {
+  final shown = _codes(ui);
+  final hidden = _codes(ui, hidden: true);
+  if (shown.isEmpty && hidden.isEmpty) return [];
+  final open = ui.hiddenCodesOpen && hidden.isNotEmpty;
+
+  web.HTMLElement line(Trip trip, {required bool isHidden}) => el('div', cls: isHidden ? 'code-line faded' : 'code-line', children: [
+        el('div', cls: 'grow', children: [codeRow(trip)]),
+        button(
+          cls: 'hide-code',
+          ariaLabel: isHidden ? tr('Prikaži šifru: {0}', [trip.city]) : tr('Sakrij šifru: {0}', [trip.city]),
+          onTap: () {
+            if (isHidden) {
+              ui.data.hiddenCodes.remove(trip.id);
+              ui.changed();
+              return;
+            }
+            ui.data.hiddenCodes.add(trip.id);
+            ui.changed();
+            ui.offerUndo(tr('Sakriveno'), () {
+              ui.data.hiddenCodes.remove(trip.id);
+              ui.changed();
+            });
+          },
+          children: isHidden
+              ? [icon('plus', size: 18), el('span', text: tr('Prikaži'))]
+              : [icon('close', size: 18), el('span', text: tr('Sakrij'))],
+        ),
+      ]);
+
+  return [
+    if (hidden.isEmpty)
+      sectionTitle(tr('Šifre putovanja'))
+    else
+      button(
+        cls: open ? 'fold open' : 'fold',
+        onTap: () {
+          ui.hiddenCodesOpen = !open;
+          ui.rerender();
+        },
+        children: [
+          icon(open ? 'minus' : 'plus', size: 22),
+          el('span', cls: 'section', text: tr('Šifre putovanja')),
+        ],
+      )..setAttribute('aria-expanded', '$open'),
+    for (final trip in shown) line(trip, isHidden: false),
+    if (open) ...[
+      el('p', cls: 'small pad gap-top', text: tr('Skrivene')),
+      for (final trip in hidden) line(trip, isHidden: true),
+    ],
+  ];
 }
 
 /// This phone's settings: who you are, and how the app looks.
@@ -50,26 +105,7 @@ web.HTMLElement groupScreen(Ui ui) {
       ui.toast(tr('Spremljeno.'));
     }),
     if (cloud != null) ...[
-      if (_shownCodes(ui).isNotEmpty) ...[
-        sectionTitle(tr('Šifre putovanja')),
-        for (final trip in _shownCodes(ui))
-          el('div', cls: 'code-line', children: [
-            el('div', cls: 'grow', children: [codeRow(trip)]),
-            button(
-              cls: 'hide-code',
-              ariaLabel: tr('Sakrij šifru: {0}', [trip.city]),
-              onTap: () {
-                ui.data.hiddenCodes.add(trip.id);
-                ui.changed();
-                ui.offerUndo(tr('Sakriveno'), () {
-                  ui.data.hiddenCodes.remove(trip.id);
-                  ui.changed();
-                });
-              },
-              children: [icon('close', size: 18), el('span', text: tr('Sakrij'))],
-            ),
-          ]),
-      ],
+      ..._codesSection(ui),
       el('hr', cls: 'divider'),
       sectionTitle(tr('Imaš šifru putovanja?')),
       codeField(ui),

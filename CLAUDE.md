@@ -192,7 +192,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   equal part of what is planned and not yet written (`Budget.shareOf`).
 - Each presentation shows how long ago it was changed (`Show.changedAt`, `sinceCount`).
 - Codes in Postavke: the next trip first, past ones last; "Sakrij" hides one on this phone
-  (`AppData.hiddenCodes`). The anthem takes sound files only. The page does not zoom.
+  (`AppData.hiddenCodes`); with any hidden, a tap on the heading folds them open, faded,
+  each with "Prikaži". The anthem takes sound files only. The page does not zoom.
 - A heading that folds a list open has + before it, and − while open. Unticking "Primaj sve
   obavijesti" stops every notification, so there is no separate button to turn them off.
 - With JS interop types, `is web.HTMLVideoElement` is always true: keep videos in their own

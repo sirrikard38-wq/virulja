@@ -374,6 +374,7 @@ details.adder.on-top summary { justify-content: flex-end; }
 .show-card { position: relative; }
 .show-age { position: absolute; right: 12px; bottom: 6px; color: var(--soft); font-size: 11px; }
 .code-line { display: flex; align-items: center; gap: 8px; padding-right: 14px; }
+.code-line.faded > .grow { opacity: .55; }
 .hide-code { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; color: var(--soft); font-size: 11px; }
 .option-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 /* Open: the plus loses its upright stroke and becomes a minus. */

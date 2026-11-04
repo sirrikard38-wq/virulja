@@ -82,6 +82,9 @@ class Ui {
   /// Whether the list of presentations in Uspomene is open.
   bool showsOpen = false;
 
+  /// Whether Postavke also lists the codes hidden with Sakrij.
+  bool hiddenCodesOpen = false;
+
   /// The poll whose answers are being changed: each has an x, and a new one
   /// can be typed.
   String? editingPoll;
