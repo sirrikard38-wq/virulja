@@ -45,6 +45,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   from the right edge would reach, with no copy of a screen left to swipe back to.
   Copies of screens (`/~`) made a swipe back show the same trip again; pushing history
   steps while the phone steps back froze an iPhone and left it white (2026-11-04).
+- The screen of the day plan and the journey (`route_screen.dart`, called Plan puta in
+  these notes) is named "Prijevoz" in the app.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
   trip's tabs and the days of Plan puta. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`

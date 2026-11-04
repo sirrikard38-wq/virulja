@@ -44,7 +44,6 @@ const Map<String, List<String>> _texts = {
   'Plan': ['Plan', 'Plan'],
   'Ankete': ['Polls', 'Anketler'],
   'Plan napada': ['Game plan', 'Eylem planı'],
-  'Plan puta': ['Itinerary', 'Rota planı'],
   'Troškovi': ['Costs', 'Masraflar'],
   'Poništi': ['Undo', 'Geri al'],
   'Odustani': ['Cancel', 'Vazgeç'],
