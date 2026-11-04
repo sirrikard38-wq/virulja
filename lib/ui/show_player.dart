@@ -19,7 +19,17 @@ class ShowPlayer {
   final Ui _ui;
   final Trip _trip;
   final List<Slide> _slides;
-  final DateTime _started;
+  DateTime _started;
+
+  /// The second of the first video it stands on while a finger chooses it.
+  double? _held;
+
+  /// Stands still on [second] of the first slide's video, or with null plays
+  /// on from the start.
+  void hold(double? second) {
+    if (second == null && _held != null) _started = DateTime.now();
+    _held = second;
+  }
 
   /// What it plays, to know whether a redraw can keep it.
   final String key;
@@ -110,6 +120,24 @@ class ShowPlayer {
 
   void _draw() {
     if (_slides.isEmpty) return;
+    if (_held case final held?) {
+      final slide = _slides.first;
+      final picture = _picture(slide);
+      for (final image in _shown) {
+        if (image != picture) image.style.display = 'none';
+      }
+      _shown
+        ..clear()
+        ..add(picture);
+      _sweepShards();
+      _plain(picture, 2);
+      final video = _videos[slide.photoId];
+      if (video != null && video.readyState >= 1) {
+        if (!video.paused) video.pause();
+        if ((video.currentTime - held).abs() > .05) video.currentTime = held;
+      }
+      return;
+    }
     final frame = frameAt(_slides, seconds);
     final slide = _slides[frame.index];
     final previous = frame.previous;

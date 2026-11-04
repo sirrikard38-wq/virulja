@@ -660,6 +660,9 @@ class Comment {
       };
 }
 
+/// The day a photo moved to after the trip has, whatever the trip's length.
+const int afterTrip = 9999;
+
 /// The small picture of photo [id] for lists and grids.
 String thumbId(String id) => '$id.t';
 
@@ -717,7 +720,7 @@ class Photo {
   final double? seconds;
 
   /// The day of the trip, from 0, someone moved it to; null for the day it was
-  /// taken (`Trip.photoDay`).
+  /// taken (`Trip.photoDay`). -1 is before the trip, [afterTrip] after it.
   int? dayIndex;
 
   /// Anyone can give several reactions.
@@ -863,6 +866,7 @@ class Show {
     Map<String, Look>? looks,
     Set<String>? leftOut,
     this.chosen,
+    this.changedAt,
   })  : look = look ?? Look(Transition.fade),
         looks = looks ?? {},
         leftOut = leftOut ?? {};
@@ -876,6 +880,7 @@ class Show {
             .map((photo, look) => MapEntry(photo, Look.fromJson(_map(look)))),
         leftOut: _map(json['leftOut']).keys.toSet(),
         chosen: json['chosen'] == null ? null : _inOrder(json['chosen']),
+        changedAt: DateTime.tryParse(json['changedAt'] as String? ?? ''),
       );
 
   final String id;
@@ -893,6 +898,9 @@ class Show {
   /// Photos that are not in it, when [chosen] is null.
   Set<String> leftOut;
 
+  /// When it was made or last changed.
+  DateTime? changedAt;
+
   Json toJson() => {
         'id': id,
         'name': name,
@@ -903,6 +911,7 @@ class Show {
         'chosen': chosen == null
             ? null
             : {for (var i = 0; i < chosen!.length; i++) chosen![i]: i},
+        'changedAt': changedAt?.toIso8601String(),
       };
 }
 
@@ -1079,10 +1088,10 @@ class Trip {
   int membersAmong(Set<String> people) => people.where(memberIds.contains).length;
 
   /// The day of the trip [photo] belongs to, from 0: the one someone moved it to,
-  /// or the day it was taken. What came before or after the trip is on its first
-  /// or its last day.
+  /// or the day it was taken. -1 is before the trip and [dayCount] after it.
   int photoDay(Photo photo) =>
-      (photo.dayIndex ?? photo.day.difference(start).inDays).clamp(0, dayCount - 1);
+      (photo.dayIndex ?? photo.day.difference(start).inDays).clamp(-1, dayCount);
+
 
   /// The votes against [person] that count: those of members, not their own.
   int kickVotesAgainst(String person) => (kickVotes[person] ?? const <String>{})
@@ -1236,6 +1245,7 @@ class AppData {
     this.theme = ThemeChoice.system,
     this.anthemMuted = false,
     this.allTransitions = false,
+    Set<String>? hiddenCodes,
     Map<String, String>? identities,
     Map<String, String>? waiting,
     Map<String, List<String>>? kindOrder,
@@ -1244,6 +1254,7 @@ class AppData {
     Set<String>? noticesOff,
     Map<String, Set<String>>? tripNoticesOff,
   })  : noticesOff = noticesOff ?? {},
+        hiddenCodes = hiddenCodes ?? {},
         tripNoticesOff = tripNoticesOff ?? {},
         kindOrder = kindOrder ?? {},
         tripPhotos = tripPhotos ?? {},
@@ -1273,6 +1284,7 @@ class AppData {
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
         anthemMuted: json['anthemMuted'] as bool? ?? false,
         allTransitions: json['allTransitions'] as bool? ?? false,
+        hiddenCodes: _strings(json['hiddenCodes']).toSet(),
       );
 
   List<Person> people;
@@ -1287,6 +1299,9 @@ class AppData {
 
   /// Every transition open at once on this phone, whatever the day (Riko only).
   bool allTransitions;
+
+  /// Trips whose codes are hidden from the list in Postavke.
+  Set<String> hiddenCodes;
 
   /// Trip id -> who this phone is on that trip, when someone joined as a name
   /// that was already on the list.
@@ -1330,6 +1345,7 @@ class AppData {
         'theme': theme.name,
         'anthemMuted': anthemMuted,
         'allTransitions': allTransitions,
+        'hiddenCodes': hiddenCodes.toList(),
         'identities': identities,
         'waiting': waiting,
         'kindOrder': kindOrder,

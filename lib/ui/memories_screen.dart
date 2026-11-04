@@ -92,16 +92,16 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) {
     );
   movableToDay(shot, (day) {
     if (trip.photoDay(photo) == day) return;
-    photo.dayIndex = day;
+    photo.dayIndex = day >= trip.dayCount ? afterTrip : day;
     ui.changed();
-    ui.toast(tr('Premješteno: {0} Dan', [day + 1]), short: true);
+    ui.toast(tr('Premješteno: {0}', [photoDayTitle(trip, day).split(' · ').first]), short: true);
   });
   return shot;
 }
 
-/// Uspomene: the presentations, then every day of the trip with its photos and
-/// videos. What was taken before or after the trip is on its first or last day,
-/// and anything can be moved to another day.
+/// Uspomene: the presentations, then Prije puta, every day of the trip and
+/// Poslije puta, each with its photos and videos by when they were taken; any
+/// of them can be moved to another.
 web.HTMLElement galleryTab(Ui ui, Trip trip) {
   final byDay = <int, List<Photo>>{};
   for (final photo in photosByDay(trip)) {
@@ -119,10 +119,9 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
     if (trip.photos.isNotEmpty) ...[
       el('p', cls: 'small pad', attrs: {'style': 'margin-top:16px'},
           text: tr('Drži prst na fotografiji i povuci je na drugi dan.')),
-      for (var day = 0; day < trip.dayCount; day++)
+      for (var day = -1; day <= trip.dayCount; day++)
         el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
-          el('div', cls: 'day-title',
-              text: tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
+          el('div', cls: 'day-title', text: photoDayTitle(trip, day)),
           if (byDay[day] == null)
             el('div', cls: 'day-empty', text: tr('Ovdje još nema ničega.'))
           else

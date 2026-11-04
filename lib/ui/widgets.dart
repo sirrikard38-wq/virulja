@@ -137,12 +137,40 @@ web.HTMLElement linkIcon(String address, String label) => el(
 
 /// Takes [item] out of [list] at once, with a moment to take that back.
 /// [also] runs with the removal and gives back what puts the rest as it was.
+/// A name that a tap opens for typing, like any text; [rename] hears the new
+/// one once the keyboard closes, if it changed and is not empty.
+web.HTMLElement editableName(String name, String label, void Function(String name) rename) {
+  final field = el('input', cls: 'name-field', attrs: {
+    'type': 'text',
+    'value': name,
+    'aria-label': label,
+    'enterkeyhint': 'done',
+  }) as web.HTMLInputElement;
+  field.onKeyDown.listen((event) {
+    if (event.key == 'Enter') field.blur();
+    if (event.key == 'Escape') {
+      field.value = name;
+      field.blur();
+    }
+  });
+  field.onChange.listen((_) {
+    final text = field.value.trim();
+    if (text.isEmpty || text == name) {
+      field.value = name;
+      return;
+    }
+    rename(text);
+  });
+  return field;
+}
+
 web.HTMLElement removeWithUndo<T>(
   Ui ui,
   List<T> list,
   T item,
   String what, {
   void Function() Function()? also,
+  bool named = true,
 }) =>
     button(
       cls: 'icon-button',
@@ -153,7 +181,7 @@ web.HTMLElement removeWithUndo<T>(
         list.removeAt(at);
         final restore = also?.call();
         ui.changed();
-        ui.offerUndo(tr('Uklonjeno: {0}', [what]), () {
+        ui.offerUndo(named ? tr('Uklonjeno: {0}', [what]) : tr('Uklonjeno'), () {
           list.insert(min(at, list.length), item);
           restore?.call();
           ui.changed();

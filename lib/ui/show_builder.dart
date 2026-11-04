@@ -76,6 +76,7 @@ List<web.HTMLElement> _howLong(
   Look Function() own,
   double limit,
   List<double> marks,
+  void Function(double? second) scrub,
 ) {
   if (!photo.isVideo) {
     return [
@@ -98,30 +99,24 @@ List<web.HTMLElement> _howLong(
   final longest = longestClip(length);
   return [
     el('p', cls: 'label pad gap-top bar-title', text: tr('Koliko videa ide u prezentaciju')),
-    secondsBar(
-      value: clip.length,
-      limit: longest,
+    clipBar(
+      length: length,
+      from: clip.from,
+      clip: clip.length,
       longest: longest,
-      least: min(1, longest),
       label: tr('Koliko videa ide u prezentaciju'),
-      onChange: (seconds, {required done}) {
-        own().length = seconds;
-        if (done) ui.rerender();
+      onChange: (from, size, {required done, required at}) {
+        own()
+          ..from = from
+          ..length = size;
+        if (done) {
+          scrub(null);
+          ui.rerender();
+        } else {
+          scrub(at);
+        }
       },
     ),
-    if (length - clip.length > .05) ...[
-      el('p', cls: 'label pad gap-top bar-title', text: tr('Od koje sekunde')),
-      secondsBar(
-        value: clip.from,
-        limit: length - clip.length,
-        longest: length,
-        label: tr('Od koje sekunde'),
-        onChange: (seconds, {required done}) {
-          own().from = seconds;
-          if (done) ui.rerender();
-        },
-      ),
-    ],
     el('p', cls: 'small pad', text: tr('Od svakih 30 s videa u prezentaciju ide najviše 6 s.')),
   ];
 }
@@ -204,7 +199,16 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   final current = draft.current;
   final slides = slidesOf(trip, draft.asShow(me));
   final at = slides.indexWhere((slide) => slide.photoId == current);
-  final preview = ShowPlayer(ui, trip, slides, from: at <= 0 ? 0 : secondsBefore(slides, at))
+  final settingVideo = current != null && byId[current]!.isVideo;
+  final preview = (settingVideo
+      ? ShowPlayer(ui, trip, [
+          (
+            photoId: current,
+            look: (draft.looks[current] ?? draft.look).copy()..transition = Transition.none,
+            video: videoLength(byId[current]!),
+          ),
+        ])
+      : ShowPlayer(ui, trip, slides, from: at <= 0 ? 0 : secondsBefore(slides, at)))
     ..start();
   final error = errorLine();
   final name = input(value: draft.name);
@@ -230,6 +234,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   }
 
   void save() {
+    final changed = DateTime.now().toUtc();
     final title = draft.name.trim();
     if (title.isEmpty) {
       error.textContent = tr('Upiši naziv prezentacije.');
@@ -247,7 +252,8 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
         ..look = draft.look
         ..looks = draft.looks
         ..chosen = [...draft.chosen]
-        ..leftOut = {};
+        ..leftOut = {}
+        ..changedAt = changed;
     } else if (mine.length >= showsEach) {
       error.textContent = tr('Već imaš 3 prezentacije na ovom putovanju.');
       return;
@@ -259,6 +265,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
         look: draft.look,
         looks: draft.looks,
         chosen: [...draft.chosen],
+        changedAt: changed,
       ));
     }
     _draft = null;
@@ -326,7 +333,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
     else ...[
       sectionTitle(tr('Uspomene')),
       for (final day in shownDays) ...[
-        el('div', cls: 'show-day', text: tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
+        el('div', cls: 'show-day', text: photoDayTitle(trip, day)),
         _strip(draft, 'day $day', [
           for (final photo in days[day]!)
             _thumb(ui, trip, photo,
@@ -379,7 +386,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
           },
         ),
       ],
-      ..._howLong(ui, byId[current]!, lookOf(current), () => own(current), limit, marks),
+      ..._howLong(ui, byId[current]!, lookOf(current), () => own(current), limit, marks, preview.hold),
       el('div', cls: 'pad centered gap-top', children: [
         button(
           cls: 'text-button',

@@ -769,13 +769,24 @@ void main() {
       expect(dayLimits(trip(8)).take(2), [6, 6.86]);
     });
 
-    test('a photo is on the day it was taken or moved to, inside the trip', () {
+    test('a photo is on the day it was taken or moved to, or before or after the trip', () {
       final plan = trip(4);
       Photo at(int day, [int? moved]) =>
           Photo(id: '$day', takenAt: DateTime(2026, 11, day, 12), addedBy: 'a', dayIndex: moved);
-      expect([for (final day in [1, 2, 3, 5, 9]) plan.photoDay(at(day))], [0, 0, 1, 3, 3]);
+      expect([for (final day in [1, 2, 3, 5, 6, 9]) plan.photoDay(at(day))], [-1, 0, 1, 3, 4, 4]);
       expect(plan.photoDay(at(2, 2)), 2);
-      expect(plan.photoDay(at(2, 7)), 3);
+      expect(plan.photoDay(at(2, afterTrip)), 4);
+      expect(plan.photoDay(at(4, -1)), -1);
+      expect([photoDayTitle(plan, -1), photoDayTitle(plan, 4)], ['Prije puta', 'Poslije puta']);
+    });
+
+    test('the time since a change counts seconds, then minutes, then hours', () {
+      expect(sinceCount(const Duration(seconds: 5)), '5 sekundi');
+      expect(sinceCount(const Duration(seconds: 2)), '2 sekunde');
+      expect(sinceCount(const Duration(minutes: 3)), '3 minute');
+      expect(sinceCount(const Duration(minutes: 30)), '30 minuta');
+      expect(sinceCount(const Duration(minutes: 61)), '1 sat');
+      expect(sinceCount(const Duration(hours: 5)), '5 sati');
     });
 
     test('a presentation keeps the photos picked for it in their order', () {

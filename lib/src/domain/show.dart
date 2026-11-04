@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'format.dart';
+import 'i18n.dart';
 import 'models.dart';
 
 /// The whole bar of a transition's lengthening, and the part of it open from
@@ -82,6 +84,13 @@ double longestClip(double seconds) =>
 
 /// How long [video] is, or the most the app keeps when that is not known.
 double videoLength(Photo video) => video.seconds ?? _keptVideo;
+
+/// The heading of [day] of Uspomene: before the trip, a day of it, or after.
+String photoDayTitle(Trip trip, int day) {
+  if (day < 0) return tr('Prije puta');
+  if (day >= trip.dayCount) return tr('Poslije puta');
+  return tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))]);
+}
 
 /// The photos and videos of [trip] by day, and in each day as they were taken.
 List<Photo> photosByDay(Trip trip) => trip.photos.toList()

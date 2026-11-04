@@ -60,7 +60,7 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: pan-x pan-y; }
 
 body {
   margin: 0;
@@ -319,8 +319,12 @@ details.adder.on-top summary { justify-content: flex-end; }
 .option { position: relative; display: inline-flex; }
 .option-x { position: absolute; top: -7px; right: -7px; z-index: 1; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: var(--card); color: var(--danger); }
 .option-x .icon { stroke-width: 3; }
-.poll-title { width: 100%; padding: 2px 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; color: inherit; font-size: 15px; font-weight: 700; caret-color: var(--accent); }
-.poll-title:focus { outline: none; border-bottom-color: var(--accent); }
+.name-field { width: 100%; padding: 2px 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; color: inherit; font-size: 15px; font-weight: 700; caret-color: var(--accent); }
+.name-field:focus { outline: none; border-bottom-color: var(--accent); }
+.show-card { position: relative; }
+.show-age { position: absolute; right: 12px; bottom: 6px; color: var(--soft); font-size: 11px; }
+.code-line { display: flex; align-items: center; gap: 8px; padding-right: 14px; }
+.hide-code { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; color: var(--soft); font-size: 11px; }
 .option-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 /* Open: the plus loses its upright stroke and becomes a minus. */
 details.adder[open] summary .icon path:first-of-type { display: none; }
@@ -543,7 +547,7 @@ details.adder .wide { width: 100%; }
 .show-card.best { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .show-card .badge { margin-bottom: 6px; border-radius: 6px; }
 .show-count { color: var(--soft); font-size: 13px; font-weight: 600; }
-.show-votes { margin-left: auto; font-size: 18px; font-weight: 700; }
+.show-votes { margin: 0 auto; font-size: 18px; font-weight: 700; }
 .show-card .show-actions { justify-content: space-between; }
 .icon-button.brush { width: 52px; height: 52px; margin-right: 6px; border-radius: 50%; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .show-preview-wrap { position: sticky; top: var(--top-safe); z-index: 3; padding: 8px 0 4px; background: var(--bg); }

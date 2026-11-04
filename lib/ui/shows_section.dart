@@ -38,6 +38,8 @@ web.HTMLElement _showCard(Ui ui, Trip trip, Show show, String me, Show? best) {
         el('span', cls: 'show-votes', text: votesCount(picksOf(trip, show))),
       ]),
     ]),
+    if (show.changedAt case final changed?)
+      el('span', cls: 'show-age', text: sinceCount(DateTime.now().toUtc().difference(changed))),
     if (show.addedBy == me)
       button(
         cls: 'icon-button brush',
@@ -85,7 +87,7 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
       // In the order they were made; the one of the day is green, not moved.
       for (final show in trip.shows) _showCard(ui, trip, show, me, best),
       if (mine.length < showsEach && trip.photos.isNotEmpty)
-        primaryButton('${tr('Napravi prezentaciju')} ${mine.length + 1}/$showsEach',
+        primaryButton('${tr('Napravi prezentaciju')} ${mine.length}/$showsEach',
             () => openShowBuilder(ui, trip, null)),
       el('p', cls: 'small pad gap-top', text: tr('Na naslovnoj stranici putovanja prikazuje se prezentacija s najviše glasova. Svatko ima jedan glas i može napraviti do 3 prezentacije.')),
     ],

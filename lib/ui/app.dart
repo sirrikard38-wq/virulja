@@ -67,9 +67,25 @@ class ViruljaApp {
     web.document.body!.appendChild(_toast);
     _undoBar = el('div', cls: 'undo-bar', attrs: {'role': 'status'});
     web.document.body!.appendChild(_undoBar);
+    // An iPhone zooms with two fingers whatever the page says, unless told not to.
+    web.document.addEventListener('gesturestart', ((web.Event event) => event.preventDefault()).toJS);
+    final known = _stepOf();
+    known == null ? _markStep() : _step = known;
     web.window.addEventListener(
       'hashchange',
       ((web.Event event) {
+        _languageOpen = false;
+        final step = _stepOf();
+        if (step != null && step > _step) {
+          web.window.history.back();
+          return;
+        }
+        if (step == null) {
+          _step++;
+          _markStep();
+        } else {
+          _step = step;
+        }
         if (_trail.isNotEmpty && _trail.last == web.window.location.hash) {
           _trail.removeLast(); // the phone's back button
         }
@@ -154,8 +170,22 @@ class ViruljaApp {
       return;
     }
     _trail.add(web.window.location.hash);
+    _step++;
     web.window.location.hash = route;
+    _markStep();
   }
+
+  /// Which step of the phone's history the app is on, counted from its start.
+  /// Going back leaves the screen behind as a step forward, which an iPhone
+  /// reaches with a swipe from the right edge; such a step is undone at once.
+  int _step = 0;
+
+  int? _stepOf() {
+    final state = web.window.history.state.dartify();
+    return state is Map && state['step'] is num ? (state['step'] as num).toInt() : null;
+  }
+
+  void _markStep() => web.window.history.replaceState({'step': _step}.jsify(), '');
 
   void _back() {
     if (_trail.isNotEmpty) {
@@ -186,6 +216,7 @@ class ViruljaApp {
   /// swipe skips this screen: tabs of a trip count as one place.
   void _swap(String route) {
     web.window.location.replace(route);
+    _markStep();
   }
 
   /// A tap on a trip in a list. The tap is what lets the phone play sound, so

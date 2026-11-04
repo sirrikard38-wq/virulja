@@ -28,11 +28,34 @@ String _placeFacts(Place place) => [
       if (place.note != null) place.note!,
     ].join(' · ');
 
+/// Its polls, found by name, taken out of Ankete; gives what puts them back.
+void Function() _takePolls(Trip trip, String name) {
+  final taken = [
+    for (var i = 0; i < trip.polls.length; i++)
+      if (trip.polls[i].single && trip.polls[i].title == name) (at: i, poll: trip.polls[i]),
+  ];
+  trip.polls.removeWhere((poll) => poll.single && poll.title == name);
+  return () {
+    for (final item in taken) {
+      trip.polls.insert(item.at.clamp(0, trip.polls.length), item.poll);
+    }
+  };
+}
+
+/// A new name for a place or dish, which its polls take along.
+void _rename(Ui ui, Trip trip, String old, String name, void Function(String) set) {
+  for (final poll in trip.polls) {
+    if (poll.single && poll.title == old) poll.title = name;
+  }
+  set(name);
+  ui.changed();
+}
+
 /// Puts [name] up for a vote, once; a second tap takes the poll back.
 web.HTMLElement _voteChip(Ui ui, Trip trip, String name) {
   bool same(Poll poll) => poll.single && poll.title == name;
   final polled = trip.polls.any(same);
-  return chip(polled ? tr('Anketa') : tr('Glasaj'), () {
+  return chip(tr('Anketa'), () {
     polled ? trip.polls.removeWhere(same) : addYesNoPoll(ui, trip, name);
     ui.changed();
   }, on: polled);
@@ -43,7 +66,8 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
   final inAttack = placeInAttack(trip, place);
   return el('div', cls: 'row', children: [
     el('div', cls: 'grow', children: [
-      el('div', cls: 'label', text: place.name),
+      editableName(place.name, tr('Naziv'),
+          (name) => _rename(ui, trip, place.name, name, (name) => place.name = name)),
       el('div', cls: 'small', text: _placeFacts(place)),
       el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
         chip(tr('Plan napada'), () {
@@ -54,7 +78,7 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
       ]),
     ]),
     if (link != null) linkIcon(link, tr('Otvori {0}', [place.name])),
-    removeWithUndo(ui, trip.places, place, place.name),
+    removeWithUndo(ui, trip.places, place, place.name, also: () => _takePolls(trip, place.name)),
   ]);
 }
 
@@ -114,7 +138,8 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
   final place = dish.placeName;
   return el('div', cls: 'row', children: [
     el('div', cls: 'grow', children: [
-      el('div', cls: 'label', text: dish.name),
+      editableName(dish.name, tr('Naziv'),
+          (name) => _rename(ui, trip, dish.name, name, (name) => dish.name = name)),
       el('div', cls: 'small', text: [
         if (place != null) place,
         '${dish.servings} × ${euros(dish.price)}',
@@ -122,7 +147,7 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
     ]),
     el('div', cls: 'price', text: euros(dish.price * dish.servings)),
     _voteChip(ui, trip, dish.name),
-    removeWithUndo(ui, trip.dishes, dish, dish.name),
+    removeWithUndo(ui, trip.dishes, dish, dish.name, also: () => _takePolls(trip, dish.name)),
   ]);
 }
 

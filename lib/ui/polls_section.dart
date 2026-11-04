@@ -68,33 +68,12 @@ void _removeOption(Ui ui, Poll poll, PollOption option) {
   });
 }
 
-/// The poll's name, which a tap opens for typing like any text; it is kept once
-/// the keyboard closes.
-web.HTMLElement _pollTitle(Ui ui, Trip trip, Poll poll) {
-  final name = el('input', cls: 'poll-title', attrs: {
-    'type': 'text',
-    'value': poll.title,
-    'aria-label': tr('Naziv ankete'),
-    'enterkeyhint': 'done',
-  }) as web.HTMLInputElement;
-  name.onKeyDown.listen((event) {
-    if (event.key == 'Enter') name.blur();
-    if (event.key == 'Escape') {
-      name.value = poll.title;
-      name.blur();
-    }
-  });
-  name.onChange.listen((_) {
-    final text = name.value.trim();
-    if (text.isEmpty || text == poll.title) {
-      name.value = poll.title;
-      return;
-    }
-    renamePoll(trip, poll, text);
-    ui.changed();
-  });
-  return name;
-}
+/// The poll's name, which a tap opens for typing like any text.
+web.HTMLElement _pollTitle(Ui ui, Trip trip, Poll poll) =>
+    editableName(poll.title, tr('Naziv ankete'), (name) {
+      renamePoll(trip, poll, name);
+      ui.changed();
+    });
 
 web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
@@ -103,7 +82,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   return el('div', cls: 'poll card', children: [
     el('div', attrs: {'style': 'display:flex;align-items:center'}, children: [
       el('div', cls: 'grow', children: [_pollTitle(ui, trip, poll)]),
-      removeWithUndo(ui, trip.polls, poll, poll.title),
+      removeWithUndo(ui, trip.polls, poll, poll.title, named: false),
     ]),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)

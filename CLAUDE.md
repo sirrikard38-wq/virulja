@@ -39,6 +39,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
+  Each history step carries its number (`App._step`): a step forward to a screen already
+  left, as an iPhone's swipe from the right edge does, is undone at once.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories and a
   trip's tabs. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
@@ -50,9 +52,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   https://claude.ai/artifact/LPK38eCE73Kx6HuBepHRob (variants, logos, a clickable
   prototype). Logo 3 Vir is temporary: the user will make the real logo later.
 - Photos: one tap on every phone; each person picks from the gallery and the app sorts
-  by day. No automatic gallery reading. Uspomene shows only the days of the trip: what was
-  taken before or after is on the first or last day, and a finger held on a photo drags it
-  to another day (`Photo.dayIndex`, `Trip.photoDay`, `lib/ui/photo_drag.dart`).
+  by day. No automatic gallery reading. Uspomene shows "Prije puta", the days of the trip and
+  "Poslije puta" (-1 and `dayCount` from `Trip.photoDay`; a photo moved after the trip
+  stores `afterTrip`), and a finger held on a photo drags it to any of them
+  (`Photo.dayIndex`, `lib/ui/photo_drag.dart`).
 - Photos have reactions and comments, one reaction per person.
 - Videos are photos with `videoType` (`lib/ui/video_work.dart`). A video from a phone would
   fill the free storage, so the app keeps the first 30 seconds at 3 to 6 MB. A browser can
@@ -99,7 +102,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   crno, reads as it) breaks the photo going out into 24 pieces that fly and fall
   (`_shatter` in `show_player.dart`; a video gives its current picture). A photo then stands 2.5 s, or what its bar
   says, from 0.5 s up to the same daily limit as the transitions; the bars are marked at
-  each day's limit (`dayLimits`) and write 6s with no space. A video plays a piece of it, 6 s of every 30 s
+  each day's limit (`dayLimits`) and write 6s with no space. A video's piece is set on one bar as long as
+  the video (`clipBar`), its ends and middle dragged; while a video is set, the preview
+  plays only that piece and stands on the second under the finger (`ShowPlayer.hold`).
+  A video plays a piece of it, 6 s of every 30 s
   it lasts at most (`longestClip`, `clipOf`); kept videos are 30 s at most, so one piece of
   6 s. The video stands still on the piece's first picture during its transition. On the first day of the trip 6 s
   and 5 transitions are open; each later day adds the rest up to 12 s divided by the days
@@ -128,6 +134,14 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   with most votes shows. Ne and
   Možda never decide a poll.
 - On a trip's main tabs the settings button is in the corner, the anthem's speaker under it.
+- Bars move only by dragging their round knob (or a video's piece); a tap elsewhere on a
+  bar changes nothing.
+- Names of polls, places and dishes are typed in place (`editableName`); a place or dish
+  taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
+  out of Ankete leaves the place. Its button always says "Anketa".
+- Each presentation shows how long ago it was changed (`Show.changedAt`, `sinceCount`).
+- Codes in Postavke: the next trip first, past ones last; "Sakrij" hides one on this phone
+  (`AppData.hiddenCodes`). The anthem takes sound files only. The page does not zoom.
 - A heading that folds a list open has + before it, and − while open. Unticking "Primaj sve
   obavijesti" stops every notification, so there is no separate button to turn them off.
 - With JS interop types, `is web.HTMLVideoElement` is always true: keep videos in their own

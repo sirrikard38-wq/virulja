@@ -5,12 +5,28 @@ import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 import 'install.dart';
 import 'join_screen.dart';
 import 'language_section.dart';
 import 'notifications_section.dart';
 import 'profile_section.dart';
 import 'widgets.dart';
+
+/// The trips whose codes are listed: the next one on top, then each after it,
+/// then those gone by, the longest ago last.
+List<Trip> _shownCodes(Ui ui) {
+  final now = today();
+  final trips = [
+    for (final trip in ui.data.trips)
+      if (trip.code != null && !ui.data.hiddenCodes.contains(trip.id)) trip,
+  ];
+  final coming = trips.where((trip) => !trip.end.isBefore(now)).toList()
+    ..sort((a, b) => a.start.compareTo(b.start));
+  final gone = trips.where((trip) => trip.end.isBefore(now)).toList()
+    ..sort((a, b) => b.end.compareTo(a.end));
+  return [...coming, ...gone];
+}
 
 /// This phone's settings: who you are, and how the app looks.
 web.HTMLElement groupScreen(Ui ui) {
@@ -34,10 +50,25 @@ web.HTMLElement groupScreen(Ui ui) {
       ui.toast(tr('Spremljeno.'));
     }),
     if (cloud != null) ...[
-      if (ui.data.trips.any((trip) => trip.code != null)) ...[
+      if (_shownCodes(ui).isNotEmpty) ...[
         sectionTitle(tr('Šifre putovanja')),
-        for (final trip in ui.data.trips)
-          if (trip.code != null) codeRow(trip),
+        for (final trip in _shownCodes(ui))
+          el('div', cls: 'code-line', children: [
+            el('div', cls: 'grow', children: [codeRow(trip)]),
+            button(
+              cls: 'hide-code',
+              ariaLabel: tr('Sakrij šifru: {0}', [trip.city]),
+              onTap: () {
+                ui.data.hiddenCodes.add(trip.id);
+                ui.changed();
+                ui.offerUndo(tr('Sakriveno'), () {
+                  ui.data.hiddenCodes.remove(trip.id);
+                  ui.changed();
+                });
+              },
+              children: [icon('close', size: 18), el('span', text: tr('Sakrij'))],
+            ),
+          ]),
       ],
       el('hr', cls: 'divider'),
       sectionTitle(tr('Imaš šifru putovanja?')),
