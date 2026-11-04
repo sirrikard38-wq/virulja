@@ -157,7 +157,8 @@ web.HTMLElement _newPoll(Ui ui, Trip trip) {
         cls: 'text-button',
         text: '+ ${action ?? label}',
         onTap: () {
-          final choice = input(type: type);
+          final picker = type == 'time' ? timePicker() : null;
+          final choice = picker?.value ?? input(type: type);
           choices.add(choice);
           late final web.HTMLElement row;
           row = el('div', cls: 'field', children: [
@@ -173,10 +174,10 @@ web.HTMLElement _newPoll(Ui ui, Trip trip) {
               ),
               el('span', text: label),
             ]),
-            choice,
+            picker?.view ?? choice,
           ]);
           rows.append(row);
-          choice.focus();
+          (picker?.view.querySelector('select') as web.HTMLElement? ?? choice).focus();
         },
       );
 

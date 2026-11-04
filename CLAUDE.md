@@ -139,7 +139,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   or no stays one answer per person (`Poll.single`), and in Plan napada the added answer
   with most votes shows. Ne and
   Možda never decide a poll.
-- On a trip's main tabs the settings button is in the corner, the anthem's speaker under it,
+- Prijevoz: a part of the journey marked Rezervirano (`Leg.reserved`) goes into Plan
+  napada, where the group votes its day like anything else. Troškovi always shows
+  Smještaj, Hrana i piće and Prijevoz. Categories of Hrana i piće go only in the bin.
+- On a trip's main tabs the settings button is in the corner (it scrolls away with the
+  page, as do the speaker and the pin), the anthem's speaker under it,
   and under that a pin while a stay is reserved: Google Maps on foot from the phone to it
   (`walkTo`; when a short map link cannot be read, it walks to the stay's name in the
   trip's city). It is a plain link: `window.open` left the iPhone app white on return.
@@ -163,6 +167,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
+- Times are picked on two wheels, minutes in steps of 5 (`timePicker`): a phone's own
+  time field offers every minute.
 - A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).
 - The trip's header shows "tvoj trošak": your part of each written cost you share, and an
   equal part of what is planned and not yet written (`Budget.shareOf`).

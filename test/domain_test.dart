@@ -213,6 +213,21 @@ void main() {
       expect(Budget.shareOf(trip, 'ana') - Budget.shareOf(trip, 'iva'), 15000);
     });
 
+    test('a reserved part of the journey is in Plan napada on its voted day', () {
+      final trip = visTrip()
+        ..legs.add(Leg(id: 'l', title: 'Trajekt', cost: 4000, dayVotes: {
+          1: {'ana', 'marko'},
+        }));
+      expect(planOfAttack(trip, DateTime(2027, 6, 1)).where((i) => i.leg != null), isEmpty);
+      trip.legs.single.reserved = true;
+      final item = planOfAttack(trip, DateTime(2027, 6, 1)).singleWhere((i) => i.leg != null);
+      expect(item.days, [1]);
+      expect(item.category, CostCategory.transport);
+      final back = Leg.fromJson(jsonDecode(jsonEncode(trip.legs.single.toJson())) as Json);
+      expect(back.reserved, isTrue);
+      expect(back.dayVotes[1], {'ana', 'marko'});
+    });
+
     test('a reserved stay is planned and spent', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));

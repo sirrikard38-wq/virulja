@@ -49,6 +49,29 @@ web.HTMLElement field(String label, web.Node control, {bool tight = false}) =>
       children: [web.document.createTextNode(label), control],
     );
 
+/// A time picked on two wheels, the hours and the minutes in steps of 5, as a
+/// phone shows a list; its own time field would offer every minute. [value]
+/// holds it as 08:30, or nothing while no hour is picked.
+({web.HTMLElement view, web.HTMLInputElement value}) timePicker() {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final value = el('input', attrs: {'type': 'hidden'}) as web.HTMLInputElement;
+  final hours = el('select', cls: 'input', attrs: {'aria-label': tr('Sati')}, children: [
+    el('option', text: '--', attrs: {'value': ''}),
+    for (var hour = 0; hour < 24; hour++) el('option', text: two(hour), attrs: {'value': two(hour)}),
+  ]) as web.HTMLSelectElement;
+  final minutes = el('select', cls: 'input', attrs: {'aria-label': tr('Minute')}, children: [
+    for (var minute = 0; minute < 60; minute += 5)
+      el('option', text: two(minute), attrs: {'value': two(minute)}),
+  ]) as web.HTMLSelectElement;
+  void keep() => value.value = hours.value.isEmpty ? '' : '${hours.value}:${minutes.value}';
+  hours.onChange.listen((_) => keep());
+  minutes.onChange.listen((_) => keep());
+  return (
+    view: el('span', cls: 'time-picker', children: [hours, el('span', text: ':'), minutes, value]),
+    value: value,
+  );
+}
+
 web.HTMLSelectElement select<T>(
   List<T> values,
   String Function(T) label, {

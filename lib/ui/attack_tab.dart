@@ -19,7 +19,7 @@ String _when(Trip trip, NextUp item) => [
 /// Takes [item] out of the plan of attack, with a moment to change your mind.
 /// A poll stays in Ankete, a stop in Plan puta and a place in Hrana i piće.
 void _remove(Ui ui, Trip trip, NextUp item) {
-  final poll = item.poll, stop = item.stop, place = item.place;
+  final poll = item.poll, stop = item.stop, place = item.place, leg = item.leg;
   final active = poll?.active, activeBy = poll?.activeBy;
   final planned = place?.planned, plannedBy = place?.plannedBy;
   final polls = {
@@ -29,6 +29,7 @@ void _remove(Ui ui, Trip trip, NextUp item) {
   if (poll != null) setPollInAttack(trip, poll, false, ui.meIn(trip));
   if (place != null) setPlaceInAttack(trip, place, false, ui.meIn(trip));
   stop?.hiddenInAttack = true;
+  leg?.reserved = false;
   ui.changed();
   ui.offerUndo(tr('Maknuto iz Plana napada'), () {
     poll
@@ -39,6 +40,7 @@ void _remove(Ui ui, Trip trip, NextUp item) {
       ..plannedBy = plannedBy;
     polls.forEach((other, wasActive) => other.active = wasActive);
     stop?.hiddenInAttack = false;
+    leg?.reserved = true;
     ui.changed();
   });
 }

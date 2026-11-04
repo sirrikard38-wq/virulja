@@ -443,19 +443,39 @@ class Stop {
 
 /// One piece of the journey by any means: a flight, a train, a ferry.
 class Leg {
-  Leg({required this.id, required this.title, this.cost = 0});
+  Leg({
+    required this.id,
+    required this.title,
+    this.cost = 0,
+    this.reserved = false,
+    Map<int, Set<String>>? dayVotes,
+  }) : dayVotes = dayVotes ?? {};
 
   factory Leg.fromJson(Json json) => Leg(
         id: json['id'] as String,
         title: json['title'] as String,
         cost: json['cost'] as int? ?? 0,
+        reserved: json['reserved'] as bool? ?? false,
+        dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
   String title;
   int cost;
 
-  Json toJson() => {'id': id, 'title': title, 'cost': cost};
+  /// Booked: it goes into Plan napada, on the day most vote for.
+  bool reserved;
+
+  /// Day -> who can go that day, once it is in Plan napada.
+  Map<int, Set<String>> dayVotes;
+
+  Json toJson() => {
+        'id': id,
+        'title': title,
+        'cost': cost,
+        'reserved': reserved,
+        'dayVotes': dayVotesToJson(dayVotes),
+      };
 }
 
 /// The drive there: the part of the transport estimate worked out from fuel.

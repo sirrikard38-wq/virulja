@@ -11,6 +11,9 @@ import 'context.dart';
 import 'dom.dart';
 import 'widgets.dart';
 
+/// The kinds of cost that always show, even at nothing yet.
+const Set<CostCategory> _always = {CostCategory.stay, CostCategory.food, CostCategory.transport};
+
 web.HTMLElement _total(String label, int cents) => el('div', cls: 'tile card', children: [
       el('span', cls: 'small', text: label),
       el('span', cls: 'value', text: euros(cents)),
@@ -219,7 +222,7 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
       _total(tr('Ostaje'), budget.plannedTotal - budget.actualTotal),
     ]),
     for (final line in budget.lines)
-      if (line.planned > 0 || line.actual > 0) _line(line),
+      if (line.planned > 0 || line.actual > 0 || _always.contains(line.category)) _line(line),
     sectionTitle(tr('Tko kome duguje')),
     if (transfers.isEmpty)
       el('p', cls: 'soft pad', text: tr('Svi su računi podmireni.')),

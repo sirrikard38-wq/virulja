@@ -555,7 +555,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     });
   }
 
-  void removeKind(CustomKind custom) => throwAway(custom.id);
+
 
   final custom = tab.custom;
   final sliding = el('div', cls: 'slide-page', children: [
@@ -573,14 +573,6 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
         el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
       for (final place in places) _placeRow(ui, trip, place),
       _addPlace(ui, trip, custom),
-      if (custom != null)
-        el('div', cls: 'pad gap-top', children: [
-          button(
-            cls: 'text-button',
-            text: tr('Obriši kategoriju'),
-            onTap: () => removeKind(custom),
-          ),
-        ]),
     ],
   ]);
   final chipRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [

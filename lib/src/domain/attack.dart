@@ -16,6 +16,7 @@ class NextUp {
     this.poll,
     this.stop,
     this.place,
+    this.leg,
   });
 
   final String title;
@@ -38,12 +39,15 @@ class NextUp {
   final int cost;
   final CostCategory category;
 
-  /// What it came from: one of these three.
+  /// What it came from: one of these four.
   final Poll? poll;
   final Stop? stop;
   final Place? place;
 
-  String get id => poll?.id ?? place?.id ?? stop!.id;
+  /// A reserved part of the journey from Prijevoz.
+  final Leg? leg;
+
+  String get id => poll?.id ?? place?.id ?? leg?.id ?? stop!.id;
 
   /// It had a day and that day is over, so what it costs counts as spent.
   bool get happened => past && days.isNotEmpty;
@@ -219,8 +223,8 @@ void setPollInAttack(Trip trip, Poll poll, bool on, String person) {
 }
 
 /// Everything in Plan napada at [now], each always in the same place: the stops
-/// of Plan puta, then the places of Hrana i piće, then the polls, each in the
-/// order it was made.
+/// of Plan puta, then the places of Hrana i piće, then the polls, then the
+/// reserved parts of the journey, each in the order it was made.
 List<NextUp> planOfAttack(Trip trip, DateTime now) {
   final day = today(now);
   final hour = now.hour.toString().padLeft(2, '0');
@@ -244,6 +248,7 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
     Poll? poll,
     Stop? stop,
     Place? place,
+    Leg? leg,
   }) {
     final days = votedDays(trip, votes);
     return NextUp(
@@ -258,6 +263,7 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
       poll: poll,
       stop: stop,
       place: place,
+      leg: leg,
     );
   }
 
@@ -288,6 +294,10 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
             place: place),
     for (final poll in trip.polls)
       if (poll.active && placeOf(trip, poll) == null) fromPoll(poll),
+    for (final leg in trip.legs)
+      if (leg.reserved)
+        item(leg.title, leg.dayVotes,
+            cost: leg.cost, category: CostCategory.transport, leg: leg),
   ];
   // Each thing keeps its place: votes, days and time never move it.
   return items;

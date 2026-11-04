@@ -15,7 +15,8 @@ double? _parseNumber(String text) =>
     double.tryParse(text.trim().replaceAll(',', '.'));
 
 web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
-  final time = input(type: 'time');
+  final picker = timePicker();
+  final time = picker.value;
   final title = input();
   final cost = numberInput();
   final error = errorLine();
@@ -39,7 +40,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
   return adder(tr('Dodaj u plan'), [
     field(tr('Što'), title),
     el('div', cls: 'fields', children: [
-      field(tr('Vrijeme'), time, tight: true),
+      field(tr('Vrijeme'), picker.view, tight: true),
       field(tr('Trošak za grupu (€)'), cost, tight: true),
     ]),
     error,
@@ -163,10 +164,17 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     ]),
     days,
     sectionTitle(tr('Prijevoz')),
+    // A reserved part of the journey goes into Plan napada, where the group
+    // picks its day.
     for (final leg in trip.legs)
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', text: leg.title),
         if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
+        chip(tr('Rezervirano'), () {
+          leg.reserved = !leg.reserved;
+          ui.changed();
+          if (leg.reserved) ui.toast(tr('Dodano u Plan napada.'));
+        }, on: leg.reserved),
         removeWithUndo(ui, trip.legs, leg, leg.title),
       ]),
     if (trip.drive.totalCost > 0)
