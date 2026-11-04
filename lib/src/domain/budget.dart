@@ -50,6 +50,28 @@ class Budget {
 
   int get actualTotal => lines.fold(0, (sum, line) => sum + line.actual);
 
+  /// What the trip costs [person]: their part of each written cost they share,
+  /// and an equal part of what is planned and not yet written down.
+  static int shareOf(Trip trip, String person, [DateTime? now]) {
+    final budget = Budget.of(trip, now);
+    var share = 0.0;
+    final written = {for (final category in CostCategory.values) category: 0};
+    for (final cost in trip.expenses) {
+      written[cost.category] = written[cost.category]! + cost.amount;
+      if (cost.sharedBy.contains(person) && cost.sharedBy.isNotEmpty) {
+        share += cost.amount / cost.sharedBy.length;
+      }
+    }
+    final people = trip.people;
+    if (people > 0) {
+      for (final line in budget.lines) {
+        final open = line.planned - written[line.category]!;
+        if (open > 0) share += open / people;
+      }
+    }
+    return share.round();
+  }
+
   int get plannedPerPerson =>
       _people == 0 ? 0 : (plannedTotal / _people).round();
 

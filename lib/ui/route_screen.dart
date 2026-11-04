@@ -5,6 +5,7 @@ import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'swipes.dart';
 import 'widgets.dart';
 
 String _number(double value) =>
@@ -127,15 +128,8 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
   final day = ui.routeDay.clamp(0, trip.dayCount - 1);
   final stops = trip.stops.where((stop) => stop.dayIndex == day).toList()
     ..sort((a, b) => a.time.compareTo(b.time));
-  return el('div', children: [
-    topBar(tr('Plan puta')),
-    el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
-      for (var i = 0; i < trip.dayCount; i++)
-        chip(tr('{0} Dan', [i + 1]), () {
-          ui.routeDay = i;
-          ui.rerender();
-        }, on: i == day),
-    ]),
+  // A swipe sideways goes to the day before or after, as the chips do.
+  final sliding = el('div', cls: 'slide-page', children: [
     sectionTitle(weekdayAndDate(trip.dayAt(day))),
     if (stops.isEmpty) el('p', cls: 'soft pad', text: tr('Za ovaj dan još nema plana.')),
     for (final stop in stops)
@@ -146,6 +140,28 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
         removeWithUndo(ui, trip.stops, stop, stop.title),
       ]),
     _addStop(ui, trip, day),
+  ]);
+  final days = el('div', cls: 'swipe-area', children: [
+    el('div', cls: 'slide-clip', children: [sliding]),
+  ]);
+  followSwipes(days, sliding, (step) {
+    final next = day + step;
+    return next >= 0 && next < trip.dayCount;
+  }, (step) {
+    ui.routeDay = day + step;
+    ui.rerender();
+    slideIn(step);
+  });
+  return el('div', children: [
+    topBar(tr('Plan puta')),
+    el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
+      for (var i = 0; i < trip.dayCount; i++)
+        chip(tr('{0} Dan', [i + 1]), () {
+          ui.routeDay = i;
+          ui.rerender();
+        }, on: i == day),
+    ]),
+    days,
     sectionTitle(tr('Prijevoz')),
     for (final leg in trip.legs)
       el('div', cls: 'row', children: [

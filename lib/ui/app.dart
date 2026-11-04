@@ -80,13 +80,23 @@ class ViruljaApp {
           _skipping = false; // a step passed through on the way back
           return;
         }
+        final hash = web.window.location.hash;
+        if (_settling == hash) {
+          // The step that wipes out the way forward: the screen stays as it is.
+          _settling = null;
+          _markStep();
+          _shown = hash;
+          return;
+        }
         final step = _stepOf();
+        final wentBack = step != null && step < _step;
         if (step == null) {
           _step++;
           _markStep();
         } else {
           _step = step;
         }
+        if (wentBack) _settleAfterBack(hash);
         if (_trail.isNotEmpty && _trail.last == web.window.location.hash) {
           _trail.removeLast(); // the phone's back button
         }
@@ -204,13 +214,45 @@ class ViruljaApp {
   /// Set while the phone's back button passes a step that shows nothing new.
   bool _skipping = false;
 
+  /// The address of the step being added after a step back.
+  String? _settling;
+
+  /// After the phone's own step back (its back button, or a swipe from the left
+  /// edge), the screen it left stays as a step forward, which an iPhone reaches
+  /// with a swipe from the right edge. A moment later, once the phone is done,
+  /// one more step of the same screen is added through the address, which wipes
+  /// that step forward out. The phone's back button then skips it.
+  void _settleAfterBack(String landed) {
+    Timer(const Duration(milliseconds: 400), () {
+      if (web.window.location.hash != landed) return;
+      final place = _Place(landed);
+      final trip = place.tripId == null ? null : _data.tripById(place.tripId!);
+      final String again;
+      if (landed == '#/~') {
+        again = '#/';
+      } else if (landed.endsWith('/~')) {
+        again = landed.substring(0, landed.length - 2);
+      } else if (trip != null && place.section == null) {
+        again = '#/p/${trip.id}/${defaultTab(trip)}/~';
+      } else if (landed.isEmpty || landed == '#' || landed == '#/') {
+        again = '#/~';
+      } else {
+        again = '$landed/~';
+      }
+      _settling = again;
+      _step++;
+      web.window.location.hash = again;
+    });
+  }
+
   /// Where an address is: the tabs of a trip are one place.
   String _placeOf(String hash) {
     final place = _Place(hash);
     if (place.tripId != null && (place.section == null || _mainTabs.contains(place.section))) {
       return '#/p/${place.tripId}';
     }
-    return hash.isEmpty ? '#/' : hash;
+    final plain = hash.endsWith('/~') ? hash.substring(0, hash.length - 2) : hash;
+    return plain.isEmpty || plain == '#' ? '#/' : plain;
   }
 
   /// Which step of the phone's history the app is on, counted from its start.

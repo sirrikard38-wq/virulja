@@ -200,6 +200,19 @@ void main() {
       expect(plannedCost(trip, CostCategory.food), 3700 * trip.people + 5600);
     });
 
+    test('your cost counts only what concerns you', () {
+      final trip = visTrip()
+        ..expenses.add(Expense(
+          id: 'x',
+          title: 'Vila',
+          amount: 30000,
+          payerId: 'ana',
+          sharedBy: ['ana', 'marko'],
+          category: CostCategory.stay,
+        ));
+      expect(Budget.shareOf(trip, 'ana') - Budget.shareOf(trip, 'iva'), 15000);
+    });
+
     test('a reserved stay is planned and spent', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));

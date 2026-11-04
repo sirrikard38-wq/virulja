@@ -41,10 +41,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
   The on-screen back arrow replaces the screen instead of stepping back, so no step
   forward is left for an iPhone's swipe from the right edge; the phone's back button
-  skips the step of the same screen this leaves (`App._step`). Pushing history steps
+  skips the step of the same screen this leaves (`App._step`). After the phone's own step
+  back, 400 ms later one more step of the same screen is added through the address
+  (ending in `/~`), which wipes the step forward out (`_settleAfterBack`). Pushing history steps
   while the phone steps back (tried on 2026-11-04) froze an iPhone and left it white.
-- `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories and a
-  trip's tabs. A swipe is off while a form is open, as a redraw would wipe it.
+- `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
+  trip's tabs and the days of Plan puta. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
 
@@ -156,6 +158,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
+- The trip's header shows "tvoj trošak": your part of each written cost you share, and an
+  equal part of what is planned and not yet written (`Budget.shareOf`).
 - Each presentation shows how long ago it was changed (`Show.changedAt`, `sinceCount`).
 - Codes in Postavke: the next trip first, past ones last; "Sakrij" hides one on this phone
   (`AppData.hiddenCodes`). The anthem takes sound files only. The page does not zoom.
