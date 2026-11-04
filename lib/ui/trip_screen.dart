@@ -18,6 +18,7 @@ import 'memories_screen.dart';
 import 'people_section.dart';
 import 'polls_section.dart';
 import 'requests_section.dart';
+import 'shop_screen.dart';
 import 'show_player.dart';
 import 'swipes.dart';
 import 'widgets.dart';
@@ -69,6 +70,8 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
           () => ui.go(ui.tripRoute(trip, 'put'))),
       _tile(tr('Troškovi'), euros(budget.plannedTotal),
           () => ui.go(ui.tripRoute(trip, 'troskovi'))),
+      _tile(tr('Dućan'), itemsCount(itemsLeft(trip)),
+          () => ui.go(ui.tripRoute(trip, 'ducan'))),
     ]),
     if (chosen != null) ...[
       sectionTitle(tr('Odabrani smještaj')),

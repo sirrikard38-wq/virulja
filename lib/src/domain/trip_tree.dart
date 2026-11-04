@@ -131,6 +131,15 @@ Tree tripToTree(
       'songs': {
         for (final song in trip.songs) song.id: _withoutId(song.toJson()),
       },
+      'shopLists': {
+        for (final list in trip.shopLists)
+          list.id: {
+            'name': list.name,
+            'expenseId': list.expenseId,
+            'items': {for (final item in list.items) item.id: _withoutId(item.toJson())},
+            'removed': list.removedJson,
+          },
+      },
       'shows': {
         for (final show in trip.shows) show.id: _withoutId(show.toJson()),
       },
@@ -241,6 +250,16 @@ CloudTrip? tripFromTree(String id, Tree tree) {
         return Photo.fromJson({...json, 'comments': comments});
       }),
       songs: _items(tree, 'songs', Song.fromJson),
+      shopLists: _items(
+          tree,
+          'shopLists',
+          (json) => ShopList(
+                id: json['id'] as String,
+                name: json['name'] as String,
+                expenseId: json['expenseId'] as String?,
+                items: _items(json, 'items', ShopItem.fromJson),
+                removed: ShopList.removedFrom(json['removed']),
+              )),
       shows: _items(tree, 'shows', Show.fromJson),
       showPicks: _branch(tree, 'showPicks').cast<String, String>(),
       dayShowId: tree['dayShowId'] as String?,

@@ -8,6 +8,7 @@ import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import 'anthem.dart';
 import 'show_builder.dart';
+import 'shop_screen.dart';
 import 'show_player.dart';
 import 'shows_section.dart';
 import 'cloud.dart';
@@ -271,6 +272,12 @@ class ViruljaApp {
     });
   }
 
+  /// Whether Plan napada was the screen last drawn, and when it was left: back
+  /// within [_attackMemory] it keeps its day.
+  bool _onAttack = false;
+  DateTime? _leftAttack;
+  static const Duration _attackMemory = Duration(seconds: 20);
+
   /// Which step of the phone's history the app is on, counted from its start.
   int _step = 0;
 
@@ -446,6 +453,8 @@ class ViruljaApp {
         return routeScreen(_ui, trip);
       case 'troskovi':
         return costsScreen(_ui, trip);
+      case 'ducan':
+        return shopScreen(_ui, trip);
       case 'playlista':
         return playlistScreen(_ui, trip, _playAnthem);
       case 'uredi':
@@ -485,8 +494,19 @@ class ViruljaApp {
     final tripId = place.tripId;
     final trip = tripId == null ? null : _data.tripById(tripId);
     if (trip == null && _anthem.isPlaying) _anthem.stop();
-    // Leaving Plan napada lets what was voted elsewhere move to its day.
-    if (place.section != 'napad') _ui.attackKept = null;
+    // Leaving Plan napada lets what was voted elsewhere move to its day. Back
+    // within 20 s it opens on the same day; later, on Sve.
+    if (place.section != 'napad') {
+      _ui.attackKept = null;
+      if (_onAttack) _leftAttack = DateTime.now();
+      _onAttack = false;
+    } else {
+      final left = _leftAttack;
+      if (!_onAttack && left != null && DateTime.now().difference(left) > _attackMemory) {
+        _ui.attackDays.clear();
+      }
+      _onAttack = true;
+    }
     _cloud?.watch(trip?.id);
     _ring = null;
 

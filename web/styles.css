@@ -153,10 +153,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sheet-card .secondary { justify-content: center; text-align: center; }
 .sheet-x { position: absolute; top: 4px; right: 4px; }
 .sheet-card .ticks { padding: 0; }
+.sheet-card .field { margin-left: 0; margin-right: 0; }
 .sheet-card .label, .sheet-card .small { margin: 0; }
 .offer-edit { margin-top: 10px; }
 .cost-edit { margin: 0 20px 12px; }
 .time-picker { display: flex; align-items: center; gap: 4px; }
+.shop-list { margin: 10px 20px 0; padding: 10px 12px; }
+.shop-head { display: flex; align-items: center; gap: 8px; }
+.shop-item-row { display: flex; align-items: center; }
+.shop-item-row .tick { flex: 1; }
+.tick.shop-item { color: var(--ink); font-weight: 500; }
+.tick.shop-item.on { color: var(--soft); opacity: .7; }
+.tick.shop-item.on .tick-box .icon { color: var(--soft); }
+.tick.shop-item.on span:last-child { text-decoration: line-through; }
+.shop-next { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
 .time-picker select { flex: 1; min-width: 0; }
 .cost-edit .field, .cost-edit .fields, .cost-edit .checks, .cost-edit .error { margin-left: 0; margin-right: 0; }
 .brush-small { color: var(--accent); }

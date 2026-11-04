@@ -228,6 +228,54 @@ void main() {
       expect(back.dayVotes[1], {'ana', 'marko'});
     });
 
+    test('a thing added to or taken off a shopping list is news', () {
+      final trip = visTrip()
+        ..uids.addAll({'ana': 'ua', 'marko': 'um'})
+        ..shopLists.add(ShopList(id: 'l1', name: 'Konzum', items: [
+          ShopItem(id: 'i1', text: 'Kruh', addedBy: 'ana'),
+        ], removed: {
+          'i2': (text: 'Voda', by: 'ana'),
+        }));
+      final events = tripEvents(trip, {'ana': 'Ana', 'marko': 'Marko'}).where((e) => e.notice == Notice.shop);
+      expect(events.map((e) => e.text), ['Ana dodaje na listu Konzum: Kruh', 'Ana miče s liste Konzum: Voda']);
+      Iterable<String> shopNews(String uid, Set<Object?> told) => newsFor(uid, 't1', trip, {'ana': 'Ana'}, told, const {})
+          .map((news) => news.body)
+          .where((body) => body.contains('Konzum'));
+      expect(shopNews('um', {newsVersion}), hasLength(2));
+      expect(shopNews('ua', {newsVersion}), isEmpty);
+      expect(shopNews('um', {'#2'}), isEmpty);
+      final back = ShopList.fromJson(jsonDecode(jsonEncode(trip.shopLists.single.toJson())) as Json);
+      expect(back.removed['i2']?.text, 'Voda');
+    });
+
+    test('a shopping list goes to the cloud and back, and its cost counts under Dućan', () {
+      final trip = visTrip()
+        ..shopLists.add(ShopList(id: 'l1', name: 'Konzum', items: [
+          ShopItem(id: 'i1', text: 'Kruh'),
+          ShopItem(id: 'i2', text: 'Voda', done: true),
+        ], expenseId: 'e1'))
+        ..expenses.add(Expense(
+          id: 'e1',
+          title: 'Konzum',
+          amount: 2300,
+          payerId: 'ana',
+          sharedBy: ['ana', 'marko', 'iva'],
+          category: CostCategory.shop,
+        ));
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
+      for (final back in [
+        tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip,
+        Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json),
+      ]) {
+        final list = back.shopLists.single;
+        expect(list.name, 'Konzum');
+        expect(list.items.map((item) => '${item.text} ${item.done}'), ['Kruh false', 'Voda true']);
+        expect(list.expenseId, 'e1');
+      }
+      expect(Budget.of(trip).line(CostCategory.shop).actual, 2300);
+      expect(Budget.of(trip).line(CostCategory.shop).planned, 2300);
+    });
+
     test('a reserved stay is planned and spent', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));

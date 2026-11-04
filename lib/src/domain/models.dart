@@ -543,6 +543,7 @@ enum CostCategory {
   food('Hrana i piće'),
   transport('Prijevoz'),
   activities('Izleti i vino'),
+  shop('Dućan'),
   other('Ostalo');
 
   const CostCategory(this._label);
@@ -786,6 +787,76 @@ class Photo {
 }
 
 /// A song on the playlist, linked from Spotify, YouTube or Apple Music.
+/// One thing to buy on a shopping list; ticked once it is in the basket.
+class ShopItem {
+  ShopItem({required this.id, required this.text, this.done = false, this.addedBy});
+
+  factory ShopItem.fromJson(Json json) => ShopItem(
+        id: json['id'] as String,
+        text: json['text'] as String,
+        done: json['done'] as bool? ?? false,
+        addedBy: json['addedBy'] as String?,
+      );
+
+  final String id;
+  String text;
+  bool done;
+  final String? addedBy;
+
+  Json toJson() => {'id': id, 'text': text, 'done': done, 'addedBy': addedBy};
+}
+
+/// A shopping list of the trip, with its name. Once bought, what it cost is in
+/// Troškovi as [expenseId].
+class ShopList {
+  ShopList({
+    required this.id,
+    required this.name,
+    List<ShopItem>? items,
+    this.expenseId,
+    Map<String, ({String text, String? by})>? removed,
+  })  : items = items ?? [],
+        removed = removed ?? {};
+
+  factory ShopList.fromJson(Json json) => ShopList(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        items: _list(json['items'], ShopItem.fromJson),
+        expenseId: json['expenseId'] as String?,
+        removed: removedFrom(json['removed']),
+      );
+
+  final String id;
+  String name;
+  List<ShopItem> items;
+  String? expenseId;
+
+  /// Item id -> what was taken off the list and by whom, for the news.
+  Map<String, ({String text, String? by})> removed;
+
+  /// [removed] as stored: item id -> {text, by}.
+  Json get removedJson => {
+        for (final entry in removed.entries)
+          entry.key: {'text': entry.value.text, 'by': entry.value.by},
+      };
+
+  static Map<String, ({String text, String? by})> removedFrom(Object? raw) => {
+        for (final entry in ((raw as Map?) ?? const {}).entries)
+          '${entry.key}': (
+            text: ((entry.value as Map)['text'] as String?) ?? '',
+            by: (entry.value as Map)['by'] as String?,
+          ),
+      };
+
+  Json toJson() => {
+        'id': id,
+        'name': name,
+        'items': [for (final item in items) item.toJson()],
+        'expenseId': expenseId,
+        'removed': removedJson,
+      };
+}
+
 class Song {
   Song({
     required this.id,
@@ -985,6 +1056,7 @@ class Trip {
     List<Payment>? payments,
     List<Photo>? photos,
     List<Song>? songs,
+    List<ShopList>? shopLists,
     List<Show>? shows,
     Map<String, String>? showPicks,
     this.dayShowId,
@@ -996,6 +1068,7 @@ class Trip {
         places = places ?? [],
         dishes = dishes ?? [],
         stops = stops ?? [],
+        shopLists = shopLists ?? [],
         legs = legs ?? [],
         requests = requests ?? [],
         customKinds = customKinds ?? [],
@@ -1042,6 +1115,7 @@ class Trip {
         payments: _list(json['payments'], Payment.fromJson),
         photos: _list(json['photos'], Photo.fromJson),
         songs: _list(json['songs'], Song.fromJson),
+        shopLists: _list(json['shopLists'], ShopList.fromJson),
         shows: _list(json['shows'], Show.fromJson),
         showPicks: (json['showPicks'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
@@ -1093,6 +1167,9 @@ class Trip {
   List<Payment> payments;
   List<Photo> photos;
   List<Song> songs;
+
+  /// What the group wants to buy in the shop, list by list.
+  List<ShopList> shopLists;
 
   /// The presentations of the photos, three at most from each person.
   List<Show> shows;
@@ -1190,6 +1267,7 @@ class Trip {
     payments = other.payments;
     photos = other.photos;
     songs = other.songs;
+    shopLists = other.shopLists;
     shows = other.shows;
     showPicks = other.showPicks;
     dayShowId = other.dayShowId;
@@ -1226,6 +1304,7 @@ class Trip {
         'payments': [for (final item in payments) item.toJson()],
         'photos': [for (final item in photos) item.toJson()],
         'songs': [for (final item in songs) item.toJson()],
+        'shopLists': [for (final item in shopLists) item.toJson()],
         'shows': [for (final item in shows) item.toJson()],
         'showPicks': showPicks,
         'dayShowId': dayShowId,

@@ -86,7 +86,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   none before the first vote (`votedDays`). Only votes give a day: not the day an older
   poll was made for, nor a stop's day in Plan puta. Days are written "1 Dan", not "Dan 1". While a day is
   open, what was on it stays even when a vote moves it; it moves once the day is left
-  (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`). Nothing
+  (`Ui.attackKept`). Back in Plan napada within 20 s it opens on the same day, later on
+  Sve. "Dogovoreno" news still needs half the group (`agreedDays`). Nothing
   in Plan napada is sorted: votes, days and time never move a thing in the list. The tabs
   show how many presentations, polls and plans there are, and each day chip its plans; the
   cards show no date, only a past one does.
@@ -167,6 +168,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
+- Dućan (`shop_screen.dart`, `Trip.shopLists`): named lists of things to buy, each with a
+  tick that greys and strikes it out. Kupljeno asks the amount and whom it is for (all
+  ticked at first) and writes it in Troškovi under Dućan, paid by whoever tapped; a tap
+  on it in Troškovi changes it (`ShopList.expenseId`). Adding to
+  or taking off a list is news of the kind Notice.shop; what was taken off is kept in
+  `ShopList.removed` for the robot, and undo takes it out again (news mark `#3`).
 - Times are picked on two wheels, minutes in steps of 5 (`timePicker`): a phone's own
   time field offers every minute.
 - A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).

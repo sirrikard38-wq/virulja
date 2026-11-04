@@ -165,6 +165,9 @@ String sinceCount(Duration gone) {
   return _count(gone.inHours, ('sata', 'sata', 'sati'), 'hour', 'hours', 'saat');
 }
 
+String itemsCount(int n) =>
+    _count(n, ('stavka', 'stavke', 'stavki'), 'item', 'items', 'ürün');
+
 String votesCount(int n) => _count(n, ('glas', 'glasa', 'glasova'), 'vote', 'votes', 'oy');
 
 String daysCount(int n) => _count(n, ('dan', 'dana', 'dana'), 'day', 'days', 'gün');

@@ -14,7 +14,8 @@ enum Notice {
   reactions('Reakcije na tvoje uspomene i komentare'),
   comments('Komentari i odgovori'),
   joins('Novi članovi i zahtjevi za ulazak'),
-  leaves('Izbacivanje iz grupe');
+  leaves('Izbacivanje iz grupe'),
+  shop('Promjene na listama za dućan');
 
   const Notice(this._label);
 
@@ -95,6 +96,16 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
       TripEvent('kick:$person', Notice.leaves,
           tr('Glasanje za izbacivanje: {0}', [name(person)]), 'plan',
           from: person),
+    for (final list in trip.shopLists) ...[
+      for (final item in list.items)
+        TripEvent('shop:${item.id}', Notice.shop,
+            tr('{0} dodaje na listu {1}: {2}', [name(item.addedBy ?? ''), list.name, item.text]),
+            'ducan', from: item.addedBy),
+      for (final entry in list.removed.entries)
+        TripEvent('shopgone:${entry.key}', Notice.shop,
+            tr('{0} miče s liste {1}: {2}', [name(entry.value.by ?? ''), list.name, entry.value.text]),
+            'ducan', from: entry.value.by),
+    ],
     for (final entry in trip.gone.entries)
       TripEvent('left:${entry.key}', Notice.leaves,
           tr('{0} više nije na putovanju', [entry.value]), 'plan',
@@ -148,16 +159,19 @@ List<TripEvent> tripEvents(Trip trip, Map<String, String> names) {
   ];
 }
 
-/// Kinds of news that came with this version. A trip whose seen list does not
-/// have this mark yet takes them as already told, so that its past is not news.
-const String newsVersion = '#2';
+/// Kinds of news that came with versions of the news. A trip whose seen list
+/// does not have this mark yet takes them as already told, so that its past is
+/// not news. A kind added later goes in here, with a new mark.
+const String newsVersion = '#3';
 const Set<String> _newInVersion2 = {
   'passed',
   'place',
   'day',
   'photo',
   'left',
-  'member'
+  'member',
+  'shop',
+  'shopgone',
 };
 
 /// Whether the phone [device], as stored under `/push`, wants [notice] from the

@@ -95,7 +95,8 @@ int dishesCost(Trip trip) =>
 ///  * stay: the chosen offer, every night;
 ///  * food: places in Plan napada for the whole group, plus the dishes to try;
 ///  * transport: the drive and every other leg of the journey;
-///  * activities: everything with a price on the day plan.
+///  * activities: everything with a price on the day plan;
+///  * shop: what was bought.
 int plannedCost(Trip trip, CostCategory category) {
   switch (category) {
     case CostCategory.stay:
@@ -110,6 +111,11 @@ int plannedCost(Trip trip, CostCategory category) {
       return trip.legs.fold(trip.drive.totalCost, (sum, leg) => sum + leg.cost);
     case CostCategory.activities:
       return trip.stops.fold(0, (sum, stop) => sum + stop.cost);
+    case CostCategory.shop:
+      // Nothing is planned for the shop: what was bought is the plan.
+      return trip.expenses
+          .where((cost) => cost.category == CostCategory.shop)
+          .fold(0, (sum, cost) => sum + cost.amount);
     case CostCategory.other:
       return 0;
   }

@@ -12,7 +12,12 @@ import 'dom.dart';
 import 'widgets.dart';
 
 /// The kinds of cost that always show, even at nothing yet.
-const Set<CostCategory> _always = {CostCategory.stay, CostCategory.food, CostCategory.transport};
+const Set<CostCategory> _always = {
+  CostCategory.stay,
+  CostCategory.food,
+  CostCategory.transport,
+  CostCategory.shop,
+};
 
 web.HTMLElement _total(String label, int cents) => el('div', cls: 'tile card', children: [
       el('span', cls: 'small', text: label),
