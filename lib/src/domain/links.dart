@@ -50,11 +50,17 @@ Uri mapsOf(String location) {
 
 /// Google Maps on foot from where the phone is to [offer]: to the place its
 /// location gives, or to its name in the trip's city when that cannot be read.
-Uri walkTo(Offer offer, Trip trip) {
+///
+/// It starts from [from], where the phone is, when known; otherwise from "My
+/// Location", which Google Maps takes as the same.
+Uri walkTo(Offer offer, Trip trip, {({double latitude, double longitude})? from}) {
   final location = offer.location;
   final place = (location == null ? null : mapsPlace(location)) ?? '${offer.name}, ${trip.city}';
   return Uri.https('www.google.com', '/maps/dir/', {
     'api': '1',
+    'origin': from == null
+        ? 'My Location'
+        : '${from.latitude.toStringAsFixed(6)},${from.longitude.toStringAsFixed(6)}',
     'destination': place,
     'travelmode': 'walking',
   });

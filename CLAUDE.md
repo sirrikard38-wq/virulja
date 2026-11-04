@@ -43,7 +43,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   forward is left for an iPhone's swipe from the right edge; the phone's back button
   skips the step of the same screen this leaves (`App._step`). After the phone's own step
   back, 400 ms later one more step of the same screen is added through the address
-  (ending in `/~`), which wipes the step forward out (`_settleAfterBack`). Pushing history steps
+  (ending in `/~`), which wipes the step forward out (`_settleAfterBack`). The first
+  screens (the trips, Uspomene, Postavke) get no copy, and the arrow steps back to them
+  for real, so a swipe back there has nothing behind it. Pushing history steps
   while the phone steps back (tried on 2026-11-04) froze an iPhone and left it white.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
   trip's tabs and the days of Plan puta. A swipe is off while a form is open, as a redraw would wipe it.
@@ -150,6 +152,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   "Glasaj". With both a location and an offer link, the link icon asks which to open. The name is
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
   deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
+- Hrana i piće: a swipe past the last category opens the field for a new one, as the +
+  does, without the keyboard; a swipe back closes it.
 - Hrana i piće: while a category is held, a bin stands at the top in the middle; let go
   over it and it goes with a puff of sparks and the usual undo. One the group made goes
   with its places; one of the app's own is hidden on this phone (`AppData.hiddenKinds`)

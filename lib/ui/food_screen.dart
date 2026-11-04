@@ -619,12 +619,22 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
           text: euros(tab.isDishes ? dishesCost(trip) : plannedPlacesCost(trip, places))),
     ]),
   ]);
+  // Past the last category a swipe opens the new one's field, as the + does,
+  // without the keyboard; a swipe back closes it again.
   bool canMove(int step) {
+    if (ui.addingKind) return step < 0;
     final next = index + step;
-    return next >= 0 && next < tabs.length;
+    return next >= 0 && next <= tabs.length;
   }
 
-  followSwipes(page, sliding, canMove, (step) => show(tabs[index + step]));
+  followSwipes(page, sliding, canMove, (step) {
+    if (ui.addingKind || index + step == tabs.length) {
+      ui.addingKind = !ui.addingKind;
+      ui.rerender();
+      return;
+    }
+    show(tabs[index + step]);
+  });
   // A redraw starts the row of categories from the left again.
   scheduleMicrotask(() {
     final row = _chipRow, chosen = _chosenChip;

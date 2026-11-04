@@ -211,6 +211,56 @@ class ViruljaApp {
   /// The address last drawn.
   String? _shown;
 
+  /// The list of trips, Uspomene and Postavke: the screens the menu leads to.
+  bool _isFirstScreen(String hash) => _Place(hash).tripId == null &&
+      const {'', '~', 'uspomene', 'grupa'}.contains(_Place(hash).page);
+
+  /// Where the phone was last found, for the walk to the stay to start there.
+  ({double latitude, double longitude})? _here;
+
+  /// The pin under the speaker: Google Maps on foot from here to the reserved
+  /// stay. A plain link, as opening a window from code left an iPhone's home
+  /// screen app white when it came back. Where the phone is, once it allows
+  /// that, goes into the link as its start.
+  web.HTMLElement _walkLink(Trip trip, Offer stay) {
+    final link = el('a', cls: trip.anthemClipId != null ? 'round right third' : 'round right second', attrs: {
+      'href': '${walkTo(stay, trip, from: _here)}',
+      'target': '_blank',
+      'rel': 'noopener',
+      'aria-label': tr('Pješice do smještaja'),
+    }, children: [icon('pin', size: 22)]);
+    void find() {
+      try {
+        web.window.navigator.geolocation.getCurrentPosition(
+          ((web.GeolocationPosition position) {
+            _here = (latitude: position.coords.latitude.toDouble(), longitude: position.coords.longitude.toDouble());
+            link.setAttribute('href', '${walkTo(stay, trip, from: _here)}');
+          }).toJS,
+          ((web.GeolocationPositionError _) {}).toJS,
+          web.PositionOptions(maximumAge: 300000, timeout: 8000),
+        );
+      } on Object {
+        // No location here: Google Maps starts from "My Location".
+      }
+    }
+
+    // Asks only where the phone already allows it; a tap asks for next time.
+    try {
+      web.window.navigator.permissions
+          .query({'name': 'geolocation'}.jsify()! as JSObject)
+          .toDart
+          .then((status) {
+        if (status.state == 'granted') find();
+      }, onError: (Object _) {});
+    } on Object {
+      // A phone without the question: the tap asks.
+    }
+    link.onClick.listen((_) {
+      if (_here == null) find();
+    });
+    return link;
+  }
+
   /// Set while the phone's back button passes a step that shows nothing new.
   bool _skipping = false;
 
@@ -223,6 +273,8 @@ class ViruljaApp {
   /// one more step of the same screen is added through the address, which wipes
   /// that step forward out. The phone's back button then skips it.
   void _settleAfterBack(String landed) {
+    // A first screen gets no copy: a swipe back there would show it again.
+    if (_isFirstScreen(landed)) return;
     Timer(const Duration(milliseconds: 400), () {
       if (web.window.location.hash != landed) return;
       final place = _Place(landed);
@@ -270,7 +322,14 @@ class ViruljaApp {
   /// an iPhone would go to.
   void _back() {
     if (_trail.isNotEmpty) {
-      final before = _trail.removeLast();
+      final before = _trail.last;
+      // To a first screen the arrow steps back for real: nothing is left behind
+      // it, so a swipe back there has nowhere to go.
+      if (_isFirstScreen(before)) {
+        web.window.history.back();
+        return;
+      }
+      _trail.removeLast();
       web.window.location.replace(before.isEmpty ? '#/' : before);
       _markStep();
       return;
@@ -524,12 +583,7 @@ class ViruljaApp {
           if (trip.reservedOffer case final stay?)
             // A plain link: opening a window from code leaves an iPhone's home
             // screen app white when it comes back from Google Maps.
-            el('a', cls: trip.anthemClipId != null ? 'round right third' : 'round right second', attrs: {
-              'href': '${walkTo(stay, trip)}',
-              'target': '_blank',
-              'rel': 'noopener',
-              'aria-label': tr('Pješice do smještaja'),
-            }, children: [icon('pin', size: 22)]),
+            _walkLink(trip, stay),
         if (hasMenu) _menu(place.page),
       ]),
     );

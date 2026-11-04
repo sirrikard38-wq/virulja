@@ -231,6 +231,9 @@ void main() {
       final trip = visTrip();
       final walk = walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1, location: 'Ulica 5'), trip);
       expect(walk.queryParameters['travelmode'], 'walking');
+      expect(walk.queryParameters['origin'], 'My Location');
+      expect(walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1), trip, from: (latitude: 43.06, longitude: 16.18))
+          .queryParameters['origin'], '43.060000,16.180000');
       expect(walk.queryParameters['destination'], 'Ulica 5');
       expect(walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1), trip).queryParameters['destination'],
           'Vila, ${trip.city}');

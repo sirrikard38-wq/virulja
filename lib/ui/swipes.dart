@@ -41,7 +41,9 @@ void followSwipes(
   page.onTouchStart.listen((event) {
     final touch = event.changedTouches.item(0)!;
     final inChips = (event.target as web.Element).closest('.chips') != null;
-    final formOpen = web.document.querySelector('details[open], .new-kind') != null;
+    // A form with something typed in it would lose it.
+    final typed = (web.document.querySelector('.new-kind input') as web.HTMLInputElement?)?.value ?? '';
+    final formOpen = web.document.querySelector('details[open]') != null || typed.isNotEmpty;
     final usable = event.touches.length == 1 &&
         touch.clientX >= _backGestureEdge &&
         !inChips &&
