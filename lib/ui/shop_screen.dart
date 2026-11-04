@@ -199,7 +199,7 @@ web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
       if (adding)
         el('div', cls: 'shop-next', children: [
           el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [next]),
-          button(cls: 'text-button', text: tr('Spremi'), onTap: save),
+          button(cls: 'text-button', text: tr('Dodaj'), onTap: save),
         ])
       else if (!editing)
         el('div', cls: 'shop-actions', children: [

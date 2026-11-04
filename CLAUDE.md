@@ -170,7 +170,7 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   out of Ankete leaves the place. Its button always says "Anketa".
 - Dućan (`shop_screen.dart`, `Trip.shopLists`): named lists of things to buy, each with a
   tick that greys and strikes it out. A list folds as "+ Naziv"; while wishes are typed
-  it shows "Dodaj želju" and Spremi, then Dodaj and Kupljeno; its brush opens the names
+  it shows "Dodaj želju" with a Dodaj that closes it, then Dodaj and Kupljeno; its brush opens the names
   of the list and its things for changing, with an x each. No box lets the page behind
   it scroll (`holdPage`). Kupljeno asks the amount and whom it is for (all
   ticked at first) and writes it in Troškovi under Dućan, paid by whoever tapped; a tap
