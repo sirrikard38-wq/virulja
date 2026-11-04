@@ -195,6 +195,7 @@ class Offer {
     this.link,
     this.location,
     this.reserved = false,
+    this.expenseId,
     Set<String>? votes,
   }) : votes = votes ?? {};
 
@@ -208,6 +209,7 @@ class Offer {
         link: json['link'] as String?,
         location: json['location'] as String?,
         reserved: json['reserved'] as bool? ?? false,
+        expenseId: json['expenseId'] as String?,
         votes: _strings(json['votes']).toSet(),
       );
 
@@ -224,6 +226,9 @@ class Offer {
 
   /// Booked: its price counts as spent, and the way there is one tap away.
   bool reserved;
+
+  /// The cost in Troškovi its reservation made, with who paid it.
+  String? expenseId;
   Set<String> votes;
 
   Json toJson() => {
@@ -232,6 +237,7 @@ class Offer {
         'pricePerNight': pricePerNight,
         'location': location,
         'reserved': reserved,
+        'expenseId': expenseId,
         'rating': rating,
         'beachMeters': beachMeters,
         'source': source,

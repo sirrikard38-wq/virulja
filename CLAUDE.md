@@ -140,6 +140,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`walkTo`; a short map link cannot be read, so it just opens).
 - Smještaj: each stay has a location (address or Google Maps link) and "Rezervirano". A
   reserved stay is planned and spent in Troškovi (`Offer.reserved`, `Trip.reservedOffer`).
+  Rezervirano asks who paid and whom it is for (everyone ticked at first) and writes that
+  cost in Troškovi (`Offer.expenseId`), so the others owe the payer; taking the
+  reservation back removes the cost, with the usual undo.
   Only Rezervirano picks a stay (its card turns green); anyone votes for any number with
   "Glasaj". With both a location and an offer link, the link icon asks which to open. The name is
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first

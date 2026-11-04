@@ -151,6 +151,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sheet-card { position: relative; }
 .sheet-card .secondary { justify-content: center; text-align: center; }
 .sheet-x { position: absolute; top: 4px; right: 4px; }
+.sheet-card .ticks { padding: 0; }
+.sheet-card .label, .sheet-card .small { margin: 0; }
 .offer-edit { margin-top: 10px; }
 .brush-small { color: var(--accent); }
 .chip.sort-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 9px; font-size: 12px; }

@@ -43,6 +43,87 @@ void _chooseWhere(Offer offer) {
   web.document.body!.append(sheet);
 }
 
+/// Asks who paid for [offer] and whom it is for, everyone at first, then books
+/// it: the cost goes into Troškovi, so the others owe the one who paid.
+void _reserve(Ui ui, Trip trip, Offer offer) {
+  var payer = ui.meIn(trip);
+  final shared = {...trip.memberIds};
+  final total = offer.pricePerNight * trip.nights;
+  final card = el('div', cls: 'sheet-card card');
+  late final web.HTMLElement sheet;
+  void close() => sheet.remove();
+
+  void book() {
+    if (shared.isEmpty) {
+      ui.toast(tr('Odaberi barem jednu osobu.'));
+      return;
+    }
+    final cost = Expense(
+      id: ui.store.newId(),
+      title: offer.name,
+      amount: total,
+      payerId: payer,
+      sharedBy: [for (final id in trip.memberIds) if (shared.contains(id)) id],
+      category: CostCategory.stay,
+    );
+    trip.expenses.add(cost);
+    offer
+      ..reserved = true
+      ..expenseId = cost.id;
+    close();
+    ui.changed();
+  }
+
+  void draw() {
+    card.textContent = '';
+    for (final part in [
+      button(cls: 'icon-button sheet-x', ariaLabel: tr('Zatvori'), onTap: close,
+          children: [icon('close', size: 20)]),
+      el('p', cls: 'label', text: tr('Tko je platio?')),
+      el('p', cls: 'small', text: '${offer.name} · ${nightsCount(trip.nights)} · ${euros(total)}'),
+      el('div', cls: 'checks', attrs: {'style': 'margin:0'}, children: [
+        for (final id in trip.memberIds)
+          chip(ui.nameOf(id), () {
+            payer = id;
+            draw();
+          }, on: payer == id),
+      ]),
+      el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Na koga se odnosi?')),
+      el('div', cls: 'ticks', children: [
+        for (final id in trip.memberIds)
+          tick(ui.nameOf(id), shared.contains(id), () {
+            shared.contains(id) ? shared.remove(id) : shared.add(id);
+            draw();
+          }),
+      ]),
+      primaryButton(tr('Rezervirano'), book),
+    ]) {
+      card.append(part);
+    }
+  }
+
+  sheet = el('div', cls: 'sheet', attrs: {'role': 'dialog', 'aria-modal': 'true'}, children: [card]);
+  sheet.onClick.listen((event) {
+    if (event.target == sheet) close();
+  });
+  web.document.body!.append(sheet);
+  draw();
+}
+
+/// Takes a stay's reservation back, with its cost in Troškovi, and a moment to
+/// change your mind.
+void _unreserve(Ui ui, Trip trip, Offer offer) {
+  final at = trip.expenses.indexWhere((cost) => cost.id == offer.expenseId);
+  final cost = at < 0 ? null : trip.expenses.removeAt(at);
+  offer.reserved = false;
+  ui.changed();
+  ui.offerUndo(tr('Rezervacija je poništena'), () {
+    offer.reserved = true;
+    if (cost != null) trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
+    ui.changed();
+  });
+}
+
 /// The link at the end of a stay: to the offer, to its place on the map, or a
 /// question which of the two when it has both.
 web.HTMLElement? _offerLink(Offer offer) {
@@ -153,8 +234,7 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
         ui.changed();
       }, on: voted),
       chip(tr('Rezervirano'), () {
-        offer.reserved = !offer.reserved;
-        ui.changed();
+        offer.reserved ? _unreserve(ui, trip, offer) : _reserve(ui, trip, offer);
       }, on: offer.reserved),
       el('div', attrs: {'style': 'display:flex;align-items:center;margin-left:auto'}, children: [
         if (opener != null) opener,
