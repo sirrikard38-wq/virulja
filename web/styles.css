@@ -148,10 +148,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .round.third { top: calc(var(--top-safe) + 118px); }
 .sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px calc(var(--bottom-safe) + 16px); background: rgba(0, 0, 0, .45); }
 .sheet-card { width: 100%; max-width: 448px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; }
+.sheet-card { position: relative; }
 .sheet-card .secondary { justify-content: center; text-align: center; }
+.sheet-x { position: absolute; top: 4px; right: 4px; }
 .offer-edit { margin-top: 10px; }
 .brush-small { color: var(--accent); }
-.sort-chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip.sort-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 9px; font-size: 12px; }
+.chip.sort-chip .icon { stroke-width: 3; }
+.offer { position: relative; margin: 10px 20px 0; padding: 10px 12px; }
+.offer.reserved { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+.offer .grow { padding-right: 4px; }
+.offer-x { position: absolute; top: 2px; right: 2px; width: 36px; height: 36px; }
+.offer-price { padding-right: 30px; text-align: right; }
 .brush-small.on { border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 .offer-edit .field { margin-left: 0; margin-right: 0; }
 .people-link { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; }

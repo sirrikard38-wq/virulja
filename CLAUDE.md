@@ -39,8 +39,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
-  Each history step carries its number (`App._step`): a step forward to a screen already
-  left, as an iPhone's swipe from the right edge does, is undone at once.
+  Screens change with `pushState`; after each step back the app pushes a copy of the
+  screen it lands on, which wipes out the steps forward, so an iPhone's swipe from the
+  right edge has nowhere to go; a copy left behind is skipped on the way back.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories and a
   trip's tabs. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
@@ -138,9 +139,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`walkTo`; a short map link cannot be read, so it just opens).
 - Smještaj: each stay has a location (address or Google Maps link) and "Rezervirano". A
   reserved stay is planned and spent in Troškovi (`Offer.reserved`, `Trip.reservedOffer`).
-  With both a location and an offer link, the link icon asks which to open. The name is
+  Only Rezervirano picks a stay (its card turns green); anyone votes for any number with
+  "Glasaj". With both a location and an offer link, the link icon asks which to open. The name is
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
-  deciding most, each removed with its x (`sortOffersBy`).
+  deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
 - Bars move only by dragging their round knob (or a video's piece); a tap elsewhere on a
   bar changes nothing.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish

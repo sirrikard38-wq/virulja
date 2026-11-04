@@ -22,6 +22,12 @@ void _chooseWhere(Offer offer) {
       })..onClick.listen((_) => close());
   sheet = el('div', cls: 'sheet', attrs: {'role': 'dialog', 'aria-modal': 'true'}, children: [
     el('div', cls: 'sheet-card card', children: [
+      button(
+        cls: 'icon-button sheet-x',
+        ariaLabel: tr('Zatvori'),
+        onTap: close,
+        children: [icon('close', size: 20)],
+      ),
       el('p', cls: 'label', text: tr('Što želiš otvoriti?')),
       away(tr('Lokacija na Google Maps'), '${mapsOf(offer.location!)}'),
       away(switch (offer.source) {
@@ -29,7 +35,6 @@ void _chooseWhere(Offer offer) {
         'Airbnb' => tr('Ponuda na Airbnbu'),
         _ => tr('Otvori ponudu'),
       }, offer.link!),
-      button(cls: 'text-button', text: tr('Odustani'), onTap: close),
     ]),
   ]);
   sheet.onClick.listen((event) {
@@ -113,9 +118,14 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
   final chosen = trip.chosenOfferId == offer.id;
   final editing = ui.editingOffer == offer.id;
   final opener = _offerLink(offer);
-  return el('div', cls: 'card', attrs: {
-    'style': 'margin:10px 20px 0;padding:10px 12px',
-  }, children: [
+  return el('div', cls: offer.reserved ? 'card offer reserved' : 'card offer', children: [
+    removeWithUndo(ui, trip.offers, offer, offer.name, also: () {
+      if (chosen) trip.chosenOfferId = null;
+      return () {
+        if (chosen) trip.chosenOfferId = offer.id;
+      };
+    })
+      ..classList.add('offer-x'),
     el('div', attrs: {'style': 'display:flex;justify-content:space-between;gap:12px'},
         children: [
       el('div', cls: 'grow', children: [
@@ -126,30 +136,22 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
         })..style.fontSize = '16px',
         el('div', cls: 'small', text: offerFacts(offer)),
       ]),
-      el('div', cls: 'price', children: [
-        el('div', text: euros(offer.pricePerNight), attrs: {'style': 'font-size:18px'}),
-        el('div', cls: 'small', text: tr('po noći')),
+      el('div', cls: 'price offer-price', children: [
+        el('div', cls: 'small', text: '${nightsCount(trip.nights)} · ${euros(offer.pricePerNight * trip.nights)} ${tr('ukupno')}'),
+        el('div', children: [
+          el('span', text: euros(offer.pricePerNight), attrs: {'style': 'font-size:18px'}),
+          el('span', cls: 'small', text: ' ${tr('po noći')}'),
+        ]),
       ]),
     ]),
     // The icons go to a line of their own when the chips leave no room.
     el('div', attrs: {'style': 'display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center'},
         children: [
-      button(
-        cls: voted ? 'chip on' : 'chip',
-        ariaLabel: tr('Glasaj za {0}, {1}', [offer.name, offer.votes.length]),
-        onTap: () {
-          voted ? offer.votes.remove(me) : offer.votes.add(me);
-          ui.changed();
-        },
-        children: [
-          icon('thumb', size: 18),
-          web.document.createTextNode('${offer.votes.length}'),
-        ],
-      ),
-      chip(chosen ? tr('Odabrano') : tr('Odaberi'), () {
-        trip.chosenOfferId = chosen ? null : offer.id;
+      // Everyone may vote for any number of stays; only Rezervirano picks one.
+      chip('${tr('Glasaj')} · ${offer.votes.length}', () {
+        voted ? offer.votes.remove(me) : offer.votes.add(me);
         ui.changed();
-      }, on: chosen),
+      }, on: voted),
       chip(tr('Rezervirano'), () {
         offer.reserved = !offer.reserved;
         ui.changed();
@@ -165,12 +167,6 @@ web.HTMLElement _offerCard(Ui ui, Trip trip, Offer offer, {required bool best}) 
           },
           children: [icon('brush', size: 20)],
         ),
-        removeWithUndo(ui, trip.offers, offer, offer.name, also: () {
-          if (chosen) trip.chosenOfferId = null;
-          return () {
-            if (chosen) trip.chosenOfferId = offer.id;
-          };
-        }),
       ]),
     ]),
     if (editing) _offerEdit(ui, offer),
@@ -255,6 +251,8 @@ web.HTMLElement stayScreen(Ui ui, Trip trip) {
       // first deciding most.
       el('div', cls: 'chips', children: [
         chip(tr('Sortiraj'), () {
+          // Turning Sortiraj off takes every sort away.
+          if (ui.sortOpen) ui.offerSorts.clear();
           ui.sortOpen = !ui.sortOpen;
           ui.rerender();
         }, on: ui.sortOpen),
@@ -270,13 +268,13 @@ web.HTMLElement stayScreen(Ui ui, Trip trip) {
         el('div', cls: 'checks', attrs: {'style': 'margin-top:8px'}, children: [
           for (final sort in ui.offerSorts)
             button(
-              cls: 'chip on sort-chip',
+              cls: 'chip sort-chip',
               ariaLabel: tr('Makni: {0}', [sort.label]),
               onTap: () {
                 ui.offerSorts.remove(sort);
                 ui.rerender();
               },
-              children: [web.document.createTextNode(sort.label), icon('close', size: 14)],
+              children: [icon('close', size: 11), web.document.createTextNode(sort.label)],
             ),
         ]),
       for (final offer in offers)

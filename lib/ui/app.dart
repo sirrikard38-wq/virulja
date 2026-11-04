@@ -72,32 +72,32 @@ class ViruljaApp {
     web.document.addEventListener('gesturestart', ((web.Event event) => event.preventDefault()).toJS);
     final known = _stepOf();
     known == null ? _markStep() : _step = known;
+    // The phone's back button or swipe. Each step back is followed by a fresh
+    // copy of the screen it lands on, which wipes out every step forward: an
+    // iPhone's swipe from the right edge then has nowhere to go. A copy left
+    // behind is skipped on the way back.
     web.window.addEventListener(
-      'hashchange',
+      'popstate',
       ((web.Event event) {
-        _languageOpen = false;
-        final step = _stepOf();
-        if (step != null && step > _step) {
+        final hash = web.window.location.hash;
+        if (hash == _shown) {
           web.window.history.back();
           return;
         }
-        if (step == null) {
-          _step++;
-          _markStep();
-        } else {
-          _step = step;
-        }
-        if (_trail.isNotEmpty && _trail.last == web.window.location.hash) {
-          _trail.removeLast(); // the phone's back button
-        }
-        final place = _Place(web.window.location.hash);
-        if (place.tripId != null && _mainTabs.contains(place.section)) {
-          if (_ui.showPeople) _ui.peopleFold = PeopleFold.closing;
-        } else {
-          _ui.showPeople = false;
-        }
-        web.window.scrollTo(0.toJS, 0);
-        render();
+        if (_trail.isNotEmpty && _trail.last == hash) _trail.removeLast();
+        _arrive();
+        _step = (_stepOf() ?? _step) + 1;
+        web.window.history.pushState({'step': _step}.jsify(), '', hash);
+      }).toJS,
+    );
+    // An address typed or linked by hand.
+    web.window.addEventListener(
+      'hashchange',
+      ((web.Event event) {
+        if (web.window.location.hash == _shown) return;
+        _step++;
+        _markStep();
+        _arrive();
       }).toJS,
     );
     watchForInstall(render);
@@ -172,13 +172,28 @@ class ViruljaApp {
     }
     _trail.add(web.window.location.hash);
     _step++;
-    web.window.location.hash = route;
-    _markStep();
+    web.window.history.pushState({'step': _step}.jsify(), '', route);
+    _arrive();
   }
 
+  /// A new screen: the list of people folds, the page starts at the top, and
+  /// the language menu closes.
+  void _arrive() {
+    _languageOpen = false;
+    final place = _Place(web.window.location.hash);
+    if (place.tripId != null && _mainTabs.contains(place.section)) {
+      if (_ui.showPeople) _ui.peopleFold = PeopleFold.closing;
+    } else {
+      _ui.showPeople = false;
+    }
+    web.window.scrollTo(0.toJS, 0);
+    render();
+  }
+
+  /// The address last drawn.
+  String? _shown;
+
   /// Which step of the phone's history the app is on, counted from its start.
-  /// Going back leaves the screen behind as a step forward, which an iPhone
-  /// reaches with a swipe from the right edge; such a step is undone at once.
   int _step = 0;
 
   int? _stepOf() {
@@ -216,8 +231,8 @@ class ViruljaApp {
   /// Changes the address without a new history step, so the iPhone's back
   /// swipe skips this screen: tabs of a trip count as one place.
   void _swap(String route) {
-    web.window.location.replace(route);
-    _markStep();
+    web.window.history.replaceState({'step': _step}.jsify(), '', route);
+    _arrive();
   }
 
   /// A tap on a trip in a list. The tap is what lets the phone play sound, so
@@ -388,6 +403,7 @@ class ViruljaApp {
     _redrawWaiting = false;
     _applyTheme();
     final place = _Place(web.window.location.hash);
+    _shown = web.window.location.hash;
     final tripId = place.tripId;
     final trip = tripId == null ? null : _data.tripById(tripId);
     if (trip == null && _anthem.isPlaying) _anthem.stop();

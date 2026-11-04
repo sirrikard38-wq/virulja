@@ -460,6 +460,8 @@ const Map<String, List<String>> _texts = {
   'Uredi smještaj': ['Change the stay', 'Konaklamayı değiştir'],
   'Pješice do smještaja': ['On foot to the stay', 'Konaklamaya yürüyerek'],
   'Sortiraj': ['Sort', 'Sırala'],
+  'ukupno': ['in all', 'toplam'],
+  'Zatvori': ['Close', 'Kapat'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],
