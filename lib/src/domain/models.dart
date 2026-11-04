@@ -661,6 +661,7 @@ class Photo {
     this.videoType,
     this.parts = 1,
     this.seconds,
+    this.dayIndex,
     Map<String, Set<Reaction>>? reactions,
     List<Comment>? comments,
   })  : reactions = reactions ?? {},
@@ -676,6 +677,7 @@ class Photo {
         videoType: json['videoType'] as String?,
         parts: json['parts'] as int? ?? 1,
         seconds: (json['seconds'] as num?)?.toDouble(),
+        dayIndex: (json['dayIndex'] as num?)?.toInt(),
         reactions: _reactionsFrom(json['reactions']),
         comments: _list(json['comments'], Comment.fromJson),
       );
@@ -700,6 +702,10 @@ class Photo {
   /// How long a video is, when known.
   final double? seconds;
 
+  /// The day of the trip, from 0, someone moved it to; null for the day it was
+  /// taken (`Trip.photoDay`).
+  int? dayIndex;
+
   /// Anyone can give several reactions.
   Map<String, Set<Reaction>> reactions;
   List<Comment> comments;
@@ -718,6 +724,7 @@ class Photo {
         'videoType': videoType,
         'parts': parts == 1 ? null : parts,
         'seconds': seconds,
+        'dayIndex': dayIndex,
         'reactions': _reactionsToJson(reactions),
         'comments': [for (final comment in comments) comment.toJson()],
       };
@@ -778,14 +785,18 @@ enum Transition {
   String get label => tr(_label);
 }
 
+/// Seconds a photo of a presentation stands still after its transition, until
+/// someone sets another time.
+const double defaultStill = 2.5;
+
 /// How one photo or video of a presentation comes in and how long it stays.
 class Look {
-  Look(this.transition, [this.extra = 0, this.stay = 0, this.from = 0, this.length = 6]);
+  Look(this.transition, [this.extra = 0, this.still = defaultStill, this.from = 0, this.length = 6]);
 
   factory Look.fromJson(Json json) => Look(
         Transition.values.asNameMap()[json['transition']] ?? Transition.fade,
         (json['extra'] as num?)?.toDouble() ?? 0,
-        (json['stay'] as num?)?.toDouble() ?? 0,
+        (json['still'] as num?)?.toDouble() ?? defaultStill,
         (json['from'] as num?)?.toDouble() ?? 0,
         (json['length'] as num?)?.toDouble() ?? 6,
       );
@@ -795,19 +806,19 @@ class Look {
   /// Seconds the transition is made longer than usual, in hundredths.
   double extra;
 
-  /// Seconds a photo stays longer than usual.
-  double stay;
+  /// Seconds a photo stands still after its transition.
+  double still;
 
   /// For a video: the second its piece starts, and how long the piece is.
   double from;
   double length;
 
-  Look copy() => Look(transition, extra, stay, from, length);
+  Look copy() => Look(transition, extra, still, from, length);
 
   Json toJson() => {
         'transition': transition.name,
         'extra': extra,
-        'stay': stay,
+        'still': still,
         'from': from,
         'length': length,
       };
@@ -816,8 +827,15 @@ class Look {
 Map<String, dynamic> _map(Object? raw) =>
     (raw as Map<dynamic, dynamic>? ?? const {}).cast<String, dynamic>();
 
+/// The keys of a map of key -> place, in the order of the places.
+List<String> _inOrder(Object? raw) {
+  final places = _map(raw);
+  return places.keys.toList()
+    ..sort((a, b) => (places[a] as num).compareTo(places[b] as num));
+}
+
 /// A presentation one person made of the trip's photos, each coming in with its
-/// own transition. A photo added later joins it with [look].
+/// own transition, [look] unless [looks] says otherwise.
 class Show {
   Show({
     required this.id,
@@ -826,6 +844,7 @@ class Show {
     Look? look,
     Map<String, Look>? looks,
     Set<String>? leftOut,
+    this.chosen,
   })  : look = look ?? Look(Transition.fade),
         looks = looks ?? {},
         leftOut = leftOut ?? {};
@@ -838,6 +857,7 @@ class Show {
         looks: _map(json['looks'])
             .map((photo, look) => MapEntry(photo, Look.fromJson(_map(look)))),
         leftOut: _map(json['leftOut']).keys.toSet(),
+        chosen: json['chosen'] == null ? null : _inOrder(json['chosen']),
       );
 
   final String id;
@@ -848,7 +868,11 @@ class Show {
   /// Photo id -> the way that photo comes in, when it is not [look].
   Map<String, Look> looks;
 
-  /// Photos that are not in it.
+  /// The photos and videos in it, in their order. Null for a presentation made
+  /// before they were picked one by one: it has all of them but [leftOut].
+  List<String>? chosen;
+
+  /// Photos that are not in it, when [chosen] is null.
   Set<String> leftOut;
 
   Json toJson() => {
@@ -858,6 +882,9 @@ class Show {
         'look': look.toJson(),
         'looks': {for (final entry in looks.entries) entry.key: entry.value.toJson()},
         'leftOut': {for (final photo in leftOut) photo: true},
+        'chosen': chosen == null
+            ? null
+            : {for (var i = 0; i < chosen!.length; i++) chosen![i]: i},
       };
 }
 
@@ -1026,6 +1053,12 @@ class Trip {
 
   /// Those of [people] who are in the group.
   int membersAmong(Set<String> people) => people.where(memberIds.contains).length;
+
+  /// The day of the trip [photo] belongs to, from 0: the one someone moved it to,
+  /// or the day it was taken. What came before or after the trip is on its first
+  /// or its last day.
+  int photoDay(Photo photo) =>
+      (photo.dayIndex ?? photo.day.difference(start).inDays).clamp(0, dayCount - 1);
 
   /// The votes against [person] that count: those of members, not their own.
   int kickVotesAgainst(String person) => (kickVotes[person] ?? const <String>{})

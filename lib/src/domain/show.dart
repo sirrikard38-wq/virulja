@@ -10,13 +10,15 @@ const double firstExtra = 6;
 /// Transitions there are from the start; the others open as the trip goes on.
 const int firstTransitions = 5;
 
-/// Seconds a transition takes before it is made longer, and then how long a
-/// photo stands still before it may be made to stay longer.
+/// Seconds a transition takes before it is made longer.
 const double transitionTime = 1;
-const double stillTime = 4;
 
-/// The bar for how much longer a photo stays: all of it open.
-const double longestStay = 12;
+/// The shortest time a photo may stand still. How long it can stand grows with
+/// the days like the lengthening of a transition, up to 12 s.
+const double leastStill = .5;
+
+/// How many presentations each person may make.
+const int showsEach = 3;
 
 /// A presentation may show this much of every 30 seconds of a video.
 const double clipPer30 = 6;
@@ -36,6 +38,13 @@ double extraLimit(Trip trip, DateTime now) {
   }
   return min(limit, longestExtra);
 }
+
+/// The most each day of the trip opens, from the first to the last: the marks
+/// on the bars of a presentation.
+List<double> dayLimits(Trip trip) => [
+      for (var day = 0; day < trip.dayCount; day++)
+        extraLimit(trip, trip.start.add(Duration(days: day))),
+    ];
 
 /// How many transitions can be used on [now]: five at first and all of them on
 /// the last day, in step with [extraLimit].
@@ -68,11 +77,24 @@ double longestClip(double seconds) =>
 /// How long [video] is, or the most the app keeps when that is not known.
 double videoLength(Photo video) => video.seconds ?? _keptVideo;
 
-/// The photos and videos of [show] in the order they were taken: everything in
-/// Uspomene but what is left out.
+/// The photos and videos of [trip] by day, and in each day as they were taken.
+List<Photo> photosByDay(Trip trip) => trip.photos.toList()
+  ..sort((a, b) {
+    final days = trip.photoDay(a).compareTo(trip.photoDay(b));
+    return days != 0 ? days : a.takenAt.compareTo(b.takenAt);
+  });
+
+/// The photos and videos of [show] in its order. One made before photos were
+/// picked one by one has everything in Uspomene but what is left out.
 List<Slide> slidesOf(Trip trip, Show show) {
-  final photos = trip.photos.where((photo) => !show.leftOut.contains(photo.id)).toList()
-    ..sort((a, b) => a.takenAt.compareTo(b.takenAt));
+  final chosen = show.chosen;
+  final List<Photo> photos;
+  if (chosen == null) {
+    photos = photosByDay(trip).where((photo) => !show.leftOut.contains(photo.id)).toList();
+  } else {
+    final byId = {for (final photo in trip.photos) photo.id: photo};
+    photos = [for (final id in chosen) if (byId[id] != null) byId[id]!];
+  }
   return [
     for (final photo in photos)
       (
@@ -88,7 +110,7 @@ List<Slide> slidesOf(Trip trip, Show show) {
 double slideLength(Slide slide) =>
     transitionTime +
     slide.look.extra +
-    (slide.video == null ? stillTime + slide.look.stay : clipOf(slide).length);
+    (slide.video == null ? slide.look.still : clipOf(slide).length);
 
 /// Seconds from the start of [slides] to the one at [index].
 double secondsBefore(List<Slide> slides, int index) =>
@@ -120,20 +142,16 @@ double secondsBefore(List<Slide> slides, int index) =>
   return (index: 0, previous: null, progress: 1, into: 0);
 }
 
-/// The presentation [person] made, if any: each makes one at most.
-Show? showBy(Trip trip, String person) {
-  for (final show in trip.shows) {
-    if (show.addedBy == person) return show;
-  }
-  return null;
-}
+/// The presentations [person] made, first to last: [showsEach] at most.
+List<Show> showsBy(Trip trip, String person) =>
+    [for (final show in trip.shows) if (show.addedBy == person) show];
 
-/// How many of the group have [show] on their screens.
+/// How many of the group voted for [show].
 int picksOf(Trip trip, Show show) =>
     trip.memberIds.where((person) => trip.showPicks[person] == show.id).length;
 
-/// The presentation most of the group have on their screens: the presentation of
-/// the day. Of equals the newest wins. Null while nobody has picked one.
+/// The presentation most of the group voted for: the presentation of the day. Of
+/// equals the newest wins. Null while nobody has voted.
 Show? showOfTheDay(Trip trip) {
   Show? best;
   var most = 0;
@@ -147,12 +165,13 @@ Show? showOfTheDay(Trip trip) {
   return best;
 }
 
-/// What plays on the screen of [person]: the presentation they picked, or else
-/// the presentation of the day.
-Show? shownTo(Trip trip, String person) {
-  final picked = trip.showPicks[person];
-  for (final show in trip.shows) {
-    if (show.id == picked) return show;
+/// What plays on the trip's cover: the presentation of the day, or before the
+/// first vote the newest presentation, one that has something to show.
+Show? onCover(Trip trip) {
+  final best = showOfTheDay(trip);
+  if (best != null && slidesOf(trip, best).isNotEmpty) return best;
+  for (final show in trip.shows.reversed) {
+    if (slidesOf(trip, show).isNotEmpty) return show;
   }
-  return showOfTheDay(trip);
+  return null;
 }

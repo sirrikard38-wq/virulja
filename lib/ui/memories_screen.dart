@@ -3,11 +3,13 @@ import 'package:web/web.dart' as web;
 import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import '../src/domain/show.dart';
 import '../src/domain/trip_tree.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'media.dart';
+import 'photo_drag.dart';
 import 'shows_section.dart';
 import 'video_work.dart';
 import 'widgets.dart';
@@ -63,12 +65,18 @@ web.HTMLElement _addPhotos(Ui ui, Trip trip) {
   ]);
 }
 
-web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) => button(
+/// One photo or video of the grid: a tap opens it, a finger held on it moves it
+/// to another day.
+web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) {
+  final shot = button(
       cls: 'shot',
       ariaLabel: photo.isVideo
           ? tr('Video, {0}', [weekdayAndDate(photo.day)])
           : tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
-      onTap: () => ui.go(ui.tripRoute(trip, 'foto/${photo.id}')),
+      onTap: () {
+        if (tapEndsMove()) return;
+        ui.go(ui.tripRoute(trip, 'foto/${photo.id}'));
+      },
       children: [
         storedImage(ui, trip, thumbId(photo.id), cls: ''),
         if (photo.isVideo)
@@ -82,12 +90,22 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) => button(
         ]),
       ],
     );
+  movableToDay(shot, (day) {
+    if (trip.photoDay(photo) == day) return;
+    photo.dayIndex = day;
+    ui.changed();
+    ui.toast(tr('Premješteno: Dan {0}', [day + 1]));
+  });
+  return shot;
+}
 
+/// Uspomene: the presentations, then every day of the trip with its photos and
+/// videos. What was taken before or after the trip is on its first or last day,
+/// and anything can be moved to another day.
 web.HTMLElement galleryTab(Ui ui, Trip trip) {
-  final byDay = <DateTime, List<Photo>>{};
-  for (final photo in trip.photos.toList()
-    ..sort((a, b) => a.takenAt.compareTo(b.takenAt))) {
-    byDay.putIfAbsent(photo.day, () => []).add(photo);
+  final byDay = <int, List<Photo>>{};
+  for (final photo in photosByDay(trip)) {
+    byDay.putIfAbsent(trip.photoDay(photo), () => []).add(photo);
   }
   return el('div', children: [
     showsSection(ui, trip),
@@ -98,19 +116,21 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
     if (trip.photos.isEmpty)
       el('p', cls: 'soft pad gap-top',
           text: tr('Dodajte fotografije i videe iz galerije, a aplikacija će ih sama složiti po danima.')),
-    for (final entry in byDay.entries) ...[
-      el('div', cls: 'day-title', text: _dayTitle(trip, entry.key)),
-      el('div', cls: 'grid', children: [
-        for (final photo in entry.value) _shot(ui, trip, photo),
-      ]),
+    if (trip.photos.isNotEmpty) ...[
+      el('p', cls: 'small pad', text: tr('Drži prst na fotografiji i povuci je na drugi dan.')),
+      for (var day = 0; day < trip.dayCount; day++)
+        el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
+          el('div', cls: 'day-title',
+              text: tr('Dan {0} · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
+          if (byDay[day] == null)
+            el('div', cls: 'day-empty', text: tr('Ovdje još nema ničega.'))
+          else
+            el('div', cls: 'grid', children: [
+              for (final photo in byDay[day]!) _shot(ui, trip, photo),
+            ]),
+        ]),
     ],
   ]);
-}
-
-String _dayTitle(Trip trip, DateTime day) {
-  final index = day.difference(trip.start).inDays;
-  final date = weekdayAndDate(day);
-  return index >= 0 && index < trip.dayCount ? tr('Dan {0} · {1}', [index + 1, date]) : date;
 }
 
 String _clock(DateTime at) => '${at.hour.toString().padLeft(2, '0')}:'

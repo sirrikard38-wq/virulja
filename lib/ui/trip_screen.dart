@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/attack.dart';
 import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
@@ -159,14 +160,20 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final peopleShown = ui.showPeople; // still drawn while it folds shut
   _foldPeople(ui);
   final cover = trip.coverId;
-  // The presentation this person picked, or the group's, plays in place of the cover.
-  final playing = shownTo(trip, ui.meIn(trip));
-  final playable = playing != null && slidesOf(trip, playing).isNotEmpty;
+  // The presentation with most votes plays in place of the cover.
+  final playing = onCover(trip);
+  final player = playing == null ? null : keptPlayer(ui, trip, playing, 'hero');
+  // How many presentations, polls and plans there are, after the tab's name.
   final tabs = {
     'plan': tr('Plan'),
     'slike': tr('Uspomene'),
     'ankete': tr('Ankete'),
     'napad': tr('Plan napada'),
+  };
+  final counts = {
+    'slike': trip.shows.length,
+    'ankete': trip.polls.length,
+    'napad': planOfAttack(trip, DateTime.now()).length,
   };
   final keys = tabs.keys.toList();
   final index = max(keys.indexOf(tab), 0);
@@ -195,11 +202,19 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     },
   ]);
   final page = el('div', cls: 'swipe-area', children: [
-    el('div', cls: 'hero', children: [
-      if (playable) ...[
-        keptPlayer(ui, trip, playing, 'hero').element..classList.add('hero-show'),
-        el('span', cls: 'hero-caption', text: playing.name),
-      ] else if (cover != null)
+    if (playing != null && player != null)
+      button(
+        cls: 'hero tappable',
+        ariaLabel: tr('Gledaj preko cijelog zaslona: {0}', [playing.name]),
+        onTap: () => watchShow(ui, trip, playing, from: player.seconds),
+        children: [
+          player.element..classList.add('hero-show'),
+          el('span', cls: 'hero-caption', text: playing.name),
+        ],
+      )
+    else
+      el('div', cls: 'hero', children: [
+      if (cover != null)
         storedImage(ui, trip, cover, cls: 'hero-photo', alt: trip.city)
       else
         el('div', cls: 'hero-blank'),
@@ -246,9 +261,14 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
       for (final entry in tabs.entries)
         button(
           cls: entry.key == tab ? 'tab on' : 'tab',
-          text: entry.value,
           onTap: () => show(entry.key),
-        )..setAttribute('data-label', entry.value),
+          children: [
+            web.document.createTextNode(entry.value),
+            if (counts[entry.key] != null)
+              el('span', cls: 'tab-count', text: ' (${counts[entry.key]})'),
+          ],
+        )..setAttribute('data-label',
+            counts[entry.key] == null ? entry.value : '${entry.value} (${counts[entry.key]})'),
     ]),
     el('div', cls: 'slide-clip', children: [sliding]),
   ]);

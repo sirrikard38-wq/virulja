@@ -10,37 +10,62 @@ import 'show_builder.dart';
 import 'show_player.dart';
 import 'widgets.dart';
 
+/// One presentation: a tap anywhere on it plays it over the whole screen, the
+/// box votes for it, and its maker changes it with the brush.
 web.HTMLElement _showCard(Ui ui, Trip trip, Show show, String me, Show? best) {
-  final picked = trip.showPicks[me] == show.id;
-  return el('div', cls: 'poll card', children: [
-    el('div', cls: 'label', text: show.name),
-    if (identical(show, best))
-      el('div', cls: 'small', attrs: {'style': 'color:var(--accent);font-weight:700'},
-          text: tr('Prezentacija dana')),
-    el('div', cls: 'small',
-        text: tr('{0} · glasova: {1}', [ui.nameOf(show.addedBy), picksOf(trip, show)])),
+  final voted = trip.showPicks[me] == show.id;
+  final number = showsBy(trip, show.addedBy).indexOf(show) + 1;
+  final card = el('div', cls: 'poll card show-card', attrs: {
+    'role': 'button',
+    'tabindex': '0',
+    'aria-label': tr('Gledaj preko cijelog zaslona: {0}', [show.name]),
+  }, children: [
+    el('div', cls: 'show-card-head', children: [
+      el('div', cls: 'grow', children: [
+        el('div', cls: 'label', children: [
+          web.document.createTextNode(show.name),
+          el('span', cls: 'show-count', text: ' $number/$showsEach'),
+        ]),
+        if (identical(show, best))
+          el('div', cls: 'small', attrs: {'style': 'color:var(--accent);font-weight:700'},
+              text: tr('Prezentacija dana')),
+        el('div', cls: 'small',
+            text: tr('{0} · glasova: {1}', [ui.nameOf(show.addedBy), picksOf(trip, show)])),
+      ]),
+      if (show.addedBy == me)
+        button(
+          cls: 'icon-button brush',
+          ariaLabel: tr('Uredi'),
+          onTap: () => openShowBuilder(ui, trip, show),
+          children: [icon('brush', size: 22)],
+        ),
+    ]),
     el('div', cls: 'show-actions', children: [
-      secondaryButton(tr('Gledaj'), () {
-        forgetPlayer('watch');
-        ui.go(ui.tripRoute(trip, 'gledaj/${show.id}'));
-      }),
-      tick(tr('Na mom zaslonu'), picked, () {
-        picked ? trip.showPicks.remove(me) : trip.showPicks[me] = show.id;
+      tick(tr('Glasaj'), voted, () {
+        voted ? trip.showPicks.remove(me) : trip.showPicks[me] = show.id;
         ui.changed();
       }),
-      if (show.addedBy == me)
-        button(cls: 'text-button', text: tr('Uredi'), onTap: () => openShowBuilder(ui, trip)),
     ]),
   ]);
+  card.onClick.listen((event) {
+    // The vote and the brush have their own taps.
+    if ((event.target as web.Element?)?.closest('button') != null) return;
+    watchShow(ui, trip, show);
+  });
+  card.onKeyDown.listen((event) {
+    if (event.key == 'Enter' && event.target == card) watchShow(ui, trip, show);
+  });
+  return card;
 }
 
 /// "Prezentacija dana" at the top of Uspomene: a tap unfolds the presentations
-/// the group made, to watch them and to pick the one that plays on your screen,
-/// which is also your vote.
+/// the group made, to watch them and vote. The one with most votes plays on the
+/// trip's cover.
 web.HTMLElement showsSection(Ui ui, Trip trip) {
   final me = ui.meIn(trip);
   final best = showOfTheDay(trip);
   final open = ui.showsOpen;
+  final mine = showsBy(trip, me);
   final ranked = [
     for (var i = 0; i < trip.shows.length; i++) (show: trip.shows[i], at: i),
   ]..sort((a, b) {
@@ -65,9 +90,10 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
       if (trip.shows.isEmpty)
         el('p', cls: 'soft pad', text: tr('Još nema prezentacija. Napravi prvu od fotografija iz Uspomena.')),
       for (final item in ranked) _showCard(ui, trip, item.show, me, best),
-      if (showBy(trip, me) == null && trip.photos.any((photo) => !photo.isVideo))
-        primaryButton(tr('Napravi prezentaciju'), () => openShowBuilder(ui, trip)),
-      el('p', cls: 'small pad gap-top', text: tr('Prezentacija koju staviš na svoj zaslon svira na naslovnoj slici putovanja i to je tvoj glas. Ona s najviše glasova je prezentacija dana. Svatko može imati jednu.')),
+      if (mine.length < showsEach && trip.photos.isNotEmpty)
+        primaryButton('${tr('Napravi prezentaciju')} ${mine.length + 1}/$showsEach',
+            () => openShowBuilder(ui, trip, null)),
+      el('p', cls: 'small pad gap-top', text: tr('Na naslovnoj slici putovanja svira prezentacija s najviše glasova. Svatko ima jedan glas i može napraviti do 3 prezentacije.')),
     ],
   ]);
 }

@@ -100,9 +100,11 @@ class ShowPlayer {
     web.window.requestAnimationFrame(_onFrame);
   }
 
+  /// How far it has played, in seconds.
+  double get seconds => DateTime.now().difference(_started).inMilliseconds / 1000;
+
   void _draw() {
     if (_slides.isEmpty) return;
-    final seconds = DateTime.now().difference(_started).inMilliseconds / 1000;
     final frame = frameAt(_slides, seconds);
     final slide = _slides[frame.index];
     final previous = frame.previous;
@@ -214,17 +216,54 @@ void _move(Transition kind, double p, web.HTMLElement incoming, web.HTMLElement?
 /// whole screen.
 final Map<String, ShowPlayer> _kept = {};
 
-/// Lets the next presentation shown at [place] start from its beginning.
-void forgetPlayer(String place) => _kept.remove(place);
+
+/// Where the next player on the whole screen starts, in seconds.
+double _watchFrom = 0;
 
 /// The player of [show] for [place]. It stays the same across redraws as long as
 /// the presentation does not change, so it does not start again.
 ShowPlayer keptPlayer(Ui ui, Trip trip, Show show, String place) {
   final slides = slidesOf(trip, show);
   final key = '${trip.id} ${show.id} ${Object.hashAll([
-    for (final slide in slides) ...[slide.photoId, slide.look.transition, slide.look.extra],
+    for (final slide in slides) ...[
+      slide.photoId,
+      slide.look.transition,
+      slide.look.extra,
+      slide.look.still,
+      slide.look.from,
+      slide.look.length,
+    ],
   ])}';
   final known = _kept[place];
   if (known != null && known.key == key) return known..start();
-  return _kept[place] = ShowPlayer(ui, trip, slides, key: key)..start();
+  final from = place == 'watch' ? _watchFrom : 0.0;
+  _watchFrom = 0;
+  return _kept[place] = ShowPlayer(ui, trip, slides, key: key, from: from)..start();
+}
+
+/// The player on the trip's cover, while one plays there.
+ShowPlayer? get coverPlayer => _kept['hero'];
+
+/// Plays [show] over the whole screen from [from] seconds into it. A phone that
+/// allows it also hides its own bars; an iPhone keeps them, as Safari lets only a
+/// video do that.
+void watchShow(Ui ui, Trip trip, Show show, {double from = 0}) {
+  _kept.remove('watch');
+  _watchFrom = from;
+  try {
+    web.document.documentElement?.requestFullscreen().toDart.then((_) {}, onError: (Object _) {});
+  } on Object {
+    // No whole screen here: the presentation still fills the page.
+  }
+  ui.go(ui.tripRoute(trip, 'gledaj/${show.id}'));
+}
+
+/// Gives the phone its bars back once the presentation is left.
+void leaveWholeScreen() {
+  if (web.document.fullscreenElement == null) return;
+  try {
+    web.document.exitFullscreen().toDart.then((_) {}, onError: (Object _) {});
+  } on Object {
+    // Nothing to give back.
+  }
 }

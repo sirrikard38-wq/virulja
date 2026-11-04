@@ -1,6 +1,5 @@
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
-import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
@@ -13,33 +12,43 @@ import 'dom.dart';
 double _across(web.PointerEvent event) =>
     (event as JSObject).getProperty<JSNumber>('clientX'.toJS).toDartDouble;
 
-/// How much longer a transition takes, dragged with a finger along a bar that runs
-/// from 0 to 12 s like the axis of a graph. Only up to [limit] can be reached: that
-/// part has the colour of the seconds that can be picked, the rest of the axis is
-/// greyer. The picked seconds fill it in green up to a round end, with the number
-/// under it. [onChange] hears every move, and [done] once the finger lets go.
-///
-/// The same bar sets how much longer a photo stays, and which piece of a video
-/// plays: then it runs to [longest] and [added] leaves out the plus.
+/// Seconds as the bars write them: one decimal, cut, none when it is 0, and the
+/// s right after the number, as in 6s or 7,5s.
+String _seconds(double value) => '${tenths(value).replaceFirst(RegExp(r'[,.]0$'), '')}s';
+
+/// Seconds dragged with a finger along a bar that runs from 0 to [longest] like
+/// the axis of a graph: how much longer a transition takes, how long a photo
+/// stands, which piece of a video plays. Only from [least] up to [limit] can be
+/// reached: that part has the colour of the seconds that can be picked, the rest
+/// of the axis is greyer. The picked seconds fill it in green up to a round end,
+/// with the number under it. [marks] are where the axis is marked, every second
+/// when not given. [onChange] hears every move, and [done] once the finger lets go.
 web.HTMLElement secondsBar({
   required double value,
   required double limit,
   required String label,
   required void Function(double seconds, {required bool done}) onChange,
   double longest = longestExtra,
-  bool added = true,
+  double least = 0,
+  List<double>? marks,
 }) {
   String at(double seconds) => '${(seconds / longest * 100).toStringAsFixed(3)}%';
-  var current = min(value, limit);
+  var current = value.clamp(least, limit).toDouble();
   final step = longest > 15 ? 5 : 1;
+  final ticks = {
+    0.0,
+    ...marks ?? [for (var second = 0; second <= longest; second += step) second.toDouble()],
+    longest,
+  };
 
   final fill = el('div', cls: 'secbar-fill');
   final knob = el('div', cls: 'secbar-knob');
   final shown = el('span', cls: 'secbar-value');
   final track = el('div', cls: 'secbar-track', children: [
     el('div', cls: 'secbar-axis', children: [
-      for (var second = 0; second <= longest; second += step)
-        el('span', cls: 'secbar-tick', attrs: {'style': 'left:${at(second.toDouble())}'}),
+      for (final second in ticks)
+        if (second <= longest)
+          el('span', cls: 'secbar-tick', attrs: {'style': 'left:${at(second)}'}),
     ]),
     el('div', cls: 'secbar-open', attrs: {'style': 'width:${at(limit)}'}),
     fill,
@@ -49,14 +58,14 @@ web.HTMLElement secondsBar({
     'role': 'slider',
     'tabindex': '0',
     'aria-label': label,
-    'aria-valuemin': '0',
+    'aria-valuemin': least.toStringAsFixed(2),
     'aria-valuemax': limit.toStringAsFixed(2),
   }, children: [
     el('div', cls: 'secbar-labels', children: [
-      el('span', cls: 'secbar-start', text: '0 s'),
+      el('span', cls: 'secbar-start', text: _seconds(0)),
       if (limit < longest)
-        el('span', cls: 'secbar-limit', text: '${tenths(limit)} s', attrs: {'style': 'left:${at(limit)}'}),
-      el('span', cls: 'secbar-end', text: '${tenths(longest).replaceFirst(RegExp(r'[,.]0$'), '')} s'),
+        el('span', cls: 'secbar-limit', text: _seconds(limit), attrs: {'style': 'left:${at(limit)}'}),
+      el('span', cls: 'secbar-end', text: _seconds(longest)),
     ]),
     track,
     el('div', cls: 'secbar-under', children: [shown]),
@@ -66,17 +75,17 @@ web.HTMLElement secondsBar({
     fill.style.width = at(current);
     knob.style.left = at(current);
     shown
-      ..textContent = '${added ? '+' : ''}${tenths(current)} s'
+      ..textContent = _seconds(current)
       ..style.left = at(current);
     bar
       ..setAttribute('aria-valuenow', current.toStringAsFixed(2))
-      ..setAttribute('aria-valuetext', '${tenths(current)} s');
+      ..setAttribute('aria-valuetext', _seconds(current));
   }
 
   void moveTo(double x, {required bool done}) {
     final box = track.getBoundingClientRect();
     final seconds = (x - box.left) / box.width * longest;
-    current = ((seconds.clamp(0, limit)) * 100).round() / 100;
+    current = ((seconds.clamp(least, limit)) * 100).round() / 100;
     show();
     onChange(current, done: done);
   }
@@ -110,7 +119,7 @@ web.HTMLElement secondsBar({
     final step = switch (event.key) { 'ArrowRight' || 'ArrowUp' => .1, 'ArrowLeft' || 'ArrowDown' => -.1, _ => 0.0 };
     if (step == 0) return;
     event.preventDefault();
-    current = (((current + step).clamp(0, limit)) * 100).round() / 100;
+    current = (((current + step).clamp(least, limit)) * 100).round() / 100;
     show();
     onChange(current, done: true);
   }).toJS);

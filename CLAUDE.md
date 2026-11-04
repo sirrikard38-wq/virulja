@@ -50,7 +50,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   https://claude.ai/artifact/LPK38eCE73Kx6HuBepHRob (variants, logos, a clickable
   prototype). Logo 3 Vir is temporary: the user will make the real logo later.
 - Photos: one tap on every phone; each person picks from the gallery and the app sorts
-  by day. No automatic gallery reading.
+  by day. No automatic gallery reading. Uspomene shows only the days of the trip: what was
+  taken before or after is on the first or last day, and a finger held on a photo drags it
+  to another day (`Photo.dayIndex`, `Trip.photoDay`, `lib/ui/photo_drag.dart`).
 - Photos have reactions and comments, one reaction per person.
 - Videos are photos with `videoType` (`lib/ui/video_work.dart`). A video from a phone would
   fill the free storage, so the app keeps the first 30 seconds at 3 to 6 MB. A browser can
@@ -63,14 +65,17 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the screen is that of the open category alone, counting what is in the plan.
 - First version also has: drive calculation, actual costs, who owes whom, voting.
 - The group agrees when at least half picks the same, and both when there are two
-  (`Trip.votesToAgree`). A poll the group votes through goes into Plan napada by itself; the
-  "Plan napada" box in Ankete and the button in Hrana i piće put things there by hand. A
+  (`Trip.votesToAgree`). A poll on which the whole group picks the same answer ticks its
+  "Plan napada" box by itself (`unanimousOption`), and unticking takes it out; the box in
+  Ankete and the button in Hrana i piće put things there by hand. A
   place and the yes or no poll about it are one thing in Plan napada (`placeInAttack`).
   Polls have no day any more: people pick days on each thing in Plan napada. The chips
   Sve, Dan 1, Dan 2 show each thing on the day with most votes, on all equal ones, and on
   none before the first vote (`votedDays`); a stop also keeps its own day. While a day is
   open, what was on it stays even when a vote moves it; it moves once the day is left
-  (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`).
+  (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`). The tabs
+  show how many presentations, polls and plans there are, and each day chip its plans; the
+  cards show no date, only a past one does.
 - In Troškovi, something in Plan napada with a price is planned until its agreed day is over,
   then spent, unless a real cost of the same name was written down. A paid debt stays in the
   list, green, where it stood.
@@ -78,17 +83,24 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   undone within 5 seconds instead of asking first. Only a photo or video still asks, as its
   file is deleted at once.
 - Presentations (`lib/src/domain/show.dart`, `lib/ui/show_*.dart`, `shows_section.dart`):
-  every photo and video of Uspomene follows the one before with one of 15 transitions,
-  lengthened with a bar from 0 to 12 s (`secondsBar`). A photo then stays 4 s, and as much
-  longer as its own bar says (all 12 s open). A video plays a piece of it, 6 s of every 30 s
+  the photos and videos picked for it (`Show.chosen`, in the order picked; older ones have
+  all but `leftOut`) follow each other with one of 15 transitions, lengthened with a bar
+  from 0 to 12 s (`secondsBar`). The builder has the presentation's own row on top and a
+  row for each day under it, the last day first. A photo then stands 2.5 s, or what its bar
+  says, from 0.5 s up to the same daily limit as the transitions; the bars are marked at
+  each day's limit (`dayLimits`) and write 6s with no space. A video plays a piece of it, 6 s of every 30 s
   it lasts at most (`longestClip`, `clipOf`); kept videos are 30 s at most, so one piece of
   6 s. The video stands still on the piece's first picture during its transition. On the first day of the trip 6 s
   and 5 transitions are open; each later day adds the rest up to 12 s divided by the days
   left, in hundredths, so the last day opens 12 s and all 15 (`extraLimit`,
-  `openTransitions`). Numbers show one decimal, cut (`tenths`). Each person makes one; the
-  one you put on your screen plays on the trip's cover and is your vote
-  (`Trip.showPicks`); the most picked is "Prezentacija dana" (`showOfTheDay`). The players
-  of the cover and of watching keep going across redraws (`keptPlayer`).
+  `openTransitions`). Numbers show one decimal, cut (`tenths`). Each person makes up to 3
+  (`showsEach`), shown as 1/3, 2/3. Everyone has one vote (`Trip.showPicks`); the most voted
+  is "Prezentacija dana" (`showOfTheDay`) and plays on the trip's cover, the newest before
+  any vote (`onCover`). A tap on the cover or on a presentation plays it over the whole
+  screen (`watchShow`); an iPhone keeps its bars, as Safari gives the whole screen only to
+  a video. "Isto za sve fotografije" turns into "Vrati natrag" until something else
+  changes. The players of the cover and of watching keep going across redraws
+  (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
 - A yes or no poll takes one answer from each person (`onlyOneAnswer`).

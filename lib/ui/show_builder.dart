@@ -14,18 +14,18 @@ import 'seconds_bar.dart';
 import 'show_player.dart';
 import 'widgets.dart';
 
+Map<String, Look> _copies(Map<String, Look> looks) =>
+    {for (final entry in looks.entries) entry.key: entry.value.copy()};
+
 /// A presentation being made, kept apart from the trip until it is saved, so that
 /// a redraw of the screen keeps it.
 class _Draft {
-  _Draft(this.tripId, Show? show)
+  _Draft(this.tripId, Show? show, List<Slide> slides)
       : editing = show?.id,
         name = show?.name ?? '',
         look = (show?.look ?? Look(Transition.fade)).copy(),
-        looks = {
-          for (final entry in (show?.looks ?? const <String, Look>{}).entries)
-            entry.key: entry.value.copy(),
-        },
-        leftOut = {...?show?.leftOut};
+        looks = _copies(show?.looks ?? const {}),
+        chosen = [for (final slide in slides) slide.photoId];
 
   final String tripId;
 
@@ -34,13 +34,18 @@ class _Draft {
   String name;
   Look look;
   Map<String, Look> looks;
-  Set<String> leftOut;
+
+  /// The photos and videos in it, in their order.
+  List<String> chosen;
 
   /// The photo whose transition is being set.
-  String? chosen;
+  String? current;
 
-  /// How far the row of photos is scrolled.
-  double strip = 0;
+  /// How every photo came in before "Isto za sve fotografije", to go back to.
+  ({Look look, Map<String, Look> looks})? before;
+
+  /// How far each row of photos is scrolled.
+  final Map<String, double> scrolled = {};
 
   Show asShow(String person) => Show(
         id: editing ?? '',
@@ -48,44 +53,43 @@ class _Draft {
         addedBy: person,
         look: look,
         looks: looks,
-        leftOut: leftOut,
+        chosen: chosen,
       );
 }
 
 _Draft? _draft;
 
-/// Opens the making of this person's presentation: a new one, or theirs to change.
-void openShowBuilder(Ui ui, Trip trip) {
-  _draft = _Draft(trip.id, showBy(trip, ui.meIn(trip)));
-  ui.go(ui.tripRoute(trip, 'prezentacija'));
+/// Opens the making of a presentation of this person: [show] to change, or a
+/// new one when null.
+void openShowBuilder(Ui ui, Trip trip, Show? show) {
+  _draft = _Draft(trip.id, show, show == null ? const [] : slidesOf(trip, show));
+  ui.go(ui.tripRoute(trip, show == null ? 'prezentacija' : 'prezentacija/${show.id}'));
 }
 
-/// What a lengthening of transitions this trip opens next.
-String _growth(Trip trip, DateTime now, double limit) {
-  if (limit >= longestExtra) return tr('Otvoreno je svih 12 s i svih 15 prijelaza.');
-  final tomorrow = extraLimit(trip, now.add(const Duration(days: 1)));
-  return tomorrow > limit
-      ? tr('Sutra se otvara do {0} s, a zadnji dan putovanja do 12 s.', [tenths(tomorrow)])
-      : tr('Svaki dan putovanja otvara dulje prijelaze, do 12 s zadnji dan.');
-}
-
-/// How long [photo] stays: a photo 4 s and as much longer as wanted, a video the
-/// piece of it that is picked, 6 s of every 30 s at most.
-List<web.HTMLElement> _howLong(Ui ui, Photo photo, Look look, Look Function() own) {
+/// How long [photo] stays: a photo as long as its bar says, a video the piece of
+/// it that is picked, 6 s of every 30 s at most.
+List<web.HTMLElement> _howLong(
+  Ui ui,
+  Photo photo,
+  Look look,
+  Look Function() own,
+  double limit,
+  List<double> marks,
+) {
   if (!photo.isVideo) {
     return [
       el('p', cls: 'label pad gap-top', text: tr('Koliko dugo se prikazuje')),
       secondsBar(
-        value: look.stay,
-        limit: longestStay,
-        longest: longestStay,
+        value: look.still,
+        limit: limit,
+        least: leastStill,
+        marks: marks,
         label: tr('Koliko dugo se prikazuje'),
         onChange: (seconds, {required done}) {
-          own().stay = seconds;
+          own().still = seconds;
           if (done) ui.rerender();
         },
       ),
-      el('p', cls: 'small pad', text: tr('Svaka fotografija stoji 4 s, i još koliko ovdje dodaš.')),
     ];
   }
   final length = videoLength(photo);
@@ -97,10 +101,10 @@ List<web.HTMLElement> _howLong(Ui ui, Photo photo, Look look, Look Function() ow
       value: clip.length,
       limit: longest,
       longest: longest,
-      added: false,
+      least: min(1, longest),
       label: tr('Koliko videa ide u prezentaciju'),
       onChange: (seconds, {required done}) {
-        own().length = max(1, seconds);
+        own().length = seconds;
         if (done) ui.rerender();
       },
     ),
@@ -110,7 +114,6 @@ List<web.HTMLElement> _howLong(Ui ui, Photo photo, Look look, Look Function() ow
         value: clip.from,
         limit: length - clip.length,
         longest: length,
-        added: false,
         label: tr('Od koje sekunde'),
         onChange: (seconds, {required done}) {
           own().from = seconds;
@@ -122,35 +125,101 @@ List<web.HTMLElement> _howLong(Ui ui, Photo photo, Look look, Look Function() ow
   ];
 }
 
-/// Makes or changes this person's presentation of the trip's photos. On top it
-/// plays as it will on the trip's cover, from the photo being set.
-web.HTMLElement showBuilder(Ui ui, Trip trip) {
+/// A row of small pictures that scrolls sideways and keeps where it was across
+/// redraws.
+web.HTMLElement _strip(_Draft draft, String key, List<web.HTMLElement> pictures) {
+  final strip = el('div', cls: 'show-strip', children: pictures);
+  strip.onScroll.listen((_) => draft.scrolled[key] = strip.scrollLeft.toDouble());
+  scheduleMicrotask(() => strip.scrollLeft = draft.scrolled[key] ?? 0);
+  return strip;
+}
+
+web.HTMLElement _thumb(
+  Ui ui,
+  Trip trip,
+  Photo photo, {
+  required String cls,
+  required void Function() onTap,
+  String? label,
+  int? place,
+}) =>
+    button(
+      cls: 'show-thumb $cls',
+      ariaLabel: photo.isVideo
+          ? tr('Video, {0}', [weekdayAndDate(photo.day)])
+          : tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
+      onTap: onTap,
+      children: [
+        el('span', cls: 'show-thumb-picture', children: [
+          storedImage(ui, trip, thumbId(photo.id), cls: ''),
+          if (photo.isVideo) el('span', cls: 'shot-play', children: [icon('play', size: 18)]),
+          if (place != null) el('span', cls: 'show-thumb-place', text: '$place'),
+        ]),
+        if (label != null) el('span', cls: 'show-thumb-label', text: label),
+      ],
+    );
+
+/// Makes or changes a presentation of the trip's photos. On top it plays as it
+/// will on the trip's cover, from the photo being set. Under it is the row of the
+/// presentation itself, and under that every day of Uspomene in a row of its own,
+/// the last day on top: a tap there puts a photo in or takes it out.
+web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   final me = ui.meIn(trip);
-  final draft = _draft?.tripId == trip.id ? _draft! : _draft = _Draft(trip.id, showBy(trip, me));
+  Show? existing() {
+    for (final show in trip.shows) {
+      if (show.id == showId && show.addedBy == me) return show;
+    }
+    return null;
+  }
+
+  final show = existing();
+  if (showId != null && show == null) {
+    return el('div', children: [
+      topBar(tr('Prezentacija')),
+      el('p', cls: 'soft pad', text: tr('Te prezentacije više nema.')),
+    ]);
+  }
+  var made = _draft;
+  if (made == null || made.tripId != trip.id || made.editing != showId) {
+    made = _draft = _Draft(trip.id, show, show == null ? const [] : slidesOf(trip, show));
+  }
+  final draft = made;
   final now = DateTime.now();
   final limit = extraLimit(trip, now);
   final open = openTransitions(trip, now);
-  final photos = trip.photos.toList()..sort((a, b) => a.takenAt.compareTo(b.takenAt));
-  if (!photos.any((photo) => photo.id == draft.chosen)) {
-    draft.chosen = photos.isEmpty ? null : photos.first.id;
+  final marks = [for (var second = 0.0; second < firstExtra; second++) second, ...dayLimits(trip)];
+  final photos = photosByDay(trip);
+  final byId = {for (final photo in photos) photo.id: photo};
+  draft.chosen.removeWhere((id) => !byId.containsKey(id));
+  if (!draft.chosen.contains(draft.current)) {
+    draft.current = draft.chosen.isEmpty ? null : draft.chosen.first;
   }
-  final chosen = draft.chosen;
+  final current = draft.current;
   final slides = slidesOf(trip, draft.asShow(me));
-  final at = slides.indexWhere((slide) => slide.photoId == chosen);
+  final at = slides.indexWhere((slide) => slide.photoId == current);
   final preview = ShowPlayer(ui, trip, slides, from: at <= 0 ? 0 : secondsBefore(slides, at))
     ..start();
   final error = errorLine();
   final name = input(value: draft.name);
   name.onInput.listen((_) => draft.name = name.value);
+  final mine = showsBy(trip, me);
+  final number = show == null ? mine.length + 1 : mine.indexOf(show) + 1;
 
   Look lookOf(String photo) => draft.looks[photo] ?? draft.look;
-  Look own(String photo) => draft.looks.putIfAbsent(photo, () => draft.look.copy());
+  Look own(String photo) {
+    draft.before = null; // a change of one photo ends the way back
+    return draft.looks.putIfAbsent(photo, () => draft.look.copy());
+  }
 
-  Show? existing() {
-    for (final show in trip.shows) {
-      if (show.id == draft.editing) return show;
+  void toggle(String photo) {
+    if (draft.chosen.remove(photo)) {
+      if (draft.current == photo) draft.current = null;
+    } else {
+      draft
+        ..chosen.add(photo)
+        ..current = photo;
     }
-    return null;
+    ui.rerender();
   }
 
   void save() {
@@ -163,30 +232,27 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
       error.textContent = tr('U prezentaciji treba biti barem jedna fotografija.');
       return;
     }
-    final kept = {for (final photo in photos) photo.id};
+    final kept = draft.chosen.toSet();
     draft.looks.removeWhere((photo, _) => !kept.contains(photo));
-    draft.leftOut.removeWhere((photo) => !kept.contains(photo));
-    final show = existing();
     if (show != null) {
       show
         ..name = title
         ..look = draft.look
         ..looks = draft.looks
-        ..leftOut = draft.leftOut;
-    } else if (showBy(trip, me) != null) {
-      error.textContent = tr('Već imaš prezentaciju na ovom putovanju.');
+        ..chosen = [...draft.chosen]
+        ..leftOut = {};
+    } else if (mine.length >= showsEach) {
+      error.textContent = tr('Već imaš 3 prezentacije na ovom putovanju.');
       return;
     } else {
-      final made = Show(
+      trip.shows.add(Show(
         id: ui.store.newId(),
         name: title,
         addedBy: me,
         look: draft.look,
         looks: draft.looks,
-        leftOut: draft.leftOut,
-      );
-      trip.shows.add(made);
-      trip.showPicks.putIfAbsent(me, () => made.id);
+        chosen: [...draft.chosen],
+      ));
     }
     _draft = null;
     ui.saved();
@@ -212,61 +278,57 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
     });
   }
 
-  final strip = el('div', cls: 'show-strip', children: [
-    for (final photo in photos)
-      button(
-        cls: [
-          'show-thumb',
-          if (photo.id == chosen) 'on',
-          if (draft.leftOut.contains(photo.id)) 'out',
-        ].join(' '),
-        ariaLabel: photo.isVideo
-            ? tr('Video, {0}', [weekdayAndDate(photo.day)])
-            : tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
-        onTap: () {
-          draft.chosen = photo.id;
-          ui.rerender();
-        },
-        children: [
-          el('span', cls: 'show-thumb-picture', children: [
-            storedImage(ui, trip, thumbId(photo.id), cls: ''),
-            if (photo.isVideo) el('span', cls: 'shot-play', children: [icon('play', size: 18)]),
-          ]),
-          el('span', cls: 'show-thumb-label', text: lookOf(photo.id).transition.label),
-        ],
-      ),
-  ]);
-  strip.onScroll.listen((_) => draft.strip = strip.scrollLeft.toDouble());
-  scheduleMicrotask(() => strip.scrollLeft = draft.strip);
+  final days = <int, List<Photo>>{};
+  for (final photo in photos) {
+    days.putIfAbsent(trip.photoDay(photo), () => []).add(photo);
+  }
+  final shownDays = days.keys.toList()..sort((a, b) => b.compareTo(a));
 
-  final show = existing();
   return el('div', children: [
-    topBar(show == null ? tr('Nova prezentacija') : tr('Tvoja prezentacija')),
+    topBar(tr('Prezentacija'))
+      ..querySelector('h1')!.append(el('span', cls: 'show-count', text: ' $number/$showsEach')),
+    if (limit < longestExtra)
+      el('p', cls: 'small pad', attrs: {'style': 'margin-bottom:8px'},
+          text: tr('Svaki dan dobivaš dulje prijelaze, fotografije i ekstra efekte.')),
     el('div', cls: 'show-preview', children: [preview.element]),
-    el('p', cls: 'small pad', attrs: {'style': 'margin-top:6px'},
-        text: tr('Ovako će svirati na naslovnoj slici putovanja.')),
     field(tr('Naziv'), name),
     if (photos.isEmpty)
       el('p', cls: 'soft pad gap-top', text: tr('Prvo dodajte fotografije u Uspomene.'))
     else ...[
-      sectionTitle(tr('Uspomene ({0} od {1})', [slides.length, photos.length])),
-      strip,
+      sectionTitle(tr('Prezentacija ({0})', [draft.chosen.length])),
+      if (draft.chosen.isEmpty)
+        el('p', cls: 'show-empty', text: tr('Dodirni fotografije ispod i dodaj ih u prezentaciju.'))
+      else
+        _strip(draft, 'top', [
+          for (final id in draft.chosen)
+            _thumb(ui, trip, byId[id]!,
+                cls: id == current ? 'on' : '',
+                label: lookOf(id).transition.label, onTap: () {
+              draft.current = id;
+              ui.rerender();
+            }),
+        ]),
+      sectionTitle(tr('Uspomene')),
+      for (final day in shownDays) ...[
+        el('div', cls: 'show-day', text: tr('Dan {0} · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
+        _strip(draft, 'day $day', [
+          for (final photo in days[day]!)
+            _thumb(ui, trip, photo,
+                cls: draft.chosen.contains(photo.id) ? 'in' : '',
+                place: draft.chosen.contains(photo.id) ? draft.chosen.indexOf(photo.id) + 1 : null,
+                onTap: () => toggle(photo.id)),
+        ]),
+      ],
     ],
-    if (chosen != null) ...[
-      el('div', cls: 'pad', attrs: {'style': 'margin-top:4px'}, children: [
-        tick(tr('U prezentaciji'), !draft.leftOut.contains(chosen), () {
-          if (!draft.leftOut.remove(chosen)) draft.leftOut.add(chosen);
-          ui.rerender();
-        }),
-      ]),
+    if (current != null) ...[
       el('p', cls: 'label pad gap-top', text: tr('Prijelaz')),
       el('div', cls: 'checks', children: [
         for (var i = 0; i < Transition.values.length; i++)
           if (i < open)
             chip(Transition.values[i].label, () {
-              own(chosen).transition = Transition.values[i];
+              own(current).transition = Transition.values[i];
               ui.rerender();
-            }, on: lookOf(chosen).transition == Transition.values[i])
+            }, on: lookOf(current).transition == Transition.values[i])
           else
             button(
               cls: 'chip locked',
@@ -274,31 +336,36 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
               onTap: () => ui.toast(tr('Ovaj prijelaz se otvara kasnije tijekom putovanja.')),
             ),
       ]),
-      if (open < Transition.values.length)
-        el('p', cls: 'small pad', attrs: {'style': 'margin-top:6px'},
-            text: tr('Još {0} prijelaza otvara se tijekom putovanja.', [Transition.values.length - open])),
       el('p', cls: 'label pad gap-top', text: tr('Produljenje prijelaza')),
       secondsBar(
-        value: lookOf(chosen).extra,
+        value: lookOf(current).extra,
         limit: limit,
+        marks: marks,
         label: tr('Produljenje prijelaza'),
         onChange: (seconds, {required done}) {
-          own(chosen).extra = seconds;
+          own(current).extra = seconds;
           if (done) ui.rerender();
         },
       ),
-      el('p', cls: 'small pad', text: _growth(trip, now, limit)),
-      ..._howLong(ui, photos.firstWhere((photo) => photo.id == chosen), lookOf(chosen),
-          () => own(chosen)),
-      el('div', cls: 'pad', children: [
+      ..._howLong(ui, byId[current]!, lookOf(current), () => own(current), limit, marks),
+      el('div', cls: 'pad centered gap-top', children: [
         button(
           cls: 'text-button',
-          text: tr('Isto za sve fotografije'),
+          text: draft.before == null ? tr('Isto za sve fotografije') : tr('Vrati natrag'),
           onTap: () {
-            draft
-              ..look = lookOf(chosen).copy()
-              ..looks.clear();
-            ui.toast(tr('Sve fotografije imaju isti prijelaz.'));
+            final before = draft.before;
+            if (before == null) {
+              final same = lookOf(current).copy();
+              draft
+                ..before = (look: draft.look, looks: draft.looks)
+                ..look = same
+                ..looks = {};
+            } else {
+              draft
+                ..look = before.look
+                ..looks = before.looks
+                ..before = null;
+            }
             ui.rerender();
           },
         ),
@@ -307,7 +374,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
     error,
     primaryButton(tr('Spremi prezentaciju'), save),
     if (show != null)
-      el('div', cls: 'pad gap-top', children: [
+      el('div', cls: 'pad centered gap-top', children: [
         button(cls: 'text-button danger', text: tr('Obriši prezentaciju'), onTap: () => remove(show)),
       ]),
   ]);

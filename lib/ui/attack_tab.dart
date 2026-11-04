@@ -9,14 +9,12 @@ import 'dom.dart';
 import 'icons.dart';
 import 'widgets.dart';
 
-/// The days the group agreed on, or that it has not yet.
-String _when(Trip trip, NextUp item) {
-  if (item.days.isEmpty) return tr('Dan još nije dogovoren');
-  return [
-    item.days.map((day) => weekdayAndDate(trip.dayAt(day))).join(', '),
-    if (item.time.isNotEmpty) item.time,
-  ].join(' · ');
-}
+/// The line over a plan: its time, and for what has gone by also its day, as
+/// those show no votes any more.
+String _when(Trip trip, NextUp item) => [
+      if (item.past) ...item.days.map((day) => weekdayAndDate(trip.dayAt(day))),
+      if (item.time.isNotEmpty) item.time,
+    ].join(' · ');
 
 /// Takes [item] out of the plan of attack, with a moment to change your mind.
 /// A poll stays in Ankete, a stop in Plan puta and a place in Hrana i piće.
@@ -67,7 +65,7 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
   return el('div', cls: item.past ? 'poll card attack-card past' : 'poll card attack-card',
       children: [
     el('div', cls: 'grow', children: [
-      el('div', cls: 'small', text: _when(trip, item)),
+      if (_when(trip, item).isNotEmpty) el('div', cls: 'small', text: _when(trip, item)),
       el('div', cls: 'title', text: item.title),
       if (detail != null) el('div', cls: 'label', text: detail),
       if (!item.past) _dayVotes(ui, trip, item),
@@ -107,9 +105,10 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
 
   return el('div', children: [
     el('div', cls: 'chips', children: [
-      chip(tr('Sve'), () => pick(null), on: shown == null),
+      chip('${tr('Sve')} (${items.length})', () => pick(null), on: shown == null),
       for (var i = 0; i < trip.dayCount; i++)
-        chip(tr('Dan {0}', [i + 1]), () => pick(i), on: i == shown),
+        chip('${tr('Dan {0}', [i + 1])} (${items.where((item) => item.days.contains(i)).length})',
+            () => pick(i), on: i == shown),
     ]),
     if (items.isEmpty)
       el('p', cls: 'soft pad gap-top', text: tr('Još nema ničega u planu.'))

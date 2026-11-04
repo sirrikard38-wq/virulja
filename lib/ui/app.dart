@@ -7,6 +7,7 @@ import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'anthem.dart';
 import 'show_builder.dart';
+import 'show_player.dart';
 import 'shows_section.dart';
 import 'cloud.dart';
 import 'context.dart';
@@ -129,6 +130,7 @@ class ViruljaApp {
         active == 'TEXTAREA' ||
         active == 'SELECT' ||
         web.document.querySelector('details[open]') != null ||
+        web.document.querySelector('.drag-ghost') != null ||
         _ui.playingSongId != null;
   }
 
@@ -321,7 +323,7 @@ class ViruljaApp {
       case 'uredi':
         return tripForm(_ui, trip: trip);
       case 'prezentacija':
-        return showBuilder(_ui, trip);
+        return showBuilder(_ui, trip, place.photoId);
       case 'gledaj':
         return watchScreen(_ui, trip, place.photoId);
       case 'foto':
@@ -376,6 +378,7 @@ class ViruljaApp {
     final isPhoto = place.section == 'foto';
     final isForm = place.page == 'novo' || place.section == 'uredi';
     final isWatch = place.section == 'gledaj';
+    if (!isWatch) leaveWholeScreen();
     final hasMenu = !isPhoto && !isForm && !isWatch && _data.meId != null;
     final hasBack = trip != null || place.page == 'novo';
     final frameClass = isPhoto

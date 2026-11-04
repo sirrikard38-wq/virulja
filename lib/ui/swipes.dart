@@ -53,6 +53,12 @@ void followSwipes(
   page.onTouchMove.listen((event) {
     final from = startX;
     if (from == null) return;
+    if (web.document.querySelector('.drag-ghost') != null) {
+      // A photo is being moved to another day: the page stays.
+      startX = null;
+      sliding.style.transform = '';
+      return;
+    }
     final touch = event.changedTouches.item(0)!;
     final across = touch.clientX - from;
     final down = touch.clientY - startY;

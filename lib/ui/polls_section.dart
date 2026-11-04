@@ -8,10 +8,10 @@ import 'dom.dart';
 import 'icons.dart';
 import 'widgets.dart';
 
-/// Casts or takes back the vote of [me]. The vote that makes the group agree
-/// puts the poll in Plan napada.
+/// Casts or takes back the vote of [me]. The vote that makes the whole group
+/// pick the same answer ticks the poll's Plan napada, which puts it there.
 void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
-  final agreedBefore = agreedOption(trip, poll) != null;
+  final allBefore = unanimousOption(trip, poll) != null;
   final had = option.votes.contains(me);
   if (onlyOneAnswer(poll)) {
     for (final other in poll.options) {
@@ -21,7 +21,7 @@ void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
     option.votes.remove(me);
   }
   if (!had) option.votes.add(me);
-  if (!agreedBefore && agreedOption(trip, poll) != null && !pollInAttack(trip, poll)) {
+  if (!allBefore && unanimousOption(trip, poll) != null && !pollInAttack(trip, poll)) {
     setPollInAttack(trip, poll, true, me);
     ui.toast(tr('Izglasano! Dodano u Plan napada.'));
   }

@@ -392,6 +392,24 @@ void main() {
       expect(agreedOption(two, poll)?.time, 'Da');
     });
 
+    test('only a yes of the whole group, or an answer all of it picked, is unanimous', () {
+      final group = trip(members: ['x', 'y']);
+      final poll = group.polls.single;
+      expect(unanimousOption(group, poll), isNull);
+      poll.options.first.votes.add('gone');
+      expect(unanimousOption(group, poll), isNull);
+      poll.options.first.votes.add('y');
+      expect(unanimousOption(group, poll)?.time, 'Da');
+      poll.options.first.votes.clear();
+      poll.options.last.votes.addAll({'x', 'y'});
+      expect(unanimousOption(group, poll), isNull);
+      final times = Poll(id: 'v', title: 'Plaža', options: [
+        PollOption(id: 'a', time: '10:00', votes: {'x', 'y'}),
+        PollOption(id: 'b', time: '11:30', votes: {'x'}),
+      ]);
+      expect(unanimousOption(group, times)?.time, '10:00');
+    });
+
     test('a no is never agreed, and votes of those not in the group do not count', () {
       final group = trip(members: ['x', 'y']);
       final poll = group.polls.single;
@@ -683,6 +701,32 @@ void main() {
       expect(Transition.values, hasLength(15));
     });
 
+    test('each day of the trip opens a little more, the marks on the bars', () {
+      expect(dayLimits(trip(4)), [6, 8, 10, 12]);
+      expect(dayLimits(trip(8)).take(2), [6, 6.86]);
+    });
+
+    test('a photo is on the day it was taken or moved to, inside the trip', () {
+      final plan = trip(4);
+      Photo at(int day, [int? moved]) =>
+          Photo(id: '$day', takenAt: DateTime(2026, 11, day, 12), addedBy: 'a', dayIndex: moved);
+      expect([for (final day in [1, 2, 3, 5, 9]) plan.photoDay(at(day))], [0, 0, 1, 3, 3]);
+      expect(plan.photoDay(at(2, 2)), 2);
+      expect(plan.photoDay(at(2, 7)), 3);
+    });
+
+    test('a presentation keeps the photos picked for it in their order', () {
+      final plan = trip(4)
+        ..photos.addAll([
+          Photo(id: 'a', takenAt: DateTime(2026, 11, 2, 9), addedBy: 'a'),
+          Photo(id: 'b', takenAt: DateTime(2026, 11, 3, 9), addedBy: 'a', dayIndex: 0),
+          Photo(id: 'c', takenAt: DateTime(2026, 11, 2, 8), addedBy: 'a', dayIndex: 2),
+        ]);
+      expect(photosByDay(plan).map((photo) => photo.id), ['a', 'b', 'c']);
+      final show = Show(id: 's', name: 'Moja', addedBy: 'a', chosen: ['c', 'removed', 'a']);
+      expect(slidesOf(plan, show).map((slide) => slide.photoId), ['c', 'a']);
+    });
+
     test('takes everything in the order it was taken, but what is left out', () {
       final plan = trip(4)
         ..photos.addAll([
@@ -707,18 +751,18 @@ void main() {
       expect(slides.last.look.extra, 2.5);
     });
 
-    test('a photo stays 4 s and longer, a video plays a piece of 6 s in every 30 s', () {
+    test('a photo stands 2,5 s or as long as set, a video plays a piece of 6 s in every 30 s', () {
       final slides = <Slide>[
         (photoId: 'x', look: Look(Transition.fade), video: null),
         (photoId: 'y', look: Look(Transition.push, 2), video: null),
       ];
-      expect(slideLength(slides.first), 5);
-      expect(slideLength((photoId: 'z', look: Look(Transition.fade, 0, 3.5), video: null)), 8.5);
+      expect(slideLength(slides.first), 3.5);
+      expect(slideLength((photoId: 'z', look: Look(Transition.fade, 0, 3.5), video: null)), 4.5);
       expect(frameAt(slides, 0), (index: 0, previous: null, progress: 0, into: 0));
-      expect(frameAt(slides, 6), (index: 1, previous: 0, progress: 1 / 3, into: 1));
-      expect(frameAt(slides, 10), (index: 1, previous: 0, progress: 1, into: 5));
-      expect(frameAt(slides, 12.5), (index: 0, previous: 1, progress: 0.5, into: 0.5));
-      expect(secondsBefore(slides, 1), 5);
+      expect(frameAt(slides, 4.5), (index: 1, previous: 0, progress: 1 / 3, into: 1));
+      expect(frameAt(slides, 8), (index: 1, previous: 0, progress: 1, into: 4.5));
+      expect(frameAt(slides, 9.5), (index: 0, previous: 1, progress: 0.5, into: 0.5));
+      expect(secondsBefore(slides, 1), 3.5);
 
       expect([longestClip(4), longestClip(20), longestClip(30), longestClip(45)], [4, 6, 6, 12]);
       final film = (photoId: 'f', look: Look(Transition.fade, 1, 0, 18, 6), video: 20.0);
@@ -728,21 +772,24 @@ void main() {
       expect(clipOf(short), (from: 0, length: 4));
     });
 
-    test('the presentation of the day is the one most have on their screens', () {
+    test('the presentation with most votes is of the day and plays on the cover', () {
       final plan = trip(4)
+        ..photos.add(Photo(id: 'p', takenAt: DateTime(2026, 11, 2, 9), addedBy: 'a'))
         ..shows.addAll([
-          Show(id: 's1', name: 'Prva', addedBy: 'a'),
-          Show(id: 's2', name: 'Druga', addedBy: 'b'),
+          Show(id: 's1', name: 'Prva', addedBy: 'a', chosen: ['p']),
+          Show(id: 's2', name: 'Druga', addedBy: 'b', chosen: ['p']),
+          Show(id: 's3', name: 'Treća', addedBy: 'b', chosen: ['removed']),
         ]);
       expect(showOfTheDay(plan), isNull);
-      expect(shownTo(plan, 'c'), isNull);
+      expect(onCover(plan)?.id, 's2');
       plan.showPicks.addAll({'a': 's1', 'b': 's2'});
       expect(showOfTheDay(plan)?.id, 's2');
       plan.showPicks.addAll({'c': 's1', 'gone': 's2', 'x': 's2'});
       expect(showOfTheDay(plan)?.id, 's1');
-      expect(shownTo(plan, 'b')?.id, 's2');
-      expect(showBy(plan, 'b')?.name, 'Druga');
-      expect(showBy(plan, 'c'), isNull);
+      expect(onCover(plan)?.id, 's1');
+      expect(showsBy(plan, 'b').map((show) => show.name), ['Druga', 'Treća']);
+      expect(showsBy(plan, 'c'), isEmpty);
+      expect(showsEach, 3);
     });
 
     test('a presentation and the picks survive saving and the cloud', () {
@@ -752,10 +799,12 @@ void main() {
           name: 'Najbolji dan',
           addedBy: 'a',
           look: Look(Transition.wipe, 1.25),
-          looks: {'p': Look(Transition.spin, 6.86)},
+          looks: {'p': Look(Transition.spin, 6.86, 4.2)},
           leftOut: {'q'},
+          chosen: ['q', 'p', 'r'],
         ))
-        ..showPicks['b'] = 's1';
+        ..showPicks['b'] = 's1'
+        ..photos.add(Photo(id: 'p', takenAt: DateTime(2026, 11, 2, 9), addedBy: 'a', dayIndex: 2));
       final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(plan, (id) => id)))));
       for (final back in [
         tripFromTree('t', (tree as Map).cast<String, dynamic>())!.trip,
@@ -767,8 +816,12 @@ void main() {
         expect(show.look.extra, 1.25);
         expect(show.looks['p']?.transition, Transition.spin);
         expect(show.looks['p']?.extra, 6.86);
+        expect(show.looks['p']?.still, 4.2);
+        expect(show.look.still, 2.5);
         expect(show.leftOut, {'q'});
+        expect(show.chosen, ['q', 'p', 'r']);
         expect(back.showPicks, {'b': 's1'});
+        expect(back.photos.single.dayIndex, 2);
       }
     });
 

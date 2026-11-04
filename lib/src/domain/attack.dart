@@ -84,6 +84,18 @@ List<int> agreedDays(Trip trip, Map<int, Set<String>> votes) => [
 
 /// The answer enough of the group voted for: for a yes or no only a yes counts,
 /// otherwise the one with most votes. Null while the group has not agreed.
+/// The answer of [poll] every member of the group voted for, if there is one; of
+/// a yes or no only Da counts.
+PollOption? unanimousOption(Trip trip, Poll poll) {
+  if (trip.memberIds.isEmpty) return null;
+  final plain = poll.options.every((option) => yesOrNo.contains(option.time));
+  for (final option in poll.options) {
+    if (plain && option.time != 'Da') continue;
+    if (trip.membersAmong(option.votes) == trip.memberIds.length) return option;
+  }
+  return null;
+}
+
 PollOption? agreedOption(Trip trip, Poll poll) {
   final plain = poll.options.every((option) => yesOrNo.contains(option.time));
   PollOption? best;
