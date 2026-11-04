@@ -89,6 +89,17 @@ class Ui {
 
   String get meId => data.meId!;
 
+  /// Whether this person may open every transition at once: a choice in Postavke
+  /// shown only to someone whose first name is Riko. Anyone could take that
+  /// name, so it is a convenience, not a lock.
+  bool get mayOpenAll {
+    final me = data.meId == null ? null : data.personById(data.meId!);
+    return me != null && me.name.trim().split(RegExp(r'\s+')).first.toLowerCase() == 'riko';
+  }
+
+  /// Every transition open on this phone, whatever the day.
+  bool get allTransitions => mayOpenAll && data.allTransitions;
+
   /// Who this phone is on [trip].
   String meIn(Trip trip) => data.identities[trip.id] ?? meId;
 

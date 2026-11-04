@@ -177,9 +177,13 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
 
   final show = existing();
   if (showId != null && show == null) {
+    // Each person changes only their own presentations.
+    final someoneElses = trip.shows.any((other) => other.id == showId);
     return el('div', children: [
       topBar(tr('Prezentacija')),
-      el('p', cls: 'soft pad', text: tr('Te prezentacije više nema.')),
+      el('p', cls: 'soft pad', text: someoneElses
+          ? tr('Prezentaciju može mijenjati samo onaj tko ju je napravio.')
+          : tr('Te prezentacije više nema.')),
     ]);
   }
   var made = _draft;
@@ -189,7 +193,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   final draft = made;
   final now = DateTime.now();
   final limit = extraLimit(trip, now);
-  final open = openTransitions(trip, now);
+  final open = ui.allTransitions ? effects.length : openTransitions(trip, now);
   final marks = [for (var second = 0.0; second < firstExtra; second++) second, ...dayLimits(trip)];
   final photos = photosByDay(trip);
   final byId = {for (final photo in photos) photo.id: photo};
@@ -320,14 +324,6 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
     if (photos.isEmpty)
       el('p', cls: 'soft pad gap-top', text: tr('Prvo dodajte fotografije u Uspomene.'))
     else ...[
-      sectionTitle(tr('Prezentacija ({0})', [draft.chosen.length])),
-      if (draft.chosen.isEmpty)
-        el('p', cls: 'show-empty', text: tr('Dodirni fotografije ispod i dodaj ih u prezentaciju.'))
-      else ...[
-        presentationRow(),
-        if (draft.chosen.length > 1)
-          el('p', cls: 'small pad', text: tr('Drži prst na fotografiji i pomakni je da promijeniš redoslijed.')),
-      ],
       sectionTitle(tr('Uspomene')),
       for (final day in shownDays) ...[
         el('div', cls: 'show-day', text: tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
@@ -340,36 +336,49 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
         ]),
       ],
     ],
+    if (photos.isNotEmpty) ...[
+      sectionTitle(tr('Odabrano za prezentaciju')),
+      if (draft.chosen.isEmpty)
+        el('p', cls: 'show-empty', text: tr('Dodirni fotografije iznad i dodaj ih u prezentaciju.'))
+      else ...[
+        presentationRow(),
+        if (draft.chosen.length > 1)
+          el('p', cls: 'small pad', text: tr('Drži prst na fotografiji i pomakni je da promijeniš redoslijed.')),
+      ],
+    ],
     el('div', cls: 'show-preview-wrap', children: [
       el('div', cls: 'show-preview', children: [preview.element]),
     ]),
     if (current != null) ...[
       el('p', cls: 'label pad gap-top', text: tr('Prijelaz')),
       el('div', cls: 'checks', children: [
-        for (var i = 0; i < Transition.values.length; i++)
-          if (i < open)
-            chip(Transition.values[i].label, () {
-              own(current).transition = Transition.values[i];
+        for (final transition in [Transition.none, ...effects])
+          if (transition == Transition.none || effects.indexOf(transition) < open)
+            chip(transition.label, () {
+              own(current).transition = transition;
               ui.rerender();
-            }, on: lookOf(current).transition == Transition.values[i])
+            }, on: lookOf(current).transition == transition)
           else
             button(
               cls: 'chip locked',
-              text: Transition.values[i].label,
+              text: transition.label,
               onTap: () => ui.toast(tr('Ovaj prijelaz se otvara kasnije tijekom putovanja.')),
             ),
       ]),
-      el('p', cls: 'label pad gap-top bar-title', text: tr('Produljenje prijelaza')),
-      secondsBar(
-        value: lookOf(current).extra,
-        limit: limit,
-        marks: marks,
-        label: tr('Produljenje prijelaza'),
-        onChange: (seconds, {required done}) {
-          own(current).extra = seconds;
-          if (done) ui.rerender();
-        },
-      ),
+      // Ništa cuts at once, so there is nothing to make longer.
+      if (lookOf(current).transition != Transition.none) ...[
+        el('p', cls: 'label pad gap-top bar-title', text: tr('Produljenje prijelaza')),
+        secondsBar(
+          value: lookOf(current).extra,
+          limit: limit,
+          marks: marks,
+          label: tr('Produljenje prijelaza'),
+          onChange: (seconds, {required done}) {
+            own(current).extra = seconds;
+            if (done) ui.rerender();
+          },
+        ),
+      ],
       ..._howLong(ui, byId[current]!, lookOf(current), () => own(current), limit, marks),
       el('div', cls: 'pad centered gap-top', children: [
         button(

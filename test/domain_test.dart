@@ -740,7 +740,9 @@ void main() {
       final four = trip(4);
       expect([for (final day in [1, 2, 3, 4, 5]) openTransitions(four, on(day))],
           [5, 5, 8, 11, 15]);
-      expect(Transition.values, hasLength(15));
+      expect(effects, hasLength(15));
+      expect(Transition.values, hasLength(16));
+      expect(effects, isNot(contains(Transition.none)));
     });
 
     test('each day of the trip opens a little more, the marks on the bars', () {
@@ -824,11 +826,22 @@ void main() {
         ]);
       expect(showOfTheDay(plan), isNull);
       expect(onCover(plan)?.id, 's2');
-      plan.showPicks.addAll({'a': 's1', 'b': 's2'});
+      plan.showPicks['b'] = 's2';
+      expect(keepShowOfTheDay(plan), isTrue);
       expect(showOfTheDay(plan)?.id, 's2');
+      // As many votes do not take its place.
+      plan.showPicks['a'] = 's1';
+      expect(keepShowOfTheDay(plan), isFalse);
+      expect(showOfTheDay(plan)?.id, 's2');
+      // More do; votes of those not in the group do not count.
       plan.showPicks.addAll({'c': 's1', 'gone': 's2', 'x': 's2'});
+      expect(keepShowOfTheDay(plan), isTrue);
       expect(showOfTheDay(plan)?.id, 's1');
       expect(onCover(plan)?.id, 's1');
+      plan
+        ..dayShowId = null
+        ..showPicks.remove('c');
+      expect(showOfTheDay(plan)?.id, 's1');
       expect(showsBy(plan, 'b').map((show) => show.name), ['Druga', 'Treća']);
       expect(showsBy(plan, 'c'), isEmpty);
       expect(showsEach, 3);
@@ -846,6 +859,7 @@ void main() {
           chosen: ['q', 'p', 'r'],
         ))
         ..showPicks['b'] = 's1'
+        ..dayShowId = 's1'
         ..photos.add(Photo(id: 'p', takenAt: DateTime(2026, 11, 2, 9), addedBy: 'a', dayIndex: 2));
       final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(plan, (id) => id)))));
       for (final back in [
@@ -863,8 +877,18 @@ void main() {
         expect(show.leftOut, {'q'});
         expect(show.chosen, ['q', 'p', 'r']);
         expect(back.showPicks, {'b': 's1'});
+        expect(back.dayShowId, 's1');
         expect(back.photos.single.dayIndex, 2);
       }
+    });
+
+    test('Ništa cuts at once, and an old Kroz crno comes back as Lom stakla', () {
+      final cut = (photoId: 'c', look: Look(Transition.none, 4, 3), video: null);
+      expect(movingTime(cut.look), 0);
+      expect(slideLength(cut), 3);
+      expect(frameAt([cut, cut], 1).progress, 1);
+      expect(Look.fromJson({'transition': 'black'}).transition, Transition.glass);
+      expect(Look.fromJson({'transition': 'none'}).transition, Transition.none);
     });
 
     test('seconds show their first decimal only', () {

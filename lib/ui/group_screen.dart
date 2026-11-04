@@ -67,6 +67,16 @@ web.HTMLElement groupScreen(Ui ui) {
     ],
     sectionTitle(tr('Jezik')),
     languageChips(ui),
+    if (ui.mayOpenAll) ...[
+      sectionTitle(tr('Prezentacije')),
+      el('div', cls: 'ticks', children: [
+        tick(tr('Svi prijelazi odmah'), ui.data.allTransitions, () {
+          ui.data.allTransitions = !ui.data.allTransitions;
+          ui.changed();
+        }),
+        el('p', cls: 'small', text: tr('Otvara svih 15 prijelaza u izradi prezentacije, bez čekanja dana. Vidiš to samo ti.')),
+      ]),
+    ],
     if (builtAt case final built?)
       el('p', cls: 'small pad gap-top', text: tr('Verzija {0} u {1}', [
         dayAndMonth(built),

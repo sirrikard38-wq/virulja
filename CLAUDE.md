@@ -89,11 +89,14 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Presentations (`lib/src/domain/show.dart`, `lib/ui/show_*.dart`, `shows_section.dart`):
   the photos and videos picked for it (`Show.chosen`, in the order picked; older ones have
   all but `leftOut`) follow each other with one of 15 transitions, lengthened with a bar
-  from 0 to 12 s (`secondsBar`). The builder has the name on top, then the presentation's
-  own row (a finger held on a photo changes the order, `reorderable`) and a row for each
-  day under it, the last day first; under them the preview, which stays at the top of the
-  screen (sticky) while the transition, "Produljenje prijelaza" and "Duljina uspomene"
-  are set. A photo then stands 2.5 s, or what its bar
+  from 0 to 12 s (`secondsBar`). The builder has the name on top, then a row for each day,
+  the last day first, then "Odabrano za prezentaciju" (a finger held on a photo changes
+  the order, `reorderable`) and the preview, which stays at the top of the screen
+  (sticky) while the transition, "Produljenje prijelaza" and "Duljina uspomene" are set.
+  "Ništa" is a cut with no moving time and no bar (`movingTime`); it is always there and
+  not one of the 15 (`effects`). "Lom stakla" (stored as `glass`; an old `black`, Kroz
+  crno, reads as it) breaks the photo going out into 24 pieces that fly and fall
+  (`_shatter` in `show_player.dart`; a video gives its current picture). A photo then stands 2.5 s, or what its bar
   says, from 0.5 s up to the same daily limit as the transitions; the bars are marked at
   each day's limit (`dayLimits`) and write 6s with no space. A video plays a piece of it, 6 s of every 30 s
   it lasts at most (`longestClip`, `clipOf`); kept videos are 30 s at most, so one piece of
@@ -103,7 +106,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   `openTransitions`). Numbers show one decimal, cut (`tenths`). Each person makes up to 3
   (`showsEach`), shown as 1/3, 2/3. Everyone has one vote (`Trip.showPicks`); the most voted
   is "Prezentacija dana" (`showOfTheDay`) and plays on the trip's cover, the newest before
-  any vote (`onCover`). A tap on the cover or on a presentation plays it over the whole
+  any vote (`onCover`). Equal votes do not take its place, only more: `Trip.dayShowId`
+  remembers it (`keepShowOfTheDay`, on every look at a trip). The list stays in the order
+  made. Each person changes only their own presentations. In Postavke, someone whose
+  first name is Riko has "Svi prijelazi odmah" (`Ui.mayOpenAll`, `AppData.allTransitions`):
+  every transition open on that phone. A name is no lock, as anyone can take it. A tap on the cover or on a presentation plays it over the whole
   screen (`watchShow`); an iPhone keeps its bars, as Safari gives the whole screen only to
   a video. "Isti prijelazi i duljina uspomene za sve" turns into "Vrati natrag" until
   something else changes. The presentation of the day has a green card with a badge; the

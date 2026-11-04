@@ -157,10 +157,11 @@ void _showTabChange(_TabChange change, int index) {
 }
 
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
-  if (trip.polls.any((poll) => wholeYesChanged(trip, poll))) {
-    addWholeYeses(trip, ui.meIn(trip));
-    ui.saved();
-  }
+  // Whatever came from another phone: a whole yes goes into Plan napada, and the
+  // presentation of the day changes only for more votes.
+  final yeses = trip.polls.any((poll) => wholeYesChanged(trip, poll));
+  if (yeses) addWholeYeses(trip, ui.meIn(trip));
+  if (keepShowOfTheDay(trip) || yeses) ui.saved();
   final peopleShown = ui.showPeople; // still drawn while it folds shut
   _foldPeople(ui);
   final cover = trip.coverId;

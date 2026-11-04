@@ -46,11 +46,17 @@ List<double> dayLimits(Trip trip) => [
         extraLimit(trip, trip.start.add(Duration(days: day))),
     ];
 
-/// How many transitions can be used on [now]: five at first and all of them on
+/// The fifteen transitions that open with the days, without Ništa.
+final List<Transition> effects = [
+  for (final transition in Transition.values)
+    if (transition != Transition.none) transition,
+];
+
+/// How many of [effects] can be used on [now]: five at first and all of them on
 /// the last day, in step with [extraLimit].
 int openTransitions(Trip trip, DateTime now) {
   final share = (extraLimit(trip, now) - firstExtra) / (longestExtra - firstExtra);
-  final later = Transition.values.length - firstTransitions;
+  final later = effects.length - firstTransitions;
   return firstTransitions + (share * later + 1e-9).floor();
 }
 
@@ -105,12 +111,14 @@ List<Slide> slidesOf(Trip trip, Show show) {
   ];
 }
 
+/// Seconds [look] takes to come in: none for Ništa, which cuts at once.
+double movingTime(Look look) =>
+    look.transition == Transition.none ? 0 : transitionTime + look.extra;
+
 /// How long one photo or video takes: its transition, then a photo stands still
 /// and a video plays its piece.
 double slideLength(Slide slide) =>
-    transitionTime +
-    slide.look.extra +
-    (slide.video == null ? slide.look.still : clipOf(slide).length);
+    movingTime(slide.look) + (slide.video == null ? slide.look.still : clipOf(slide).length);
 
 /// Seconds from the start of [slides] to the one at [index].
 double secondsBefore(List<Slide> slides, int index) =>
@@ -133,7 +141,7 @@ double secondsBefore(List<Slide> slides, int index) =>
       return (
         index: i,
         previous: first ? null : (i - 1 + slides.length) % slides.length,
-        progress: min(1.0, left / (transitionTime + slide.look.extra)),
+        progress: movingTime(slide.look) == 0 ? 1.0 : min(1.0, left / movingTime(slide.look)),
         into: left,
       );
     }
@@ -150,19 +158,28 @@ List<Show> showsBy(Trip trip, String person) =>
 int picksOf(Trip trip, Show show) =>
     trip.memberIds.where((person) => trip.showPicks[person] == show.id).length;
 
-/// The presentation most of the group voted for: the presentation of the day. Of
-/// equals the newest wins. Null while nobody has voted.
+/// The presentation most of the group voted for: the presentation of the day. It
+/// stays so while another only has as many votes; only more votes take its place.
+/// Without one before, the first of equals is it. Null while nobody has voted.
 Show? showOfTheDay(Trip trip) {
-  Show? best;
-  var most = 0;
+  final most = trip.shows.fold(0, (best, show) => max(best, picksOf(trip, show)));
+  if (most == 0) return null;
+  Show? first;
   for (final show in trip.shows) {
-    final picks = picksOf(trip, show);
-    if (picks > 0 && picks >= most) {
-      best = show;
-      most = picks;
-    }
+    if (picksOf(trip, show) != most) continue;
+    if (show.id == trip.dayShowId) return show;
+    first ??= show;
   }
-  return best;
+  return first;
+}
+
+/// Remembers the presentation of the day for the next change of votes. True when
+/// it changed, so the trip needs saving.
+bool keepShowOfTheDay(Trip trip) {
+  final now = showOfTheDay(trip)?.id;
+  if (now == trip.dayShowId) return false;
+  trip.dayShowId = now;
+  return true;
 }
 
 /// What plays on the trip's cover: the presentation of the day, or before the

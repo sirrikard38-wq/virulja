@@ -773,6 +773,7 @@ class Song {
 
 /// How one photo of a presentation follows the one before, simplest first. The
 /// first five are there from the start; the rest come with the days of the trip.
+/// Ništa, a plain cut, is always there and is not one of the fifteen.
 enum Transition {
   fade('Pretapanje'),
   push('Guranje'),
@@ -784,11 +785,12 @@ enum Transition {
   uncover('Otkrivanje'),
   split('Zavjesa'),
   diamond('Romb'),
-  black('Kroz crno'),
+  glass('Lom stakla'),
   flip('Okretanje'),
   blur('Zamućenje'),
   spin('Vrtlog'),
-  zoomOut('Udaljavanje');
+  zoomOut('Udaljavanje'),
+  none('Ništa');
 
   const Transition(this._label);
 
@@ -806,7 +808,9 @@ class Look {
   Look(this.transition, [this.extra = 0, this.still = defaultStill, this.from = 0, this.length = 6]);
 
   factory Look.fromJson(Json json) => Look(
-        Transition.values.asNameMap()[json['transition']] ?? Transition.fade,
+        Transition.values.asNameMap()[json['transition']] ??
+            // Kroz crno became Lom stakla.
+            (json['transition'] == 'black' ? Transition.glass : Transition.fade),
         (json['extra'] as num?)?.toDouble() ?? 0,
         (json['still'] as num?)?.toDouble() ?? defaultStill,
         (json['from'] as num?)?.toDouble() ?? 0,
@@ -934,6 +938,7 @@ class Trip {
     List<Song>? songs,
     List<Show>? shows,
     Map<String, String>? showPicks,
+    this.dayShowId,
   })  : uids = uids ?? {},
         shows = shows ?? [],
         showPicks = showPicks ?? {},
@@ -991,6 +996,7 @@ class Trip {
         shows: _list(json['shows'], Show.fromJson),
         showPicks: (json['showPicks'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
+        dayShowId: json['dayShowId'] as String?,
       );
 
   final String id;
@@ -1039,11 +1045,15 @@ class Trip {
   List<Photo> photos;
   List<Song> songs;
 
-  /// The presentations of the photos, one at most from each person.
+  /// The presentations of the photos, three at most from each person.
   List<Show> shows;
 
-  /// Person -> the presentation playing on their screen, which is also their vote.
+  /// Person -> the presentation they voted for.
   Map<String, String> showPicks;
+
+  /// The presentation of the day as last seen, which stays so while no other has
+  /// more votes (`showOfTheDay`).
+  String? dayShowId;
 
   int get nights => end.difference(start).inDays;
 
@@ -1125,6 +1135,7 @@ class Trip {
     songs = other.songs;
     shows = other.shows;
     showPicks = other.showPicks;
+    dayShowId = other.dayShowId;
   }
 
   Json toJson() => {
@@ -1160,6 +1171,7 @@ class Trip {
         'songs': [for (final item in songs) item.toJson()],
         'shows': [for (final item in shows) item.toJson()],
         'showPicks': showPicks,
+        'dayShowId': dayShowId,
       };
 }
 
@@ -1221,6 +1233,7 @@ class AppData {
     List<Trip>? trips,
     this.theme = ThemeChoice.system,
     this.anthemMuted = false,
+    this.allTransitions = false,
     Map<String, String>? identities,
     Map<String, String>? waiting,
     Map<String, List<String>>? kindOrder,
@@ -1257,6 +1270,7 @@ class AppData {
         theme: ThemeChoice.values
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
         anthemMuted: json['anthemMuted'] as bool? ?? false,
+        allTransitions: json['allTransitions'] as bool? ?? false,
       );
 
   List<Person> people;
@@ -1268,6 +1282,9 @@ class AppData {
 
   /// Stays on until the speaker is tapped again.
   bool anthemMuted;
+
+  /// Every transition open at once on this phone, whatever the day (Riko only).
+  bool allTransitions;
 
   /// Trip id -> who this phone is on that trip, when someone joined as a name
   /// that was already on the list.
@@ -1310,6 +1327,7 @@ class AppData {
         'trips': [for (final item in trips) item.toJson()],
         'theme': theme.name,
         'anthemMuted': anthemMuted,
+        'allTransitions': allTransitions,
         'identities': identities,
         'waiting': waiting,
         'kindOrder': kindOrder,

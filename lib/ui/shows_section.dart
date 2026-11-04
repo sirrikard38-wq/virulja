@@ -32,6 +32,7 @@ web.HTMLElement _showCard(Ui ui, Trip trip, Show show, String me, Show? best) {
       el('div', cls: 'show-actions', children: [
         tick(tr('Glasaj'), voted, () {
           voted ? trip.showPicks.remove(me) : trip.showPicks[me] = show.id;
+          keepShowOfTheDay(trip);
           ui.changed();
         }),
         el('span', cls: 'show-votes', text: votesCount(picksOf(trip, show))),
@@ -64,12 +65,6 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
   final best = showOfTheDay(trip);
   final open = ui.showsOpen;
   final mine = showsBy(trip, me);
-  final ranked = [
-    for (var i = 0; i < trip.shows.length; i++) (show: trip.shows[i], at: i),
-  ]..sort((a, b) {
-      final picks = picksOf(trip, b.show).compareTo(picksOf(trip, a.show));
-      return picks != 0 ? picks : b.at.compareTo(a.at);
-    });
   return el('div', cls: 'shows', children: [
     button(
       cls: open ? 'fold open' : 'fold',
@@ -87,7 +82,8 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
     if (open) ...[
       if (trip.shows.isEmpty)
         el('p', cls: 'soft pad', text: tr('Još nema prezentacija. Napravi prvu od fotografija iz Uspomena.')),
-      for (final item in ranked) _showCard(ui, trip, item.show, me, best),
+      // In the order they were made; the one of the day is green, not moved.
+      for (final show in trip.shows) _showCard(ui, trip, show, me, best),
       if (mine.length < showsEach && trip.photos.isNotEmpty)
         primaryButton('${tr('Napravi prezentaciju')} ${mine.length + 1}/$showsEach',
             () => openShowBuilder(ui, trip, null)),
