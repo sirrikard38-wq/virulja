@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:web/web.dart' as web;
 
 import '../src/domain/attack.dart';
@@ -26,12 +24,12 @@ void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
   ui.changed();
 }
 
-/// One more answer to vote for, typed in the poll's card. A yes or no stays one
-/// answer per person.
+/// One more answer to vote for, typed in the poll's card while its answers are
+/// being changed. A yes or no stays one answer per person.
 web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
   final answer = input(placeholder: tr('Nova mogućnost'));
   void close() {
-    ui.addingOption = null;
+    ui.editingPoll = null;
     ui.rerender();
   }
 
@@ -46,7 +44,6 @@ web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
     if (onlyOneAnswer(poll)) poll.single = true;
     // Kept in order by its id, after the ones before it.
     poll.options.add(PollOption(id: 'o${poll.options.length}${ui.store.newId()}', time: text));
-    ui.addingOption = null;
     ui.changed();
   }
 
@@ -54,41 +51,85 @@ web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
     if (event.key == 'Enter') add();
     if (event.key == 'Escape') close();
   });
-  scheduleMicrotask(() => answer.focus());
   return el('div', cls: 'option-form', children: [
     el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [answer]),
     button(cls: 'text-button', text: tr('Dodaj'), onTap: add),
-    button(cls: 'icon-button', ariaLabel: tr('Odustani'), onTap: close, children: [icon('close', size: 18)]),
   ]);
+}
+
+/// Takes [option] out of [poll], votes and all, with a moment to change your mind.
+void _removeOption(Ui ui, Poll poll, PollOption option) {
+  final at = poll.options.indexOf(option);
+  poll.options.removeAt(at);
+  ui.changed();
+  ui.offerUndo(tr('Uklonjeno: {0}', [tr(option.time)]), () {
+    poll.options.insert(at.clamp(0, poll.options.length), option);
+    ui.changed();
+  });
+}
+
+/// The poll's name, which a tap opens for typing like any text; it is kept once
+/// the keyboard closes.
+web.HTMLElement _pollTitle(Ui ui, Trip trip, Poll poll) {
+  final name = el('input', cls: 'poll-title', attrs: {
+    'type': 'text',
+    'value': poll.title,
+    'aria-label': tr('Naziv ankete'),
+    'enterkeyhint': 'done',
+  }) as web.HTMLInputElement;
+  name.onKeyDown.listen((event) {
+    if (event.key == 'Enter') name.blur();
+    if (event.key == 'Escape') {
+      name.value = poll.title;
+      name.blur();
+    }
+  });
+  name.onChange.listen((_) {
+    final text = name.value.trim();
+    if (text.isEmpty || text == poll.title) {
+      name.value = poll.title;
+      return;
+    }
+    renamePoll(trip, poll, text);
+    ui.changed();
+  });
+  return name;
 }
 
 web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
   final inAttack = pollInAttack(trip, poll);
+  final editing = ui.editingPoll == poll.id;
   return el('div', cls: 'poll card', children: [
     el('div', attrs: {'style': 'display:flex;align-items:center'}, children: [
-      el('div', cls: 'grow', children: [
-        el('div', cls: 'label', text: poll.title),
-      ]),
+      el('div', cls: 'grow', children: [_pollTitle(ui, trip, poll)]),
       removeWithUndo(ui, trip.polls, poll, poll.title),
     ]),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)
-        chip('${tr(option.time)} · ${option.votes.length}',
-            () => _vote(ui, trip, poll, option, me),
-            on: option.votes.contains(me)),
-      if (poll.options.length < mostOptions && ui.addingOption != poll.id)
-        button(
-          cls: 'icon-button more-option',
-          ariaLabel: tr('Dodaj mogućnost za glasanje'),
-          onTap: () {
-            ui.addingOption = poll.id;
-            ui.rerender();
-          },
-          children: [icon('plus', size: 22)],
-        ),
+        el('span', cls: 'option', children: [
+          chip('${tr(option.time)} · ${option.votes.length}',
+              () => _vote(ui, trip, poll, option, me),
+              on: option.votes.contains(me)),
+          if (editing && poll.options.length > 1)
+            button(
+              cls: 'option-x',
+              ariaLabel: tr('Makni: {0}', [tr(option.time)]),
+              onTap: () => _removeOption(ui, poll, option),
+              children: [icon('close', size: 12)],
+            ),
+        ]),
+      button(
+        cls: editing ? 'icon-button more-option on' : 'icon-button more-option',
+        ariaLabel: tr('Uredi mogućnosti'),
+        onTap: () {
+          ui.editingPoll = editing ? null : poll.id;
+          ui.rerender();
+        },
+        children: [icon('brush', size: 20)],
+      )..setAttribute('aria-pressed', '$editing'),
     ]),
-    if (ui.addingOption == poll.id) _optionForm(ui, trip, poll),
+    if (editing && poll.options.length < mostOptions) _optionForm(ui, trip, poll),
     el('div', attrs: {'style': 'margin-top:6px'}, children: [
       tick(tr('Plan napada'), inAttack, () {
         setPollInAttack(trip, poll, !inAttack, me);
@@ -125,17 +166,17 @@ void addYesNoPoll(Ui ui, Trip trip, String title) {
   ui.toast(tr('Dodano u Ankete.'));
 }
 
-/// A new poll: the choices are times, price ranges or locations, as many as
-/// wanted; with none it is a plain yes or no.
+/// A new poll: the choices are answers of any kind or times, as many as wanted;
+/// with none it is a plain yes or no.
 web.HTMLElement _newPoll(Ui ui, Trip trip) {
   final title = input();
   final choices = <web.HTMLInputElement>[];
   final rows = el('div');
   final error = errorLine();
 
-  web.HTMLElement more(String label, {String type = 'text'}) => button(
+  web.HTMLElement more(String label, {String? action, String type = 'text'}) => button(
         cls: 'text-button',
-        text: '+ $label',
+        text: '+ ${action ?? label}',
         onTap: () {
           final choice = input(type: type);
           choices.add(choice);
@@ -187,9 +228,8 @@ web.HTMLElement _newPoll(Ui ui, Trip trip) {
     field(tr('Što odlučujemo'), title),
     rows,
     el('div', attrs: {'style': 'display:flex;flex-wrap:wrap;gap:16px;margin-top:12px'}, children: [
+      more(tr('Opcija'), action: tr('Dodaj opciju')),
       more(tr('Vrijeme'), type: 'time'),
-      more(tr('Raspon cijene')),
-      more(tr('Lokacija')),
     ]),
     error,
     primaryButton(tr('Napravi anketu'), add),

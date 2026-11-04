@@ -146,6 +146,14 @@ Dish? _dishOf(Trip trip, Poll poll) {
   return null;
 }
 
+/// Gives [poll] a new [title]. The place or dish it is about takes the same
+/// name, as they are found by it and are one thing in Plan napada.
+void renamePoll(Trip trip, Poll poll, String title) {
+  placeOf(trip, poll)?.name = title;
+  _dishOf(trip, poll)?.name = title;
+  poll.title = title;
+}
+
 bool _isAbout(Poll poll, Place place) => poll.single && poll.title == place.name;
 
 /// Whether [place] is in Plan napada: put there from Hrana i piće or, in older

@@ -433,6 +433,25 @@ void main() {
       expect(addWholeYeses(group, 'y'), [poll]);
     });
 
+    test('a renamed poll takes its place along, so they stay one thing', () {
+      final group = trip(members: ['x', 'y']);
+      final place = Place(id: 'k', kind: PlaceKind.restaurant, name: 'Konoba');
+      final poll = Poll(id: 'q', title: 'Konoba', single: true, options: [
+        PollOption(id: 'o0', time: 'Da'),
+      ]);
+      group
+        ..places.add(place)
+        ..polls.add(poll);
+      renamePoll(group, poll, 'Konoba Bako');
+      expect(poll.title, 'Konoba Bako');
+      expect(place.name, 'Konoba Bako');
+      expect(placeOf(group, poll), place);
+      final alone = group.polls.first;
+      renamePoll(group, alone, 'Kupanje');
+      expect(alone.title, 'Kupanje');
+      expect(place.name, 'Konoba Bako');
+    });
+
     test('an added answer shows in Plan napada, a no never decides', () {
       final group = trip(members: ['x', 'y']);
       final poll = group.polls.single

@@ -138,7 +138,9 @@ class Poll {
       );
 
   final String id;
-  final String title;
+
+  /// What it decides; a poll about a place or a dish has its name.
+  String title;
 
   /// What can be voted for: [mostOptions] at most.
   final List<PollOption> options;

@@ -119,9 +119,13 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
-- A yes or no poll takes one answer from each person (`onlyOneAnswer`). The + at the right
-  of a poll's answers adds one, up to 5 (`mostOptions`); a yes or no stays one answer per
-  person (`Poll.single`), and in Plan napada the added answer with most votes shows. Ne and
+- A yes or no poll takes one answer from each person (`onlyOneAnswer`). A tap on a poll's name
+  opens it for typing; a poll about a place or a dish renames that too, as they are found
+  by name (`renamePoll`). The brush at the right of the answers (`Ui.editingPoll`) puts an
+  x on each answer, which removes it with the usual undo, and a field for a new one, up
+  to 5 (`mostOptions`). A new poll takes plain answers ("Dodaj opciju") or times. A yes
+  or no stays one answer per person (`Poll.single`), and in Plan napada the added answer
+  with most votes shows. Ne and
   Možda never decide a poll.
 - On a trip's main tabs the settings button is in the corner, the anthem's speaker under it.
 - A heading that folds a list open has + before it, and − while open. Unticking "Primaj sve

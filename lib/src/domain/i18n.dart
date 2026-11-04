@@ -134,8 +134,6 @@ const Map<String, List<String>> _texts = {
   'Upiši što odlučujete.': ['Write what you are deciding.', 'Neye karar verdiğinizi yaz.'],
   'Nova anketa': ['New poll', 'Yeni anket'],
   'Što odlučujemo': ['What we are deciding', 'Neye karar veriyoruz'],
-  'Raspon cijene': ['Price range', 'Fiyat aralığı'],
-  'Lokacija': ['Location', 'Konum'],
   'Napravi anketu': ['Create poll', 'Anket oluştur'],
 
   // Costs
@@ -439,10 +437,13 @@ const Map<String, List<String>> _texts = {
   'Odabrano za prezentaciju': ['Picked for the presentation', 'Sunum için seçilenler'],
   'Dodirni fotografije iznad i dodaj ih u prezentaciju.': ['Tap the photos above to add them to the presentation.', 'Sunuma eklemek için yukarıdaki fotoğraflara dokun.'],
   'Prezentaciju može mijenjati samo onaj tko ju je napravio.': ['Only the one who made a presentation can change it.', 'Bir sunumu yalnızca onu yapan değiştirebilir.'],
+  'Opcija': ['Answer', 'Seçenek'],
+  'Dodaj opciju': ['Add an answer', 'Seçenek ekle'],
+  'Naziv ankete': ['Name of the poll', 'Anketin adı'],
+  'Uredi mogućnosti': ['Change the answers', 'Seçenekleri değiştir'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],
-  'Dodaj mogućnost za glasanje': ['Add an answer to vote for', 'Oylanacak bir seçenek ekle'],
   'Duljina uspomene': ['Length of the memory', 'Anının süresi'],
   'Drži prst na fotografiji i pomakni je da promijeniš redoslijed.': ['Hold a finger on a photo and move it to change the order.', 'Sırayı değiştirmek için parmağını bir fotoğrafta tut ve kaydır.'],
   'Isti prijelazi i duljina uspomene za sve': ['Same transitions and length for all', 'Hepsi için aynı geçişler ve süre'],
