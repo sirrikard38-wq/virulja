@@ -93,7 +93,7 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
       if (mine.length < showsEach && trip.photos.isNotEmpty)
         primaryButton('${tr('Napravi prezentaciju')} ${mine.length + 1}/$showsEach',
             () => openShowBuilder(ui, trip, null)),
-      el('p', cls: 'small pad gap-top', text: tr('Na naslovnoj slici putovanja svira prezentacija s najviše glasova. Svatko ima jedan glas i može napraviti do 3 prezentacije.')),
+      el('p', cls: 'small pad gap-top', text: tr('Na naslovnoj stranici putovanja prikazuje se prezentacija s najviše glasova. Svatko ima jedan glas i može napraviti do 3 prezentacije.')),
     ],
   ]);
 }

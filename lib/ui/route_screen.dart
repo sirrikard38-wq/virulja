@@ -131,7 +131,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     topBar(tr('Plan puta')),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (var i = 0; i < trip.dayCount; i++)
-        chip(tr('Dan {0}', [i + 1]), () {
+        chip(tr('{0} Dan', [i + 1]), () {
           ui.routeDay = i;
           ui.rerender();
         }, on: i == day),

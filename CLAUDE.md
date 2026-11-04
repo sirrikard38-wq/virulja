@@ -70,8 +70,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Ankete and the button in Hrana i piće put things there by hand. A
   place and the yes or no poll about it are one thing in Plan napada (`placeInAttack`).
   Polls have no day any more: people pick days on each thing in Plan napada. The chips
-  Sve, Dan 1, Dan 2 show each thing on the day with most votes, on all equal ones, and on
-  none before the first vote (`votedDays`); a stop also keeps its own day. While a day is
+  Sve, 1 Dan, 2 Dan show each thing on the day with most votes, on all equal ones, and on
+  none before the first vote (`votedDays`). Only votes give a day: not the day an older
+  poll was made for, nor a stop's day in Plan puta. Days are written "1 Dan", not "Dan 1". While a day is
   open, what was on it stays even when a vote moves it; it moves once the day is left
   (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`). The tabs
   show how many presentations, polls and plans there are, and each day chip its plans; the

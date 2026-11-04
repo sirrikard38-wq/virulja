@@ -94,7 +94,7 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) {
     if (trip.photoDay(photo) == day) return;
     photo.dayIndex = day;
     ui.changed();
-    ui.toast(tr('Premješteno: Dan {0}', [day + 1]));
+    ui.toast(tr('Premješteno: {0} Dan', [day + 1]));
   });
   return shot;
 }
@@ -121,7 +121,7 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
       for (var day = 0; day < trip.dayCount; day++)
         el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
           el('div', cls: 'day-title',
-              text: tr('Dan {0} · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
+              text: tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
           if (byDay[day] == null)
             el('div', cls: 'day-empty', text: tr('Ovdje još nema ničega.'))
           else

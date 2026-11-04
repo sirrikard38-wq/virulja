@@ -51,7 +51,7 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
     el('div', cls: 'small', attrs: {'style': 'margin-top:8px'}, text: tr('Koji dan idemo?')),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final day in remainingDays(trip, DateTime.now()))
-        chip(tr('Dan {0} · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
+        chip(tr('{0} Dan · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
           toggleDayVote(votes, day, me);
           ui.changed();
         }, on: votes[day]?.contains(me) ?? false)
@@ -107,7 +107,7 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
     el('div', cls: 'chips', children: [
       chip('${tr('Sve')} (${items.length})', () => pick(null), on: shown == null),
       for (var i = 0; i < trip.dayCount; i++)
-        chip('${tr('Dan {0}', [i + 1])} (${items.where((item) => item.days.contains(i)).length})',
+        chip('${tr('{0} Dan', [i + 1])} (${items.where((item) => item.days.contains(i)).length})',
             () => pick(i), on: i == shown),
     ]),
     if (items.isEmpty)

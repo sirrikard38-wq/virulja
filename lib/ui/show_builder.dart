@@ -310,7 +310,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
         ]),
       sectionTitle(tr('Uspomene')),
       for (final day in shownDays) ...[
-        el('div', cls: 'show-day', text: tr('Dan {0} · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
+        el('div', cls: 'show-day', text: tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
         _strip(draft, 'day $day', [
           for (final photo in days[day]!)
             _thumb(ui, trip, photo,

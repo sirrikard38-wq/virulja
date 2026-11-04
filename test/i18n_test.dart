@@ -56,11 +56,11 @@ void main() {
   });
 
   test('a text takes what goes into it, in the right language', () {
-    expect(tr('Dan {0}', [2]), 'Dan 2');
+    expect(tr('{0} Dan', [2]), '2 Dan');
     language = Language.en;
-    expect(tr('Dan {0}', [2]), 'Day 2');
+    expect(tr('{0} Dan', [2]), 'Day 2');
     language = Language.tr;
-    expect(tr('Dan {0}', [2]), '2. gün');
+    expect(tr('{0} Dan', [2]), '2. gün');
     expect(tr('Nešto novo'), 'Nešto novo');
   });
 

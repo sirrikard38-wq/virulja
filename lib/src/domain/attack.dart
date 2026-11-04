@@ -207,18 +207,13 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
     Map<int, Set<String>> votes, {
     String time = '',
     String? detail,
-    int? ownDay,
     int cost = 0,
     CostCategory category = CostCategory.other,
     Poll? poll,
     Stop? stop,
     Place? place,
   }) {
-    final days = {
-      if (ownDay != null && ownDay >= 0 && ownDay < trip.dayCount) ownDay,
-      ...votedDays(trip, votes),
-    }.toList()
-      ..sort();
+    final days = votedDays(trip, votes);
     return NextUp(
       title,
       days: days,
@@ -240,8 +235,6 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
     return item(poll.title, poll.dayVotes,
         time: shown.time,
         detail: shown.detail,
-        // Older polls were made for a day.
-        ownDay: poll.single ? null : poll.dayIndex,
         cost: dish == null ? 0 : dish.price * dish.servings,
         category: CostCategory.food,
         poll: poll);
@@ -252,7 +245,6 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
       if (!stop.hiddenInAttack)
         item(stop.title, stop.dayVotes,
             time: stop.time,
-            ownDay: stop.dayIndex,
             cost: stop.cost,
             category: CostCategory.activities,
             stop: stop),

@@ -328,16 +328,22 @@ void main() {
       city: 'Vis',
       start: dayOf(2026, 7, 1),
       end: dayOf(2026, 7, 3),
-      memberIds: [],
+      memberIds: ['x', 'y'],
       stops: [
-        Stop(id: 'a', dayIndex: 0, title: 'Kava', time: '08:00'),
-        Stop(id: 'b', dayIndex: 0, title: 'Brod', time: '12:00'),
+        Stop(id: 'a', dayIndex: 0, title: 'Kava', time: '08:00', dayVotes: {
+          0: {'x'},
+        }),
+        Stop(id: 'b', dayIndex: 0, title: 'Brod', time: '12:00', dayVotes: {
+          0: {'y'},
+        }),
       ],
       polls: [
         Poll(id: 'p', title: 'Plaža', dayIndex: 0, active: true, options: [
           PollOption(id: 'o0', time: '10:00', votes: {'x'}),
           PollOption(id: 'o1', time: '11:00', votes: {'x', 'y'}),
-        ]),
+        ], dayVotes: {
+          0: {'x', 'y'},
+        }),
         Poll(id: 'q', title: 'Skriveno', options: [PollOption(id: 'o0', time: '09:00')]),
       ],
     );
@@ -451,14 +457,18 @@ void main() {
       expect(remainingDays(trip(), DateTime(2026, 7, 3, 12)), [2, 3]);
     });
 
-    test('a stop keeps its own day and takes the days voted for', () {
+    test('only votes give a day, not the day of Plan puta or of an older poll', () {
       final plan = trip()
         ..stops.add(Stop(id: 'b', dayIndex: 0, title: 'Brod', dayVotes: {
           3: {'x', 'z'},
           1: {'y'},
-        }));
-      final stop = planOfAttack(plan, DateTime(2026, 6, 1)).firstWhere((i) => i.stop != null);
-      expect(stop.days, [0, 3]);
+        }))
+        ..polls.add(Poll(id: 'old', title: 'Stara', dayIndex: 0, active: true, options: [
+          PollOption(id: 'o0', time: '10:00', votes: {'x'}),
+        ]));
+      final items = planOfAttack(plan, DateTime(2026, 6, 1));
+      expect(items.firstWhere((i) => i.stop != null).days, [3]);
+      expect(items.firstWhere((i) => i.title == 'Stara').days, isEmpty);
     });
 
     test('a place is in the plan once, whether through its poll or itself', () {
@@ -547,7 +557,11 @@ void main() {
             ),
             Place(id: 'n', kind: PlaceKind.cafe, name: 'Bez dana', pricePerPerson: 500, planned: true),
           ],
-          stops: [Stop(id: 'b', dayIndex: 0, title: 'Brod', cost: 3000)],
+          stops: [
+            Stop(id: 'b', dayIndex: 0, title: 'Brod', cost: 3000, dayVotes: {
+              0: {'x', 'y'},
+            }),
+          ],
         );
 
     test('is planned before its day and spent once the day is over', () {
