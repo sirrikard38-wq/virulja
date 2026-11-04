@@ -158,13 +158,22 @@ class CloudSync {
         .join();
   }
 
-  /// Gives a trip what sharing needs: a code and this phone's id.
+  /// Gives a trip what sharing needs: a code, this phone's id, and the list of
+  /// phones the database lets in: every member's known phones, nobody else's.
   Future<void> _prepare(Trip trip) async {
     await _session.token();
     final me = _meIn(trip);
     trip.code ??= newCode();
     final uid = _session.uid;
-    if (uid != null) trip.uids[me] = uid;
+    if (uid != null) {
+      trip.uids[me] = uid;
+      trip.access[uid] = me;
+    }
+    for (final person in trip.memberIds) {
+      final known = trip.uids[person];
+      if (known != null) trip.access[known] ??= person;
+    }
+    trip.access.removeWhere((_, person) => !trip.memberIds.contains(person));
   }
 
   /// A new code for [trip]; the old one stops working, members stay.
@@ -178,10 +187,32 @@ class CloudSync {
     await _push();
   }
 
-  /// The trip behind a code. Null when no trip has that code.
-  Future<({CloudTrip trip, Tree tree})?> findTrip(String code) async {
+  /// The id of the trip behind a code. Null when no trip has that code.
+  Future<String?> tripIdOf(String code) async {
     final id = jsonDecode((await _send('GET', 'codes/$code')).body);
-    return id is String ? fetchTrip(id) : null;
+    return id is String ? id : null;
+  }
+
+  /// The trip's city: all that someone not in the group may read of it.
+  Future<String?> cityOf(String tripId) async {
+    final city = jsonDecode((await _send('GET', 'trips/$tripId/city')).body);
+    return city is String ? city : null;
+  }
+
+  /// Lets this phone back into a trip as the member with its name and number,
+  /// as the database allows with that member's key. The member, or null when
+  /// there is none.
+  Future<String?> comeBack(String tripId) async {
+    final me = _data.personById(_data.meId!);
+    final key = me == null ? null : memberKey(me.name, me.phone);
+    await _session.token();
+    final uid = _session.uid;
+    if (key == null || uid == null) return null;
+    final person = jsonDecode(
+        (await _send('GET', 'trips/$tripId/keys/${Uri.encodeComponent(key)}')).body);
+    if (person is! String) return null;
+    await _send('PATCH', 'trips/$tripId', json: {'claims/$uid': key, 'access/$uid': person});
+    return person;
   }
 
   Future<Uri> _address(String path) async =>
@@ -195,7 +226,10 @@ class CloudSync {
       headers: json == null ? const {} : const {'Content-Type': 'application/json'},
       body: json == null ? null : jsonEncode(json),
     );
-    if (reply.status == 401) _session.tokenRefused();
+    if (reply.status == 401) {
+      _session.tokenRefused();
+      throw const LockedOut();
+    }
     if (!reply.ok) throw OnlineException('$method answered ${reply.status}');
     return reply;
   }
@@ -231,16 +265,16 @@ class CloudSync {
     _refresh();
   }
 
-  /// Asks the group to let this phone into [invited].
-  Future<void> askToJoin(({CloudTrip trip, Tree tree}) invited) async {
-    final trip = invited.trip.trip;
+  /// Asks the group to let this phone into the trip [tripId] in [city]. Only
+  /// this request can be written there, never its approvals.
+  Future<void> askToJoin(String tripId, String city) async {
     await _session.token();
-    await _send('PATCH', 'trips/${trip.id}/requests/${_session.uid}', json: {
+    await _send('PATCH', 'trips/$tripId/requests/${_session.uid}', json: {
       'name': _nameOf(_data.meId!),
       'phone': _data.personById(_data.meId!)?.phone,
       'person': _data.meId,
     });
-    _data.waiting[trip.id] = trip.city;
+    _data.waiting[tripId] = city;
     _store.save();
   }
 
@@ -254,6 +288,7 @@ class CloudSync {
         trip.gone[person] = _nameOf(person);
         trip.memberIds.remove(person);
         trip.uids.remove(person);
+        trip.access.removeWhere((_, member) => member == person);
         trip.kickVotes.remove(person);
       }
     }
@@ -271,6 +306,7 @@ class CloudSync {
       if (!trip.memberIds.contains(person)) trip.memberIds.add(person);
       trip.gone.remove(person);
       trip.uids[person] = request.id;
+      trip.access[request.id] = person;
       trip.requests.remove(request);
     }
   }
@@ -283,8 +319,18 @@ class CloudSync {
     try {
       await _session.token();
       for (final entry in _data.waiting.entries.toList()) {
-        final found = await fetchTrip(entry.key);
-        if (found == null) continue;
+        final found = await readTrip(entry.key);
+        if (found == null) {
+          // Not let in yet: the request is still there while the group decides.
+          final asked = jsonDecode(
+              (await _send('GET', 'trips/${entry.key}/requests/${_session.uid}')).body);
+          if (asked != null) continue;
+          _data.waiting.remove(entry.key);
+          _store.save();
+          onNotice?.call(tr('{0}: zahtjev je odbijen.', [entry.value]));
+          onChange?.call();
+          continue;
+        }
         final trip = found.trip.trip;
         final mine = trip.requests.where((item) => item.id == _session.uid);
         final accepted = mine.isNotEmpty &&
@@ -314,7 +360,10 @@ class CloudSync {
       for (final trip in _data.trips.toList()) {
         // Asked with a fresh token, a refusal can only mean a locked door.
         _session.tokenRefused();
-        final reply = await _http.send('GET', await _address('trips/${trip.id}'));
+        var reply = await _http.send('GET', await _address('trips/${trip.id}'));
+        if (reply.status == 401 && await _cameBack(trip)) {
+          reply = await _http.send('GET', await _address('trips/${trip.id}'));
+        }
         if (reply.status == 401) {
           _forget(trip);
         } else if (reply.ok) {
@@ -399,6 +448,16 @@ class CloudSync {
     settleGroup(trip);
     pushSoon();
     onChange?.call();
+  }
+
+  /// A phone of a member that the lock does not know, such as one whose sign-in
+  /// changed, comes back in with its name and number.
+  Future<bool> _cameBack(Trip trip) async {
+    try {
+      return await comeBack(trip.id) == _meIn(trip);
+    } on Object {
+      return false;
+    }
   }
 
   /// This person is no longer in the group: the trip leaves this phone.
@@ -535,8 +594,16 @@ class CloudSync {
   }
 
   /// The trip of an invitation, as it is in the cloud. Null when there is no such
-  /// trip; throws when the cloud cannot be reached.
-  Future<({CloudTrip trip, Tree tree})?> fetchTrip(String id) async {
+  /// trip or this phone is not let in; throws when the cloud cannot be reached.
+  Future<({CloudTrip trip, Tree tree})?> readTrip(String id) async {
+    try {
+      return await _fetchTrip(id);
+    } on LockedOut {
+      return null;
+    }
+  }
+
+  Future<({CloudTrip trip, Tree tree})?> _fetchTrip(String id) async {
     final reply = await _send('GET', 'trips/$id');
     final tree = jsonDecode(reply.body);
     if (tree is! Map) return null;

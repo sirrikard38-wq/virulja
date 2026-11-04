@@ -38,6 +38,11 @@ class OnlineException implements Exception {
   String toString() => 'OnlineException: $message';
 }
 
+/// The database said no with a fresh sign-in: this phone is not let in there.
+class LockedOut extends OnlineException {
+  const LockedOut() : super('locked out');
+}
+
 /// Where the shared data lives: a Firebase Realtime Database. Read from
 /// `web/online.json`; without it the app simply stays on this phone.
 class OnlineConfig {

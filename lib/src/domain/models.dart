@@ -1067,8 +1067,10 @@ class Trip {
     Map<String, String>? showPicks,
     this.dayShowId,
     Map<String, int>? budgets,
+    Map<String, String>? access,
   })  : uids = uids ?? {},
         budgets = budgets ?? {},
+        access = access ?? {},
         shows = shows ?? [],
         showPicks = showPicks ?? {},
         polls = polls ?? [],
@@ -1128,6 +1130,7 @@ class Trip {
         showPicks: (json['showPicks'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
         dayShowId: json['dayShowId'] as String?,
+        access: (json['access'] as Json? ?? const <String, dynamic>{}).cast<String, String>(),
         budgets: (json['budgets'] as Json? ?? const <String, dynamic>{})
             .map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
       );
@@ -1194,6 +1197,10 @@ class Trip {
   /// Kind of cost -> the whole amount the group means to spend on it, set with
   /// Planiraj trošak.
   Map<String, int> budgets;
+
+  /// The phones let into this trip: sign-in id -> the member it is. The
+  /// database lets only these read and change it; a person may have several.
+  Map<String, String> access;
 
   int get nights => end.difference(start).inDays;
 
@@ -1286,6 +1293,7 @@ class Trip {
     showPicks = other.showPicks;
     dayShowId = other.dayShowId;
     budgets = other.budgets;
+    access = other.access;
   }
 
   Json toJson() => {
@@ -1324,6 +1332,7 @@ class Trip {
         'showPicks': showPicks,
         'dayShowId': dayShowId,
         'budgets': budgets,
+        'access': access,
       };
 }
 

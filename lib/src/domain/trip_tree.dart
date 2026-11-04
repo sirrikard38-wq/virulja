@@ -24,6 +24,17 @@ class CloudTrip {
 
 Json _withoutId(Json json) => Map.of(json)..remove('id');
 
+/// What a member is found by when they come back on another phone: the name in
+/// small letters and the last eight digits of the number, so +385 91 and 091
+/// match. Null without a number. A database key cannot have . # $ [ ] or /.
+String? memberKey(String name, String? phone) {
+  final all = (phone ?? '').replaceAll(RegExp(r'\D'), '');
+  final digits = all.length > 8 ? all.substring(all.length - 8) : all;
+  if (digits.length < 6) return null;
+  final clean = name.trim().toLowerCase().replaceAll(RegExp(r'[.#$\[\]/\x00-\x1f\x7f]'), '_');
+  return '${clean}_$digits';
+}
+
 Map<String, bool> _set(Iterable<String> ids) => {for (final id in ids) id: true};
 
 /// The shape a trip has in the cloud. Lists become maps keyed by id, so that
@@ -146,6 +157,12 @@ Tree tripToTree(
       'showPicks': trip.showPicks,
       'dayShowId': trip.dayShowId,
       'budgets': trip.budgets,
+      'access': trip.access,
+      // Read one at a time by whoever knows a member's name and number.
+      'keys': {
+        for (final id in trip.memberIds)
+          if (memberKey(nameOf(id), phoneOf?.call(id)) case final key?) key: id,
+      },
     };
 
 Tree _branch(Tree tree, String key) =>
@@ -264,6 +281,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       shows: _items(tree, 'shows', Show.fromJson),
       showPicks: _branch(tree, 'showPicks').cast<String, String>(),
       dayShowId: tree['dayShowId'] as String?,
+      access: _branch(tree, 'access').map((uid, person) => MapEntry(uid, person as String)),
       budgets: _branch(tree, 'budgets').map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
     );
     return CloudTrip(trip, {

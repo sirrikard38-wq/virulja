@@ -295,6 +295,22 @@ void main() {
       expect(line.ahead, 3000);
     });
 
+    test('a member is found again by name and the last eight digits of the number', () {
+      expect(memberKey(' Ana ', '+385 91 234 5678'), memberKey('ana', '091 234 5678'));
+      expect(memberKey('Ana', null), isNull);
+      expect(memberKey('Ana', '12'), isNull);
+      expect(memberKey('A.n#a\$[b]/c', '0912345678'), 'a_n_a__b__c_12345678');
+    });
+
+    test('the phones let into a trip and the members\' keys go to the cloud and back', () {
+      final trip = visTrip()..access.addAll({'uid1': 'ana', 'uid2': 'ana'});
+      final tree = tripToTree(trip, (id) => id == 'ana' ? 'Ana' : 'Ivo', (id) => id == 'ana' ? '091 234 5678' : null);
+      expect(tree['keys'], {'ana_12345678': 'ana'});
+      final back = jsonDecode(jsonEncode(unflatten(flatten(tree))));
+      expect(tripFromTree('t1', (back as Map).cast<String, dynamic>())!.trip.access, {'uid1': 'ana', 'uid2': 'ana'});
+      expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).access, {'uid1': 'ana', 'uid2': 'ana'});
+    });
+
     test('a planned whole for a kind of cost is what is ahead of what was spent', () {
       final trip = visTrip()
         ..budgets['food'] = 50000

@@ -181,8 +181,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   time field offers every minute.
 - Troškovi shows Potrošeno, Planirano (the whole plan) and Preostalo (plan less spent;
   not "Ostalo", which is a kind of cost), and each kind as "Potrošeno X · Planirano Y".
-  "Planiraj trošak" at the bottom of Hrana i piće, Dućan, Prijevoz and Smještaj sets the
-  whole the group means to spend on that kind (`Trip.budgets`), which is then its plan. A place of Hrana i piće in Plan
+  "Planirani trošak:" at the bottom of Hrana i piće, Dućan, Prijevoz and Smještaj is a
+  small box, kept as it is typed with no button, that sets the whole the group means to
+  spend on that kind (`Trip.budgets`), which is then its plan; it widens for a long number. A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what
   it really cost, who paid and whom it is for (`Place.expenseId`).
 - Entering a code with the name (any capitals) and phone number of someone already in
@@ -231,14 +232,21 @@ also be pasted into the Firebase console.
 
 - Each trip has a code of 10 mixed characters (older trips: 10 digits) in `/codes/<code>`; entering it once joins that device.
   Nobody is added by hand: two members must accept a newcomer, or the only member if alone
-  (`JoinRequest`, kept inside the trip, so no rule change). This is checked by the app, not
-  by the database: the code stays the real lock. Everyone on a trip has the same rights;
+  (`JoinRequest`, in the trip's `requests`). Everyone on a trip has the same rights;
   there are no admins. Half of the whole group, rounded down, can vote a person out
   (`kickVotes`), and they may ask to come back, so the group decides again. Changing the
-  code keeps the members. `/banned/<trip>/<uid>` and its rule are left from when admins
-  could lock someone out; nothing writes there now. Names and phone numbers
+  code keeps the members. Names and phone numbers
   are entered once per device and changed in Postavke. The WhatsApp button is one tap
   (automatic sending needs the paid Business API). The anthem stays an uploaded file.
+- The database lets only members in (2026-11-04). `Trip.access` (sign-in id -> member)
+  lists the phones of a trip; only they read and change it and its blobs, and move its
+  codes; a person may have several. A trip without `access` is from before and stays open
+  until a member's phone adds it (`_prepare`). Nobody can wipe a trip or take the lock
+  off. A stranger with the code reads only `city`, writes only their own request (never
+  its approvals) and reads it back. `keys/<name_last8digits>` -> member (`memberKey`) is
+  read one at a time: writing the key to `claims/<uid>` with `access/<uid>` lets the same
+  person in on another phone (`comeBack`), so a phone whose sign-in changed gets back in
+  by itself. `tool/check_rules.dart` checks all of this against the real database.
 - Each value is compared and sent separately (`TripMirror`), so people working at the same
   moment do not overwrite each other, and offline changes wait on the phone.
 - The open trip follows the database live through `EventSource`; others are read when the

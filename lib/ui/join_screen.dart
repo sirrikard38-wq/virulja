@@ -79,9 +79,36 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
   final cloud = ui.cloud;
   if (cloud == null) return;
   try {
-    final found = await cloud.findTrip(code);
-    if (found == null) {
+    final id = await cloud.tripIdOf(code);
+    if (id == null) {
       error.textContent = tr('Nema putovanja s tom šifrom.');
+      return;
+    }
+    final known = ui.data.tripById(id);
+    if (known != null) {
+      ui.openTrip(known);
+      return;
+    }
+    var found = await cloud.readTrip(id);
+    if (found == null) {
+      // The group's trip is locked to its members: back in with this name and
+      // number, or a request the group decides on.
+      final person = await cloud.comeBack(id);
+      found = person == null ? null : await cloud.readTrip(id);
+      if (person != null && found != null) {
+        cloud.rejoin(found, person);
+        ui.toast(tr('Već si dio ovog prekrasnog putovanja'), long: true);
+        ui.openTrip(ui.data.tripById(id)!);
+        return;
+      }
+      final city = await cloud.cityOf(id);
+      if (city == null) {
+        error.textContent = tr('Nema putovanja s tom šifrom.');
+        return;
+      }
+      await cloud.askToJoin(id, city);
+      ui.toast(tr('Zahtjev je poslan. Grupa te mora prihvatiti.'));
+      ui.rerender();
       return;
     }
     final trip = found.trip.trip;
@@ -94,7 +121,7 @@ Future<void> joinByCode(Ui ui, String code, web.Element error) async {
     }
     if (ui.data.tripById(trip.id) == null) {
       if (trip.approvalsNeeded > 0) {
-        await cloud.askToJoin(found);
+        await cloud.askToJoin(trip.id, trip.city);
         ui.toast(tr('Zahtjev je poslan. Grupa te mora prihvatiti.'));
         ui.rerender();
         return;
