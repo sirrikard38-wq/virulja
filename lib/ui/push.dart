@@ -54,7 +54,3 @@ Future<Map<String, String>?> turnOnPush(String publicKey) async {
   return _device(subscription);
 }
 
-Future<void> turnOffPush() async {
-  final subscription = await (await _manager()).getSubscription().toDart;
-  await subscription?.unsubscribe().toDart;
-}

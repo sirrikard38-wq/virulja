@@ -45,8 +45,7 @@ void _remove(Ui ui, Trip trip, NextUp item) {
   });
 }
 
-/// Which of the days left suit each person. A day enough of the group can go
-/// is marked.
+/// Which of the days left suit each person. The day with most votes is marked.
 web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
   final me = ui.meIn(trip);
   final votes = item.dayVotes;
@@ -54,7 +53,7 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
     el('div', cls: 'small', attrs: {'style': 'margin-top:8px'}, text: tr('Koji dan idemo?')),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final day in remainingDays(trip, DateTime.now()))
-        chip(tr('Dan {0} · {1}', [day + 1, votes[day]?.length ?? 0]), () {
+        chip(tr('Dan {0} · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
           toggleDayVote(votes, day, me);
           ui.changed();
         }, on: votes[day]?.contains(me) ?? false)
@@ -82,18 +81,27 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
   ]);
 }
 
-/// Everything the group wants to do, by the days it agreed on: all of it, or one
-/// day. What has gone by stays at the end, grey.
+/// Everything the group wants to do, by the day with most votes: all of it, or
+/// one day. What has gone by stays at the end, grey. While a day is open, what
+/// was on it stays, even if a vote moves it to another day; it moves once the
+/// day is left.
 web.HTMLElement attackTab(Ui ui, Trip trip) {
   final items = planOfAttack(trip, DateTime.now());
   final day = ui.attackDays[trip.id];
   final shown = day == null || day >= trip.dayCount ? null : day;
+  final kept = ui.attackKept;
+  final stays = kept != null && kept.trip == trip.id && kept.day == shown
+      ? kept.ids
+      : const <String>{};
   final chosen = [
     for (final item in items)
-      if (shown == null || item.days.contains(shown)) item,
+      if (shown == null || item.days.contains(shown) || stays.contains(item.id)) item,
   ];
+  ui.attackKept =
+      shown == null ? null : (trip: trip.id, day: shown, ids: {for (final item in chosen) item.id});
   void pick(int? next) {
     next == null ? ui.attackDays.remove(trip.id) : ui.attackDays[trip.id] = next;
+    ui.attackKept = null;
     ui.rerender();
   }
 

@@ -660,6 +660,7 @@ class Photo {
     this.stored = false,
     this.videoType,
     this.parts = 1,
+    this.seconds,
     Map<String, Set<Reaction>>? reactions,
     List<Comment>? comments,
   })  : reactions = reactions ?? {},
@@ -674,6 +675,7 @@ class Photo {
         stored: json['stored'] as bool? ?? false,
         videoType: json['videoType'] as String?,
         parts: json['parts'] as int? ?? 1,
+        seconds: (json['seconds'] as num?)?.toDouble(),
         reactions: _reactionsFrom(json['reactions']),
         comments: _list(json['comments'], Comment.fromJson),
       );
@@ -695,6 +697,9 @@ class Photo {
   /// How many pieces the file takes in the cloud. Only a video needs more than one.
   final int parts;
 
+  /// How long a video is, when known.
+  final double? seconds;
+
   /// Anyone can give several reactions.
   Map<String, Set<Reaction>> reactions;
   List<Comment> comments;
@@ -712,6 +717,7 @@ class Photo {
         'stored': stored,
         'videoType': videoType,
         'parts': parts == 1 ? null : parts,
+        'seconds': seconds,
         'reactions': _reactionsToJson(reactions),
         'comments': [for (final comment in comments) comment.toJson()],
       };
@@ -772,13 +778,16 @@ enum Transition {
   String get label => tr(_label);
 }
 
-/// How one photo of a presentation comes in.
+/// How one photo or video of a presentation comes in and how long it stays.
 class Look {
-  Look(this.transition, [this.extra = 0]);
+  Look(this.transition, [this.extra = 0, this.stay = 0, this.from = 0, this.length = 6]);
 
   factory Look.fromJson(Json json) => Look(
         Transition.values.asNameMap()[json['transition']] ?? Transition.fade,
         (json['extra'] as num?)?.toDouble() ?? 0,
+        (json['stay'] as num?)?.toDouble() ?? 0,
+        (json['from'] as num?)?.toDouble() ?? 0,
+        (json['length'] as num?)?.toDouble() ?? 6,
       );
 
   Transition transition;
@@ -786,7 +795,22 @@ class Look {
   /// Seconds the transition is made longer than usual, in hundredths.
   double extra;
 
-  Json toJson() => {'transition': transition.name, 'extra': extra};
+  /// Seconds a photo stays longer than usual.
+  double stay;
+
+  /// For a video: the second its piece starts, and how long the piece is.
+  double from;
+  double length;
+
+  Look copy() => Look(transition, extra, stay, from, length);
+
+  Json toJson() => {
+        'transition': transition.name,
+        'extra': extra,
+        'stay': stay,
+        'from': from,
+        'length': length,
+      };
 }
 
 Map<String, dynamic> _map(Object? raw) =>

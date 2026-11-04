@@ -66,8 +66,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`Trip.votesToAgree`). A poll the group votes through goes into Plan napada by itself; the
   "Plan napada" box in Ankete and the button in Hrana i piće put things there by hand. A
   place and the yes or no poll about it are one thing in Plan napada (`placeInAttack`).
-  Polls have no day any more: people pick days on each thing in Plan napada, and the chips
-  Sve, Dan 1, Dan 2 show what is agreed for a day (`agreedDays`); a stop also keeps its own day.
+  Polls have no day any more: people pick days on each thing in Plan napada. The chips
+  Sve, Dan 1, Dan 2 show each thing on the day with most votes, on all equal ones, and on
+  none before the first vote (`votedDays`); a stop also keeps its own day. While a day is
+  open, what was on it stays even when a vote moves it; it moves once the day is left
+  (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`).
 - In Troškovi, something in Plan napada with a price is planned until its agreed day is over,
   then spent, unless a real cost of the same name was written down. A paid debt stays in the
   list, green, where it stood.
@@ -75,8 +78,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   undone within 5 seconds instead of asking first. Only a photo or video still asks, as its
   file is deleted at once.
 - Presentations (`lib/src/domain/show.dart`, `lib/ui/show_*.dart`, `shows_section.dart`):
-  every photo of Uspomene, not videos, follows the one before with one of 15 transitions,
-  lengthened with a bar from 0 to 12 s (`secondsBar`). On the first day of the trip 6 s
+  every photo and video of Uspomene follows the one before with one of 15 transitions,
+  lengthened with a bar from 0 to 12 s (`secondsBar`). A photo then stays 4 s, and as much
+  longer as its own bar says (all 12 s open). A video plays a piece of it, 6 s of every 30 s
+  it lasts at most (`longestClip`, `clipOf`); kept videos are 30 s at most, so one piece of
+  6 s. The video stands still on the piece's first picture during its transition. On the first day of the trip 6 s
   and 5 transitions are open; each later day adds the rest up to 12 s divided by the days
   left, in hundredths, so the last day opens 12 s and all 15 (`extraLimit`,
   `openTransitions`). Numbers show one decimal, cut (`tenths`). Each person makes one; the
@@ -86,6 +92,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
 - A yes or no poll takes one answer from each person (`onlyOneAnswer`).
+- A heading that folds a list open has + before it, and − while open. Unticking "Primaj sve
+  obavijesti" stops every notification, so there is no separate button to turn them off.
+- With JS interop types, `is web.HTMLVideoElement` is always true: keep videos in their own
+  map instead of checking (`show_player.dart`).
 - The postcard has a round seal with no background, as the user asked, so its ink follows
   the photo: dark on a bright corner, light with a shadow otherwise (`lib/src/domain/seal.dart`).
 

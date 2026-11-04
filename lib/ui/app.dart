@@ -123,7 +123,7 @@ class ViruljaApp {
   /// open, or a song or video is playing in its player.
   bool get _busy {
     final active = web.document.activeElement?.tagName;
-    final video = web.document.querySelector('video') as web.HTMLVideoElement?;
+    final video = web.document.querySelector('video:not(.show-video)') as web.HTMLVideoElement?;
     return active == 'INPUT' ||
         (video != null && !video.paused) ||
         active == 'TEXTAREA' ||
@@ -355,6 +355,8 @@ class ViruljaApp {
     final tripId = place.tripId;
     final trip = tripId == null ? null : _data.tripById(tripId);
     if (trip == null && _anthem.isPlaying) _anthem.stop();
+    // Leaving Plan napada lets what was voted elsewhere move to its day.
+    if (place.section != 'napad') _ui.attackKept = null;
     _cloud?.watch(trip?.id);
     _ring = null;
 

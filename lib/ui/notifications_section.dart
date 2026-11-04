@@ -28,9 +28,9 @@ web.HTMLElement notificationsSection(Ui ui, {Trip? trip}) {
       ui.rerender();
     },
     children: [
+      icon(open ? 'minus' : 'plus', size: 22),
       el('span', cls: 'section',
           text: trip == null ? tr('Obavijesti') : tr('Obavijesti za ovo putovanje')),
-      icon('plus', size: 22),
     ],
   )..setAttribute('aria-expanded', '$open');
   if (!open) return heading;
@@ -96,18 +96,6 @@ web.HTMLElement notificationsSection(Ui ui, {Trip? trip}) {
     unawaited(tellSender());
   }
 
-  Future<void> signOut() async {
-    try {
-      await turnOffPush();
-      await cloud.removePushDevice();
-    } on Object {
-      ui.toast(tr('Nema veze. Pokušaj ponovno.'));
-      return;
-    }
-    _signedUp = false;
-    fill();
-  }
-
   fill = () {
     final on = _signedUp == true;
     bool locked(Notice notice) => trip != null && everywhere.contains(notice.name);
@@ -135,8 +123,6 @@ web.HTMLElement notificationsSection(Ui ui, {Trip? trip}) {
             }), locked: locked(notice)),
       if (Notice.values.any(locked))
         el('p', cls: 'small', text: tr('Sivo je isključeno za sva putovanja u Postavkama.')),
-      if (trip == null && on)
-        button(cls: 'text-button', text: tr('Isključi obavijesti na ovom mobitelu'), onTap: signOut),
     ]) {
       body.append(part);
     }

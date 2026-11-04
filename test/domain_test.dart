@@ -402,6 +402,27 @@ void main() {
       expect(agreedOption(group, poll), isNull);
     });
 
+    test('a thing stands on the day with most votes, on all equal ones, and on none without a vote', () {
+      final group = trip();
+      expect(votedDays(group, {}), isEmpty);
+      expect(votedDays(group, {
+        1: {'x'},
+      }), [1]);
+      expect(votedDays(group, {
+        1: {'x', 'y'},
+        2: {'y', 'z'},
+        0: {'z'},
+      }), [1, 2]);
+      expect(votedDays(group, {
+        1: {'x', 'y'},
+        2: {'y', 'z', 'x'},
+      }), [2]);
+      expect(votedDays(group, {
+        1: {'x'},
+        2: {'gone', 'left'},
+      }), [1]);
+    });
+
     test('it goes grey only once its last agreed day has gone by', () {
       expect(planOfAttack(trip(), DateTime(2026, 7, 3, 23)).single.past, isFalse);
       expect(planOfAttack(trip(), DateTime(2026, 7, 4, 0, 5)).single.past, isTrue);
@@ -662,34 +683,49 @@ void main() {
       expect(Transition.values, hasLength(15));
     });
 
-    test('takes every photo in the order it was taken, not videos or those left out', () {
+    test('takes everything in the order it was taken, but what is left out', () {
       final plan = trip(4)
         ..photos.addAll([
           Photo(id: 'late', takenAt: DateTime(2026, 11, 3, 18), addedBy: 'a'),
           Photo(id: 'early', takenAt: DateTime(2026, 11, 2, 9), addedBy: 'b'),
-          Photo(id: 'film', takenAt: DateTime(2026, 11, 2, 10), addedBy: 'a', videoType: 'video/mp4'),
+          Photo(
+              id: 'film',
+              takenAt: DateTime(2026, 11, 2, 10),
+              addedBy: 'a',
+              videoType: 'video/mp4',
+              seconds: 20),
+          Photo(id: 'old film', takenAt: DateTime(2026, 11, 2, 10, 30), addedBy: 'a', videoType: 'video/mp4'),
           Photo(id: 'out', takenAt: DateTime(2026, 11, 2, 11), addedBy: 'a'),
         ]);
       final show = Show(id: 's', name: 'Dan 1', addedBy: 'a', look: Look(Transition.push))
         ..leftOut.add('out')
         ..looks['late'] = Look(Transition.circle, 2.5);
       final slides = slidesOf(plan, show);
-      expect(slides.map((slide) => slide.photoId), ['early', 'late']);
+      expect(slides.map((slide) => slide.photoId), ['early', 'film', 'old film', 'late']);
+      expect(slides.map((slide) => slide.video), [null, 20, 30, null]);
       expect(slides.first.look.transition, Transition.push);
       expect(slides.last.look.extra, 2.5);
     });
 
-    test('plays each photo for its transition and then still, round and round', () {
+    test('a photo stays 4 s and longer, a video plays a piece of 6 s in every 30 s', () {
       final slides = <Slide>[
-        (photoId: 'x', look: Look(Transition.fade)),
-        (photoId: 'y', look: Look(Transition.push, 2)),
+        (photoId: 'x', look: Look(Transition.fade), video: null),
+        (photoId: 'y', look: Look(Transition.push, 2), video: null),
       ];
-      expect(slideLength(slides.first.look), 3.5);
-      expect(frameAt(slides, 0), (index: 0, previous: null, progress: 0));
-      expect(frameAt(slides, 4.0), (index: 1, previous: 0, progress: 0.5 / 3));
-      expect(frameAt(slides, 8), (index: 1, previous: 0, progress: 1));
-      expect(frameAt(slides, 9.5), (index: 0, previous: 1, progress: 0.5));
-      expect(secondsBefore(slides, 1), 3.5);
+      expect(slideLength(slides.first), 5);
+      expect(slideLength((photoId: 'z', look: Look(Transition.fade, 0, 3.5), video: null)), 8.5);
+      expect(frameAt(slides, 0), (index: 0, previous: null, progress: 0, into: 0));
+      expect(frameAt(slides, 6), (index: 1, previous: 0, progress: 1 / 3, into: 1));
+      expect(frameAt(slides, 10), (index: 1, previous: 0, progress: 1, into: 5));
+      expect(frameAt(slides, 12.5), (index: 0, previous: 1, progress: 0.5, into: 0.5));
+      expect(secondsBefore(slides, 1), 5);
+
+      expect([longestClip(4), longestClip(20), longestClip(30), longestClip(45)], [4, 6, 6, 12]);
+      final film = (photoId: 'f', look: Look(Transition.fade, 1, 0, 18, 6), video: 20.0);
+      expect(clipOf(film), (from: 14, length: 6));
+      expect(slideLength(film), 8);
+      final short = (photoId: 'g', look: Look(Transition.fade, 0, 0, 2, 6), video: 4.0);
+      expect(clipOf(short), (from: 0, length: 4));
     });
 
     test('the presentation of the day is the one most have on their screens', () {

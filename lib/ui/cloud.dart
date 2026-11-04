@@ -125,11 +125,6 @@ class CloudSync {
     });
   }
 
-  Future<void> removePushDevice() async {
-    await _session.token();
-    await _send('DELETE', 'push/${_session.uid}');
-  }
-
   /// Dates change and trips come and go, so this is repeated with every refresh.
   Future<void> _updatePushDevice() async {
     try {

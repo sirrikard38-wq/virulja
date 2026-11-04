@@ -168,6 +168,7 @@ class _VideoWork {
       await Future.any([_recording.future, _next(_player, 'ended')]);
       _stopRecording();
       _player.pause();
+      final recorded = min(_player.currentTime, length);
       recorder.stop();
       await stopped;
       if (_gaveUp || pieces.isEmpty) throw StateError('no clip');
@@ -186,6 +187,7 @@ class _VideoWork {
         addedBy: addedBy,
         videoType: type,
         parts: piecesFor(clip.size.toInt()),
+        seconds: (recorded * 10).round() / 10,
       );
     } finally {
       web.URL.revokeObjectURL(address);

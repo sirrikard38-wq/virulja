@@ -68,6 +68,9 @@ class Ui {
   /// Trip id -> the day its Plan napada shows; without one, all of them.
   final Map<String, int> attackDays = {};
 
+  /// What the open day of Plan napada showed, which stays until the day is left.
+  ({String trip, int day, Set<String> ids})? attackKept;
+
   /// Whether the list of kinds of notification is open.
   bool noticesOpen = false;
 

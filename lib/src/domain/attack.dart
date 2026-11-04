@@ -20,7 +20,7 @@ class NextUp {
 
   final String title;
 
-  /// The days the group agreed on, in order. A stop also has its own day.
+  /// The days with the most votes, in order. A stop also has its own day.
   final List<int> days;
 
   /// Day -> who can go that day.
@@ -30,8 +30,8 @@ class NextUp {
   final String time;
   final String? detail;
 
-  /// It has gone by: every day agreed on is over, or the whole trip is. It stays
-  /// in the list, greyed out.
+  /// It has gone by: every one of its days is over, or the whole trip is. It
+  /// stays in the list, greyed out.
   final bool past;
 
   /// What it costs the whole group, and where that goes in Troškovi.
@@ -58,7 +58,22 @@ const Set<String> yesOrNo = {'Da', 'Ne', 'Možda'};
 bool onlyOneAnswer(Poll poll) =>
     poll.single || poll.options.every((option) => yesOrNo.contains(option.time));
 
-/// The days enough of the group can go, in order.
+/// The days with the most votes, in order: where the thing stands in Plan napada.
+/// Days with equal votes all count; with no vote it has no day.
+List<int> votedDays(Trip trip, Map<int, Set<String>> votes) {
+  final counts = {
+    for (final day in votes.keys)
+      if (day >= 0 && day < trip.dayCount) day: trip.membersAmong(votes[day]!),
+  };
+  final most = counts.values.fold(0, (best, count) => count > best ? count : best);
+  if (most == 0) return const [];
+  return [
+    for (final day in counts.keys.toList()..sort())
+      if (counts[day] == most) day,
+  ];
+}
+
+/// The days enough of the group can go, in order: what the news calls agreed.
 List<int> agreedDays(Trip trip, Map<int, Set<String>> votes) => [
       for (final day in votes.keys.toList()..sort())
         if (day >= 0 &&
@@ -189,7 +204,7 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
   }) {
     final days = {
       if (ownDay != null && ownDay >= 0 && ownDay < trip.dayCount) ownDay,
-      ...agreedDays(trip, votes),
+      ...votedDays(trip, votes),
     }.toList()
       ..sort();
     return NextUp(

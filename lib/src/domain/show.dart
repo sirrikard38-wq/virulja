@@ -10,10 +10,16 @@ const double firstExtra = 6;
 /// Transitions there are from the start; the others open as the trip goes on.
 const int firstTransitions = 5;
 
-/// Seconds a transition takes before it is made longer, and then how long the
-/// photo stands still.
+/// Seconds a transition takes before it is made longer, and then how long a
+/// photo stands still before it may be made to stay longer.
 const double transitionTime = 1;
-const double stillTime = 2.5;
+const double stillTime = 4;
+
+/// The bar for how much longer a photo stays: all of it open.
+const double longestStay = 12;
+
+/// A presentation may show this much of every 30 seconds of a video.
+const double clipPer30 = 6;
 
 double _hundredths(double value) => (value * 100).round() / 100;
 
@@ -39,49 +45,79 @@ int openTransitions(Trip trip, DateTime now) {
   return firstTransitions + (share * later + 1e-9).floor();
 }
 
-/// One photo of a presentation and the way it comes in.
-typedef Slide = ({String photoId, Look look});
+/// One photo or video of a presentation and the way it comes in. [video] is how
+/// long a video is; null for a photo.
+typedef Slide = ({String photoId, Look look, double? video});
 
-/// The photos of [show] in the order they were taken: every photo of the trip,
-/// not videos and not those left out.
+/// How long a video of [seconds] is when its length is not known: the most the
+/// app keeps.
+const double _keptVideo = 30;
+
+/// The longest piece of a video of [seconds] a presentation may show: 6 s of
+/// every 30 s it lasts.
+double longestClip(double seconds) =>
+    min(seconds, clipPer30 * max(1, (seconds / 30 - 1e-9).ceil()));
+
+/// The piece of the video [slide] plays: where it starts and how long it is.
+({double from, double length}) clipOf(Slide slide) {
+  final video = slide.video ?? 0;
+  final length = min(slide.look.length, longestClip(video));
+  return (from: slide.look.from.clamp(0, max(0.0, video - length)).toDouble(), length: length);
+}
+
+/// How long [video] is, or the most the app keeps when that is not known.
+double videoLength(Photo video) => video.seconds ?? _keptVideo;
+
+/// The photos and videos of [show] in the order they were taken: everything in
+/// Uspomene but what is left out.
 List<Slide> slidesOf(Trip trip, Show show) {
-  final photos = trip.photos
-      .where((photo) => !photo.isVideo && !show.leftOut.contains(photo.id))
-      .toList()
+  final photos = trip.photos.where((photo) => !show.leftOut.contains(photo.id)).toList()
     ..sort((a, b) => a.takenAt.compareTo(b.takenAt));
   return [
-    for (final photo in photos) (photoId: photo.id, look: show.looks[photo.id] ?? show.look),
+    for (final photo in photos)
+      (
+        photoId: photo.id,
+        look: show.looks[photo.id] ?? show.look,
+        video: photo.isVideo ? videoLength(photo) : null,
+      ),
   ];
 }
 
-/// How long one photo takes: its transition, then standing still.
-double slideLength(Look look) => transitionTime + look.extra + stillTime;
+/// How long one photo or video takes: its transition, then a photo stands still
+/// and a video plays its piece.
+double slideLength(Slide slide) =>
+    transitionTime +
+    slide.look.extra +
+    (slide.video == null ? stillTime + slide.look.stay : clipOf(slide).length);
 
-/// Seconds from the start of [slides] to the photo at [index].
-double secondsBefore(List<Slide> slides, int index) => slides
-    .take(index)
-    .fold(0.0, (sum, slide) => sum + slideLength(slide.look));
+/// Seconds from the start of [slides] to the one at [index].
+double secondsBefore(List<Slide> slides, int index) =>
+    slides.take(index).fold(0.0, (sum, slide) => sum + slideLength(slide));
 
 /// Where a presentation is after [seconds], going round and round: which photo,
-/// the one it comes after, and how far its transition has come, from 0 to 1. The
-/// very first photo comes after none.
-({int index, int? previous, double progress}) frameAt(List<Slide> slides, double seconds) {
-  if (slides.isEmpty) return (index: 0, previous: null, progress: 1);
+/// the one it comes after, how far its transition has come, from 0 to 1, and how
+/// many seconds of it have gone. The very first photo comes after none.
+({int index, int? previous, double progress, double into}) frameAt(
+  List<Slide> slides,
+  double seconds,
+) {
+  if (slides.isEmpty) return (index: 0, previous: null, progress: 1, into: 0);
   final round = secondsBefore(slides, slides.length);
   var left = seconds % round;
   for (var i = 0; i < slides.length; i++) {
-    final look = slides[i].look;
-    if (left < slideLength(look) || i == slides.length - 1) {
+    final slide = slides[i];
+    if (left < slideLength(slide) || i == slides.length - 1) {
       final first = i == 0 && seconds < round;
       return (
         index: i,
         previous: first ? null : (i - 1 + slides.length) % slides.length,
-        progress: min(1.0, left / (transitionTime + look.extra)),
+        progress: min(1.0, left / (transitionTime + slide.look.extra)),
+        into: left,
       );
     }
-    left -= slideLength(look);
+    left -= slideLength(slide);
   }
-  return (index: 0, previous: null, progress: 1);
+  return (index: 0, previous: null, progress: 1, into: 0);
 }
 
 /// The presentation [person] made, if any: each makes one at most.

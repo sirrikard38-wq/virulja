@@ -9,11 +9,10 @@ import '../src/domain/models.dart';
 import '../src/domain/show.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 import 'seconds_bar.dart';
 import 'show_player.dart';
 import 'widgets.dart';
-
-Look _copy(Look look) => Look(look.transition, look.extra);
 
 /// A presentation being made, kept apart from the trip until it is saved, so that
 /// a redraw of the screen keeps it.
@@ -21,10 +20,10 @@ class _Draft {
   _Draft(this.tripId, Show? show)
       : editing = show?.id,
         name = show?.name ?? '',
-        look = _copy(show?.look ?? Look(Transition.fade)),
+        look = (show?.look ?? Look(Transition.fade)).copy(),
         looks = {
           for (final entry in (show?.looks ?? const <String, Look>{}).entries)
-            entry.key: _copy(entry.value),
+            entry.key: entry.value.copy(),
         },
         leftOut = {...?show?.leftOut};
 
@@ -70,6 +69,59 @@ String _growth(Trip trip, DateTime now, double limit) {
       : tr('Svaki dan putovanja otvara dulje prijelaze, do 12 s zadnji dan.');
 }
 
+/// How long [photo] stays: a photo 4 s and as much longer as wanted, a video the
+/// piece of it that is picked, 6 s of every 30 s at most.
+List<web.HTMLElement> _howLong(Ui ui, Photo photo, Look look, Look Function() own) {
+  if (!photo.isVideo) {
+    return [
+      el('p', cls: 'label pad gap-top', text: tr('Koliko dugo se prikazuje')),
+      secondsBar(
+        value: look.stay,
+        limit: longestStay,
+        longest: longestStay,
+        label: tr('Koliko dugo se prikazuje'),
+        onChange: (seconds, {required done}) {
+          own().stay = seconds;
+          if (done) ui.rerender();
+        },
+      ),
+      el('p', cls: 'small pad', text: tr('Svaka fotografija stoji 4 s, i još koliko ovdje dodaš.')),
+    ];
+  }
+  final length = videoLength(photo);
+  final clip = clipOf((photoId: photo.id, look: look, video: length));
+  final longest = longestClip(length);
+  return [
+    el('p', cls: 'label pad gap-top', text: tr('Koliko videa ide u prezentaciju')),
+    secondsBar(
+      value: clip.length,
+      limit: longest,
+      longest: longest,
+      added: false,
+      label: tr('Koliko videa ide u prezentaciju'),
+      onChange: (seconds, {required done}) {
+        own().length = max(1, seconds);
+        if (done) ui.rerender();
+      },
+    ),
+    if (length - clip.length > .05) ...[
+      el('p', cls: 'label pad gap-top', text: tr('Od koje sekunde')),
+      secondsBar(
+        value: clip.from,
+        limit: length - clip.length,
+        longest: length,
+        added: false,
+        label: tr('Od koje sekunde'),
+        onChange: (seconds, {required done}) {
+          own().from = seconds;
+          if (done) ui.rerender();
+        },
+      ),
+    ],
+    el('p', cls: 'small pad', text: tr('Od svakih 30 s videa u prezentaciju ide najviše 6 s.')),
+  ];
+}
+
 /// Makes or changes this person's presentation of the trip's photos. On top it
 /// plays as it will on the trip's cover, from the photo being set.
 web.HTMLElement showBuilder(Ui ui, Trip trip) {
@@ -78,8 +130,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
   final now = DateTime.now();
   final limit = extraLimit(trip, now);
   final open = openTransitions(trip, now);
-  final photos = trip.photos.where((photo) => !photo.isVideo).toList()
-    ..sort((a, b) => a.takenAt.compareTo(b.takenAt));
+  final photos = trip.photos.toList()..sort((a, b) => a.takenAt.compareTo(b.takenAt));
   if (!photos.any((photo) => photo.id == draft.chosen)) {
     draft.chosen = photos.isEmpty ? null : photos.first.id;
   }
@@ -93,7 +144,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
   name.onInput.listen((_) => draft.name = name.value);
 
   Look lookOf(String photo) => draft.looks[photo] ?? draft.look;
-  Look own(String photo) => draft.looks.putIfAbsent(photo, () => _copy(draft.look));
+  Look own(String photo) => draft.looks.putIfAbsent(photo, () => draft.look.copy());
 
   Show? existing() {
     for (final show in trip.shows) {
@@ -169,13 +220,18 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
           if (photo.id == chosen) 'on',
           if (draft.leftOut.contains(photo.id)) 'out',
         ].join(' '),
-        ariaLabel: tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
+        ariaLabel: photo.isVideo
+            ? tr('Video, {0}', [weekdayAndDate(photo.day)])
+            : tr('Fotografija, {0}', [weekdayAndDate(photo.day)]),
         onTap: () {
           draft.chosen = photo.id;
           ui.rerender();
         },
         children: [
-          storedImage(ui, trip, thumbId(photo.id), cls: ''),
+          el('span', cls: 'show-thumb-picture', children: [
+            storedImage(ui, trip, thumbId(photo.id), cls: ''),
+            if (photo.isVideo) el('span', cls: 'shot-play', children: [icon('play', size: 18)]),
+          ]),
           el('span', cls: 'show-thumb-label', text: lookOf(photo.id).transition.label),
         ],
       ),
@@ -193,7 +249,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
     if (photos.isEmpty)
       el('p', cls: 'soft pad gap-top', text: tr('Prvo dodajte fotografije u Uspomene.'))
     else ...[
-      sectionTitle(tr('Fotografije ({0} od {1})', [slides.length, photos.length])),
+      sectionTitle(tr('Uspomene ({0} od {1})', [slides.length, photos.length])),
       strip,
     ],
     if (chosen != null) ...[
@@ -225,19 +281,22 @@ web.HTMLElement showBuilder(Ui ui, Trip trip) {
       secondsBar(
         value: lookOf(chosen).extra,
         limit: limit,
+        label: tr('Produljenje prijelaza'),
         onChange: (seconds, {required done}) {
           own(chosen).extra = seconds;
           if (done) ui.rerender();
         },
       ),
       el('p', cls: 'small pad', text: _growth(trip, now, limit)),
+      ..._howLong(ui, photos.firstWhere((photo) => photo.id == chosen), lookOf(chosen),
+          () => own(chosen)),
       el('div', cls: 'pad', children: [
         button(
           cls: 'text-button',
           text: tr('Isto za sve fotografije'),
           onTap: () {
             draft
-              ..look = _copy(lookOf(chosen))
+              ..look = lookOf(chosen).copy()
               ..looks.clear();
             ui.toast(tr('Sve fotografije imaju isti prijelaz.'));
             ui.rerender();

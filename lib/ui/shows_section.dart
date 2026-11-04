@@ -55,8 +55,8 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
         ui.rerender();
       },
       children: [
+        icon(open ? 'minus' : 'plus', size: 22),
         el('span', cls: 'section', text: tr('Prezentacija dana')),
-        icon('plus', size: 22),
       ],
     )..setAttribute('aria-expanded', '$open'),
     if (!open && best != null)

@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
@@ -23,19 +24,64 @@ class ShowPlayer {
   /// What it plays, to know whether a redraw can keep it.
   final String key;
   final web.HTMLElement element = el('div', cls: 'show-player');
-  final Map<String, web.HTMLImageElement> _pictures = {};
-  final Set<web.HTMLImageElement> _shown = {};
+  final Map<String, web.HTMLElement> _pictures = {};
+
+  /// The videos among [_pictures], by the same ids.
+  final Map<String, web.HTMLVideoElement> _videos = {};
+  final Set<web.HTMLElement> _shown = {};
   late final JSFunction _onFrame = _frame.toJS;
   bool _running = false;
 
-  web.HTMLImageElement _picture(String id) => _pictures.putIfAbsent(id, () {
-        final image = el('img', attrs: {'alt': ''}) as web.HTMLImageElement;
-        _ui.imageAddress(_trip, id).then((address) {
-          if (address != null) image.src = address;
-        });
-        element.append(image);
-        return image;
+  /// The picture of [slide], or for a video a silent player of it.
+  web.HTMLElement _picture(Slide slide) => _pictures.putIfAbsent(slide.photoId, () {
+        final id = slide.photoId;
+        final web.HTMLElement picture;
+        if (slide.video == null) {
+          final image = el('img', attrs: {'alt': ''}) as web.HTMLImageElement;
+          _ui.imageAddress(_trip, id).then((address) {
+            if (address != null) image.src = address;
+          });
+          picture = image;
+        } else {
+          final video = el('video', cls: 'show-video', attrs: {
+            'muted': '',
+            'playsinline': '',
+            'preload': 'auto',
+          }) as web.HTMLVideoElement
+            ..muted = true;
+          _ui.imageAddress(_trip, id).then((address) {
+            if (address != null) video.src = address;
+          });
+          picture = _videos[id] = video;
+        }
+        element.append(picture);
+        return picture;
       });
+
+  /// Plays the piece of a video once its transition is over, and holds it still
+  /// on the piece's first picture before that.
+  void _playPiece(Slide slide, double into) {
+    final picture = _videos[slide.photoId];
+    if (picture == null || picture.readyState < 1) return;
+    final clip = clipOf(slide);
+    final moving = transitionTime + slide.look.extra;
+    if (into < moving) {
+      if (!picture.paused) picture.pause();
+      if ((picture.currentTime - clip.from).abs() > .1) picture.currentTime = clip.from;
+      return;
+    }
+    final target = clip.from + min(into - moving, clip.length);
+    if ((picture.currentTime - target).abs() > .4) picture.currentTime = target;
+    if (picture.paused) {
+      picture.play().toDart.then((_) {}, onError: (Object _) {});
+    }
+  }
+
+  void _stopVideos(Iterable<web.HTMLVideoElement> videos) {
+    for (final video in videos) {
+      if (!video.paused) video.pause();
+    }
+  }
 
   /// Starts drawing, or goes on after the player was off the screen.
   void start() {
@@ -47,6 +93,7 @@ class ShowPlayer {
   void _frame(double _) {
     if (!element.isConnected) {
       _running = false;
+      _stopVideos(_videos.values);
       return;
     }
     _draw();
@@ -59,14 +106,19 @@ class ShowPlayer {
     final frame = frameAt(_slides, seconds);
     final slide = _slides[frame.index];
     final previous = frame.previous;
-    final incoming = _picture(slide.photoId);
+    final incoming = _picture(slide);
     final outgoing = previous == null || previous == frame.index || frame.progress >= 1
         ? null
-        : _picture(_slides[previous].photoId);
-    _picture(_slides[(frame.index + 1) % _slides.length].photoId); // ready in time
+        : _picture(_slides[previous]);
+    _picture(_slides[(frame.index + 1) % _slides.length]); // ready in time
     for (final image in _shown) {
       if (image != incoming && image != outgoing) image.style.display = 'none';
     }
+    _stopVideos([
+      for (final entry in _videos.entries)
+        if (entry.key != slide.photoId) entry.value,
+    ]);
+    _playPiece(slide, frame.into);
     _shown
       ..clear()
       ..add(incoming);
