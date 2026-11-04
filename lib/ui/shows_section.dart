@@ -39,7 +39,8 @@ web.HTMLElement _showCard(Ui ui, Trip trip, Show show, String me, Show? best) {
       ]),
     ]),
     if (show.changedAt case final changed?)
-      el('span', cls: 'show-age', text: sinceCount(DateTime.now().toUtc().difference(changed))),
+      el('span', cls: 'show-age',
+          text: tr('Promijenjeno prije {0}', [sinceCount(DateTime.now().toUtc().difference(changed))])),
     if (show.addedBy == me)
       button(
         cls: 'icon-button brush',

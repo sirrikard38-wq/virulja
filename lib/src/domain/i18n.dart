@@ -472,6 +472,7 @@ const Map<String, List<String>> _texts = {
   'Dodano u Plan napada.': ['Added to the game plan.', 'Eylem planına eklendi.'],
   'Minute': ['Minutes', 'Dakika'],
   'Sati': ['Hours', 'Saat'],
+  'Promijenjeno prije {0}': ['Changed {0} ago', '{0} önce değiştirildi'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

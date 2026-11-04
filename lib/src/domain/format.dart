@@ -152,17 +152,17 @@ String songsCount(int n) =>
 
 String nightsCount(int n) => _count(n, ('noć', 'noći', 'noći'), 'night', 'nights', 'gece');
 
-/// How long ago something was changed: seconds, then minutes up to an hour,
-/// then hours.
+/// How long ago something was changed, as it follows "prije": seconds, then
+/// minutes up to an hour, then hours. "prije 1 minute", "prije 5 minuta".
 String sinceCount(Duration gone) {
   final seconds = max(0, gone.inSeconds);
   if (seconds < 60) {
-    return _count(seconds, ('sekunda', 'sekunde', 'sekundi'), 'second', 'seconds', 'saniye');
+    return _count(seconds, ('sekunde', 'sekunde', 'sekundi'), 'second', 'seconds', 'saniye');
   }
   if (gone.inMinutes < 60) {
-    return _count(gone.inMinutes, ('minuta', 'minute', 'minuta'), 'minute', 'minutes', 'dakika');
+    return _count(gone.inMinutes, ('minute', 'minute', 'minuta'), 'minute', 'minutes', 'dakika');
   }
-  return _count(gone.inHours, ('sat', 'sata', 'sati'), 'hour', 'hours', 'saat');
+  return _count(gone.inHours, ('sata', 'sata', 'sati'), 'hour', 'hours', 'saat');
 }
 
 String votesCount(int n) => _count(n, ('glas', 'glasa', 'glasova'), 'vote', 'votes', 'oy');

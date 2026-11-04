@@ -579,7 +579,7 @@ details.adder .wide { width: 100%; }
 .show-card.best { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .show-card .badge { margin-bottom: 6px; border-radius: 6px; }
 .show-count { color: var(--soft); font-size: 13px; font-weight: 600; }
-.show-votes { margin: 0 auto; font-size: 18px; font-weight: 700; }
+.show-votes { position: absolute; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700; white-space: nowrap; }
 .show-card .show-actions { justify-content: space-between; }
 .icon-button.brush { width: 52px; height: 52px; margin-right: 6px; border-radius: 50%; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .show-preview-wrap { position: sticky; top: var(--top-safe); z-index: 3; padding: 8px 0 4px; background: var(--bg); }

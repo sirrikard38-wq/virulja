@@ -851,7 +851,8 @@ void main() {
       expect(sinceCount(const Duration(seconds: 2)), '2 sekunde');
       expect(sinceCount(const Duration(minutes: 3)), '3 minute');
       expect(sinceCount(const Duration(minutes: 30)), '30 minuta');
-      expect(sinceCount(const Duration(minutes: 61)), '1 sat');
+      expect(sinceCount(const Duration(minutes: 61)), '1 sata');
+      expect(sinceCount(const Duration(minutes: 1)), '1 minute');
       expect(sinceCount(const Duration(hours: 5)), '5 sati');
     });
 
