@@ -5,6 +5,7 @@ import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'plan_cost.dart';
 import 'swipes.dart';
 import 'widgets.dart';
 
@@ -184,5 +185,6 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       ]),
     _driveForm(ui, trip),
     _addLeg(ui, trip),
+    planCost(ui, trip, CostCategory.transport),
   ]);
 }

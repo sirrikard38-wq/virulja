@@ -145,6 +145,7 @@ Tree tripToTree(
       },
       'showPicks': trip.showPicks,
       'dayShowId': trip.dayShowId,
+      'budgets': trip.budgets,
     };
 
 Tree _branch(Tree tree, String key) =>
@@ -263,6 +264,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       shows: _items(tree, 'shows', Show.fromJson),
       showPicks: _branch(tree, 'showPicks').cast<String, String>(),
       dayShowId: tree['dayShowId'] as String?,
+      budgets: _branch(tree, 'budgets').map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
     );
     return CloudTrip(trip, {
       for (final person in order)

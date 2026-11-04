@@ -8,6 +8,7 @@ import '../src/domain/offers.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'plan_cost.dart';
 import 'widgets.dart';
 
 /// Asks where the link of a stay should go when it has both a place on the map
@@ -376,5 +377,6 @@ web.HTMLElement stayScreen(Ui ui, Trip trip) {
         _offerCard(ui, trip, offer, best: identical(offer, best)),
     ],
     _addOffer(ui, trip),
+    planCost(ui, trip, CostCategory.stay),
   ]);
 }

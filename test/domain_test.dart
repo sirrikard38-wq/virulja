@@ -295,6 +295,17 @@ void main() {
       expect(line.ahead, 3000);
     });
 
+    test('a planned whole for a kind of cost is what is ahead of what was spent', () {
+      final trip = visTrip()
+        ..budgets['food'] = 50000
+        ..expenses.add(Expense(id: 'x', title: 'Ručak', amount: 12000, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food));
+      final line = Budget.of(trip).line(CostCategory.food);
+      expect([line.planned, line.actual, line.ahead], [50000, 12000, 38000]);
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
+      expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.budgets, {'food': 50000});
+      expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).budgets, {'food': 50000});
+    });
+
     test('a reserved stay is planned and spent', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));

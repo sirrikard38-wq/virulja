@@ -104,19 +104,18 @@ web.HTMLElement _total(String label, int cents) => el('div', cls: 'tile card', c
       el('span', cls: 'value', text: euros(cents)),
     ]);
 
-/// One kind of cost: what was spent, and what is planned and not spent yet.
-/// The bar fills with what was spent of the two together.
+/// One kind of cost: what was spent and what is planned for it in all. The bar
+/// fills with what was spent of the plan.
 web.HTMLElement _line(BudgetLine line) {
-  final whole = line.actual + line.ahead;
-  final share = whole == 0 ? 0 : line.actual / whole;
+  final share = line.planned == 0 ? 0 : line.actual / line.planned;
   return el('div', cls: 'line', children: [
     el('div', attrs: {'style': 'display:flex;justify-content:space-between;gap:12px'},
         children: [
       el('span', cls: 'strong', text: line.category.label),
-      el('span', cls: 'small', text: tr('Potrošeno {0} · Planirano {1}', [euros(line.actual), euros(line.ahead)])),
+      el('span', cls: 'small', text: tr('Potrošeno {0} · Planirano {1}', [euros(line.actual), euros(line.planned)])),
     ]),
     el('div', cls: 'bar', children: [
-      el('div', attrs: {
+      el('div', cls: share > 1 ? 'over' : null, attrs: {
         'style': 'width:${(share.clamp(0, 1) * 100).round()}%',
       }),
     ]),
@@ -306,8 +305,8 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
     topBar(tr('Troškovi')),
     el('div', cls: 'three', children: [
       _total(tr('Potrošeno'), budget.actualTotal),
-      _total(tr('Planirano'), budget.aheadTotal),
-      _total(tr('Ukupno'), budget.actualTotal + budget.aheadTotal),
+      _total(tr('Planirano'), budget.plannedTotal),
+      _total(tr('Preostalo'), budget.plannedTotal - budget.actualTotal),
     ]),
     for (final line in budget.lines)
       if (line.planned > 0 || line.actual > 0 || _always.contains(line.category)) _line(line),

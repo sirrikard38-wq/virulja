@@ -13,6 +13,7 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'plan_cost.dart';
 import 'polls_section.dart';
 import 'swipes.dart';
 import 'widgets.dart';
@@ -605,6 +606,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     chipRow,
     if (ui.addingKind) _newKind(ui, addKind),
     el('div', cls: 'slide-clip', children: [sliding]),
+    planCost(ui, trip, CostCategory.food),
     el('div', cls: 'row stick-bottom', children: [
       el('div', cls: 'grow', text: tab.estimateTitle),
       el('div', cls: 'price',

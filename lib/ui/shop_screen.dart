@@ -6,6 +6,7 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'plan_cost.dart';
 import 'widgets.dart';
 
 /// Asks what [list] cost and whom it is for, everyone at first, and writes it
@@ -239,6 +240,7 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
       field(tr('Naziv liste'), name),
       primaryButton(tr('Napravi listu'), make),
     ]),
+    planCost(ui, trip, CostCategory.shop),
   ]);
 }
 

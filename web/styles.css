@@ -170,6 +170,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .shop-fold { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 16px; font-weight: 700; text-align: left; }
 .shop-fold .icon { flex: none; color: var(--accent); }
 .shop-actions { display: flex; gap: 8px; margin-top: 10px; }
+.ticks .tick.tick-in { padding-left: 28px; }
+.plan-cost { margin-top: 18px; padding-top: 4px; border-top: 1px solid color-mix(in srgb, var(--soft) 35%, transparent); margin-left: 20px; margin-right: 20px; }
+.plan-cost .section, .plan-cost .pad { padding-left: 0; padding-right: 0; }
+.plan-cost-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .shop-list .shop-item-row, .shop-list .shop-next, .shop-list .shop-actions { padding-left: 28px; }
 .time-picker select { flex: 1; min-width: 0; }
 .cost-edit .field, .cost-edit .fields, .cost-edit .checks, .cost-edit .error { margin-left: 0; margin-right: 0; }

@@ -79,12 +79,21 @@ class Budget {
     }
     return Budget._([
       for (final category in CostCategory.values)
-        BudgetLine(
-          category,
-          planned: plannedCost(trip, category),
-          actual: actual[category]!,
-          ahead: ahead[category]!,
-        ),
+        if (trip.budgets[category.name] case final whole?)
+          // The group set what it means to spend: what is not spent yet is ahead.
+          BudgetLine(
+            category,
+            planned: whole,
+            actual: actual[category]!,
+            ahead: whole > actual[category]! ? whole - actual[category]! : 0,
+          )
+        else
+          BudgetLine(
+            category,
+            planned: plannedCost(trip, category),
+            actual: actual[category]!,
+            ahead: ahead[category]!,
+          ),
     ], trip.people);
   }
 

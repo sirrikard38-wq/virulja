@@ -1066,7 +1066,9 @@ class Trip {
     List<Show>? shows,
     Map<String, String>? showPicks,
     this.dayShowId,
+    Map<String, int>? budgets,
   })  : uids = uids ?? {},
+        budgets = budgets ?? {},
         shows = shows ?? [],
         showPicks = showPicks ?? {},
         polls = polls ?? [],
@@ -1126,6 +1128,8 @@ class Trip {
         showPicks: (json['showPicks'] as Json? ?? const <String, dynamic>{})
             .cast<String, String>(),
         dayShowId: json['dayShowId'] as String?,
+        budgets: (json['budgets'] as Json? ?? const <String, dynamic>{})
+            .map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
       );
 
   final String id;
@@ -1186,6 +1190,10 @@ class Trip {
   /// The presentation of the day as last seen, which stays so while no other has
   /// more votes (`showOfTheDay`).
   String? dayShowId;
+
+  /// Kind of cost -> the whole amount the group means to spend on it, set with
+  /// Planiraj trošak.
+  Map<String, int> budgets;
 
   int get nights => end.difference(start).inDays;
 
@@ -1277,6 +1285,7 @@ class Trip {
     shows = other.shows;
     showPicks = other.showPicks;
     dayShowId = other.dayShowId;
+    budgets = other.budgets;
   }
 
   Json toJson() => {
@@ -1314,6 +1323,7 @@ class Trip {
         'shows': [for (final item in shows) item.toJson()],
         'showPicks': showPicks,
         'dayShowId': dayShowId,
+        'budgets': budgets,
       };
 }
 

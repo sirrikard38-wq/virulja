@@ -120,7 +120,8 @@ web.HTMLElement notificationsSection(Ui ui, {Trip? trip}) {
               } else if (!here().remove(notice.name)) {
                 here().add(notice.name);
               }
-            }), locked: locked(notice)),
+            }), locked: locked(notice))
+          ..classList.add('tick-in'),
       if (Notice.values.any(locked))
         el('p', cls: 'small', text: tr('Sivo je isključeno za sva putovanja u Postavkama.')),
     ]) {

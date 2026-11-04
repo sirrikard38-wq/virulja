@@ -179,8 +179,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   `ShopList.removed` for the robot, and undo takes it out again (news mark `#3`).
 - Times are picked on two wheels, minutes in steps of 5 (`timePicker`): a phone's own
   time field offers every minute.
-- Troškovi shows Potrošeno, Planirano (planned and not yet spent, `BudgetLine.ahead`) and
-  Ukupno, and each kind as "Potrošeno X · Planirano Y". A place of Hrana i piće in Plan
+- Troškovi shows Potrošeno, Planirano (the whole plan) and Preostalo (plan less spent;
+  not "Ostalo", which is a kind of cost), and each kind as "Potrošeno X · Planirano Y".
+  "Planiraj trošak" at the bottom of Hrana i piće, Dućan, Prijevoz and Smještaj sets the
+  whole the group means to spend on that kind (`Trip.budgets`), which is then its plan. A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what
   it really cost, who paid and whom it is for (`Place.expenseId`).
 - Entering a code with the name (any capitals) and phone number of someone already in

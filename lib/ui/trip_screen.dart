@@ -69,7 +69,7 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
           () => ui.go(ui.tripRoute(trip, 'put'))),
       _tile(tr('Smještaj'), euros(budget.line(CostCategory.stay).planned),
           () => ui.go(ui.tripRoute(trip, 'smjestaj'))),
-      _tile(tr('Troškovi'), euros(budget.actualTotal + budget.aheadTotal),
+      _tile(tr('Troškovi'), euros(budget.actualTotal),
           () => ui.go(ui.tripRoute(trip, 'troskovi'))),
     ]),
     if (chosen != null) ...[
