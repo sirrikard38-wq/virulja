@@ -24,7 +24,8 @@ class Budget {
     final written = {for (final expense in trip.expenses) _same(expense.title)};
     // A reserved stay is as good as paid.
     for (final offer in trip.offers) {
-      if (offer.reserved && !written.contains(_same(offer.name))) {
+      final booked = trip.expenses.any((cost) => cost.id == offer.expenseId);
+      if (offer.reserved && !booked && !written.contains(_same(offer.name))) {
         actual[CostCategory.stay] = actual[CostCategory.stay]! + offer.pricePerNight * trip.nights;
       }
     }

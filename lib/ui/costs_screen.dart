@@ -32,12 +32,24 @@ web.HTMLElement _line(BudgetLine line) {
   ]);
 }
 
-web.HTMLElement _addExpense(Ui ui, Trip trip) {
-  final title = input();
-  final amount = numberInput();
-  final category = select(CostCategory.values, (c) => c.label, selected: CostCategory.food);
-  final payer = select(trip.memberIds, ui.nameOf, selected: ui.meIn(trip));
-  final boxes = {for (final id in trip.memberIds) id: checkInput(checked: true)};
+/// The fields of a cost: a new one, or [editing] to change, which a tap on it
+/// in Plaćeno opens.
+List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
+  final title = input(value: editing?.title ?? '');
+  final amount = numberInput()
+    ..value = editing == null
+        ? ''
+        : (editing.amount / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
+  final category = select(CostCategory.values, (c) => c.label,
+      selected: editing?.category ?? CostCategory.food);
+  final payer = select(trip.memberIds, ui.nameOf,
+      selected: editing != null && trip.memberIds.contains(editing.payerId)
+          ? editing.payerId
+          : ui.meIn(trip));
+  final boxes = {
+    for (final id in trip.memberIds)
+      id: checkInput(checked: editing == null || editing.sharedBy.contains(id)),
+  };
   final error = errorLine();
 
   void add() {
@@ -54,18 +66,28 @@ web.HTMLElement _addExpense(Ui ui, Trip trip) {
       error.textContent = tr('Označi tko dijeli trošak.');
       return;
     }
-    trip.expenses.add(Expense(
-      id: ui.store.newId(),
-      title: title.value.trim(),
-      amount: cents,
-      payerId: trip.memberIds[payer.selectedIndex],
-      sharedBy: sharers,
-      category: CostCategory.values[category.selectedIndex],
-    ));
+    if (editing != null) {
+      editing
+        ..title = title.value.trim()
+        ..amount = cents
+        ..payerId = trip.memberIds[payer.selectedIndex]
+        ..sharedBy = sharers
+        ..category = CostCategory.values[category.selectedIndex];
+      ui.editingExpense = null;
+    } else {
+      trip.expenses.add(Expense(
+        id: ui.store.newId(),
+        title: title.value.trim(),
+        amount: cents,
+        payerId: trip.memberIds[payer.selectedIndex],
+        sharedBy: sharers,
+        category: CostCategory.values[category.selectedIndex],
+      ));
+    }
     ui.changed();
   }
 
-  return adder(tr('Dodaj trošak'), [
+  return [
     field(tr('Što'), title),
     el('div', cls: 'fields', children: [
       field(tr('Iznos (€)'), amount, tight: true),
@@ -77,7 +99,44 @@ web.HTMLElement _addExpense(Ui ui, Trip trip) {
       for (final id in trip.memberIds) checkbox(ui.nameOf(id), boxes[id]!),
     ]),
     error,
-    primaryButton(tr('Dodaj trošak'), add),
+    if (editing == null)
+      primaryButton(tr('Dodaj trošak'), add)
+    else
+      el('div', attrs: {'style': 'display:flex;gap:12px;align-items:center;margin-top:12px'}, children: [
+        primaryButton(tr('Spremi'), add, wide: false),
+        button(cls: 'text-button', text: tr('Odustani'), onTap: () {
+          ui.editingExpense = null;
+          ui.rerender();
+        }),
+      ]),
+  ];
+}
+
+web.HTMLElement _addExpense(Ui ui, Trip trip) =>
+    adder(tr('Dodaj trošak'), _expenseFields(ui, trip));
+
+/// One cost that was paid: a tap opens it for changing.
+web.HTMLElement _paidCost(Ui ui, Trip trip, Expense expense) {
+  final editing = ui.editingExpense == expense.id;
+  return el('div', children: [
+    el('div', cls: 'row', children: [
+      button(
+        cls: 'grow title-link',
+        ariaLabel: tr('Uredi: {0}', [expense.title]),
+        onTap: () {
+          ui.editingExpense = editing ? null : expense.id;
+          ui.rerender();
+        },
+        children: [
+          el('div', text: expense.title),
+          el('div', cls: 'small', text: '${ui.nameOf(expense.payerId)} · '
+              '${expense.category.label}'),
+        ],
+      ),
+      el('div', cls: 'price', text: euros(expense.amount)),
+      removeWithUndo(ui, trip.expenses, expense, expense.title),
+    ]),
+    if (editing) el('div', cls: 'cost-edit', children: _expenseFields(ui, trip, editing: expense)),
   ]);
 }
 
@@ -173,15 +232,6 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
       row,
     _addExpense(ui, trip),
     if (recent.isNotEmpty) sectionTitle(tr('Plaćeno')),
-    for (final expense in recent)
-      el('div', cls: 'row', children: [
-        el('div', cls: 'grow', children: [
-          el('div', text: expense.title),
-          el('div', cls: 'small', text: '${ui.nameOf(expense.payerId)} · '
-              '${expense.category.label}'),
-        ]),
-        el('div', cls: 'price', text: euros(expense.amount)),
-        removeWithUndo(ui, trip.expenses, expense, expense.title),
-      ]),
+    for (final expense in recent) _paidCost(ui, trip, expense),
   ]);
 }

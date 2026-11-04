@@ -522,12 +522,14 @@ class ViruljaApp {
         // Under the speaker: the way to the reserved stay, on foot.
         if (trip != null && _mainTabs.contains(place.section))
           if (trip.reservedOffer case final stay?)
-            button(
-              cls: trip.anthemClipId != null ? 'round right third' : 'round right second',
-              ariaLabel: tr('Pješice do smještaja'),
-              onTap: () => web.window.open('${walkTo(stay, trip)}', '_blank'),
-              children: [icon('pin', size: 22)],
-            ),
+            // A plain link: opening a window from code leaves an iPhone's home
+            // screen app white when it comes back from Google Maps.
+            el('a', cls: trip.anthemClipId != null ? 'round right third' : 'round right second', attrs: {
+              'href': '${walkTo(stay, trip)}',
+              'target': '_blank',
+              'rel': 'noopener',
+              'aria-label': tr('Pješice do smještaja'),
+            }, children: [icon('pin', size: 22)]),
         if (hasMenu) _menu(place.page),
       ]),
     );

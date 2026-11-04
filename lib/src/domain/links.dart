@@ -48,12 +48,11 @@ Uri mapsOf(String location) {
   return Uri.https('www.google.com', '/maps/search/', {'api': '1', 'query': text});
 }
 
-/// Google Maps on foot from where the phone is to [offer], or its map when its
-/// link does not say where it is.
+/// Google Maps on foot from where the phone is to [offer]: to the place its
+/// location gives, or to its name in the trip's city when that cannot be read.
 Uri walkTo(Offer offer, Trip trip) {
   final location = offer.location;
-  final place = location == null ? '${offer.name}, ${trip.city}' : mapsPlace(location);
-  if (place == null) return mapsOf(location!);
+  final place = (location == null ? null : mapsPlace(location)) ?? '${offer.name}, ${trip.city}';
   return Uri.https('www.google.com', '/maps/dir/', {
     'api': '1',
     'destination': place,

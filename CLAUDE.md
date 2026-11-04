@@ -139,7 +139,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Možda never decide a poll.
 - On a trip's main tabs the settings button is in the corner, the anthem's speaker under it,
   and under that a pin while a stay is reserved: Google Maps on foot from the phone to it
-  (`walkTo`; a short map link cannot be read, so it just opens).
+  (`walkTo`; when a short map link cannot be read, it walks to the stay's name in the
+  trip's city). It is a plain link: `window.open` left the iPhone app white on return.
 - Smještaj: each stay has a location (address or Google Maps link) and "Rezervirano". A
   reserved stay is planned and spent in Troškovi (`Offer.reserved`, `Trip.reservedOffer`).
   Rezervirano asks who paid and whom it is for (everyone ticked at first) and writes that
@@ -158,6 +159,7 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
+- A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).
 - The trip's header shows "tvoj trošak": your part of each written cost you share, and an
   equal part of what is planned and not yet written (`Budget.shareOf`).
 - Each presentation shows how long ago it was changed (`Show.changedAt`, `sinceCount`).

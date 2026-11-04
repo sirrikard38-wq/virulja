@@ -88,6 +88,9 @@ class Ui {
 
   /// The stay whose details are being changed.
   String? editingOffer;
+
+  /// The paid cost being changed.
+  String? editingExpense;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;

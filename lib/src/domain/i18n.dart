@@ -468,6 +468,7 @@ const Map<String, List<String>> _texts = {
   'Odaberi barem jednu osobu.': ['Pick at least one person.', 'En az bir kişi seç.'],
   'Rezervacija je poništena': ['The booking is taken back', 'Rezervasyon geri alındı'],
   'tvoj trošak': ['your cost', 'senin payın'],
+  'Uredi: {0}': ['Change: {0}', 'Değiştir: {0}'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

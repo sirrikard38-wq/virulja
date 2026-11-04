@@ -234,8 +234,10 @@ void main() {
       expect(walk.queryParameters['destination'], 'Ulica 5');
       expect(walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1), trip).queryParameters['destination'],
           'Vila, ${trip.city}');
-      expect('${walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1, location: 'https://maps.app.goo.gl/abc'), trip)}',
-          'https://maps.app.goo.gl/abc');
+      expect(
+          walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1, location: 'https://maps.app.goo.gl/abc'), trip)
+              .queryParameters['destination'],
+          'Vila, ${trip.city}');
     });
 
     test('with no offer chosen the stay costs nothing yet', () {

@@ -154,6 +154,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sheet-card .ticks { padding: 0; }
 .sheet-card .label, .sheet-card .small { margin: 0; }
 .offer-edit { margin-top: 10px; }
+.cost-edit { margin: 0 20px 12px; }
+.cost-edit .field, .cost-edit .fields, .cost-edit .checks, .cost-edit .error { margin-left: 0; margin-right: 0; }
 .brush-small { color: var(--accent); }
 .chip.sort-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 9px; font-size: 12px; }
 .chip.sort-chip .icon { stroke-width: 3; }
