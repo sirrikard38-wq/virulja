@@ -13,6 +13,7 @@ import 'package:virulja/src/domain/models.dart';
 import 'package:virulja/src/domain/offers.dart';
 import 'package:virulja/src/domain/seal.dart';
 import 'package:virulja/src/domain/settlement.dart';
+import 'package:virulja/src/domain/show.dart';
 import 'package:virulja/src/domain/trip_events.dart';
 import 'package:virulja/src/domain/wav.dart';
 
@@ -624,6 +625,132 @@ void main() {
       expect(bodies(newsFor('ub', 't', after, names, allOf(before), device)),
           ['Dogovoreno: Konoba, četvrtak, 2. srpnja', 'Cvita više nije na putovanju']);
     });
+  });
+
+  group('presentations', () {
+    Trip trip(int days) => Trip(
+          id: 't',
+          country: 'Hrvatska',
+          city: 'Vis',
+          start: dayOf(2026, 11, 2),
+          end: dayOf(2026, 11, 1 + days),
+          memberIds: ['a', 'b', 'c'],
+        );
+    DateTime on(int day) => DateTime(2026, 11, day, 12);
+
+    test('a transition gets longer each day of the trip, up to 12 s on the last', () {
+      final four = trip(4);
+      expect([for (final day in [1, 2, 3, 4, 5, 9]) extraLimit(four, on(day))],
+          [6, 6, 8, 10, 12, 12]);
+      final eight = trip(8);
+      final limits = [for (var day = 2; day <= 9; day++) extraLimit(eight, on(day))];
+      expect(limits.first, 6);
+      expect(limits[1], 6.86);
+      expect(limits.last, 12);
+      for (var i = 1; i < limits.length; i++) {
+        expect(limits[i], greaterThan(limits[i - 1]));
+      }
+      final one = trip(1);
+      expect(extraLimit(one, on(2)), 6);
+      expect(extraLimit(one, on(3)), 12);
+    });
+
+    test('five transitions at first, all fifteen on the last day', () {
+      final four = trip(4);
+      expect([for (final day in [1, 2, 3, 4, 5]) openTransitions(four, on(day))],
+          [5, 5, 8, 11, 15]);
+      expect(Transition.values, hasLength(15));
+    });
+
+    test('takes every photo in the order it was taken, not videos or those left out', () {
+      final plan = trip(4)
+        ..photos.addAll([
+          Photo(id: 'late', takenAt: DateTime(2026, 11, 3, 18), addedBy: 'a'),
+          Photo(id: 'early', takenAt: DateTime(2026, 11, 2, 9), addedBy: 'b'),
+          Photo(id: 'film', takenAt: DateTime(2026, 11, 2, 10), addedBy: 'a', videoType: 'video/mp4'),
+          Photo(id: 'out', takenAt: DateTime(2026, 11, 2, 11), addedBy: 'a'),
+        ]);
+      final show = Show(id: 's', name: 'Dan 1', addedBy: 'a', look: Look(Transition.push))
+        ..leftOut.add('out')
+        ..looks['late'] = Look(Transition.circle, 2.5);
+      final slides = slidesOf(plan, show);
+      expect(slides.map((slide) => slide.photoId), ['early', 'late']);
+      expect(slides.first.look.transition, Transition.push);
+      expect(slides.last.look.extra, 2.5);
+    });
+
+    test('plays each photo for its transition and then still, round and round', () {
+      final slides = <Slide>[
+        (photoId: 'x', look: Look(Transition.fade)),
+        (photoId: 'y', look: Look(Transition.push, 2)),
+      ];
+      expect(slideLength(slides.first.look), 3.5);
+      expect(frameAt(slides, 0), (index: 0, previous: null, progress: 0));
+      expect(frameAt(slides, 4.0), (index: 1, previous: 0, progress: 0.5 / 3));
+      expect(frameAt(slides, 8), (index: 1, previous: 0, progress: 1));
+      expect(frameAt(slides, 9.5), (index: 0, previous: 1, progress: 0.5));
+      expect(secondsBefore(slides, 1), 3.5);
+    });
+
+    test('the presentation of the day is the one most have on their screens', () {
+      final plan = trip(4)
+        ..shows.addAll([
+          Show(id: 's1', name: 'Prva', addedBy: 'a'),
+          Show(id: 's2', name: 'Druga', addedBy: 'b'),
+        ]);
+      expect(showOfTheDay(plan), isNull);
+      expect(shownTo(plan, 'c'), isNull);
+      plan.showPicks.addAll({'a': 's1', 'b': 's2'});
+      expect(showOfTheDay(plan)?.id, 's2');
+      plan.showPicks.addAll({'c': 's1', 'gone': 's2', 'x': 's2'});
+      expect(showOfTheDay(plan)?.id, 's1');
+      expect(shownTo(plan, 'b')?.id, 's2');
+      expect(showBy(plan, 'b')?.name, 'Druga');
+      expect(showBy(plan, 'c'), isNull);
+    });
+
+    test('a presentation and the picks survive saving and the cloud', () {
+      final plan = trip(4)
+        ..shows.add(Show(
+          id: 's1',
+          name: 'Najbolji dan',
+          addedBy: 'a',
+          look: Look(Transition.wipe, 1.25),
+          looks: {'p': Look(Transition.spin, 6.86)},
+          leftOut: {'q'},
+        ))
+        ..showPicks['b'] = 's1';
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(plan, (id) => id)))));
+      for (final back in [
+        tripFromTree('t', (tree as Map).cast<String, dynamic>())!.trip,
+        Trip.fromJson(jsonDecode(jsonEncode(plan.toJson())) as Json),
+      ]) {
+        final show = back.shows.single;
+        expect(show.name, 'Najbolji dan');
+        expect(show.look.transition, Transition.wipe);
+        expect(show.look.extra, 1.25);
+        expect(show.looks['p']?.transition, Transition.spin);
+        expect(show.looks['p']?.extra, 6.86);
+        expect(show.leftOut, {'q'});
+        expect(back.showPicks, {'b': 's1'});
+      }
+    });
+
+    test('seconds show their first decimal only', () {
+      expect(tenths(7.72), '7,7');
+      expect(tenths(6.86), '6,8');
+      expect(tenths(12), '12,0');
+      expect(tenths(0.3), '0,3');
+    });
+  });
+
+  test('a yes or no takes one answer from each person', () {
+    Poll poll(List<String> answers) => Poll(id: 'p', title: 'Ronjenje', options: [
+          for (var i = 0; i < answers.length; i++) PollOption(id: 'o$i', time: answers[i]),
+        ]);
+    expect(onlyOneAnswer(poll(['Da', 'Ne'])), isTrue);
+    expect(onlyOneAnswer(poll(['10:00', '11:30'])), isFalse);
+    expect(onlyOneAnswer(Poll(id: 'k', title: 'Konoba', single: true, options: [])), isTrue);
   });
 
   group('links', () {

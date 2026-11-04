@@ -34,12 +34,15 @@ class AnthemPlayer {
 
   /// Phones only let a page make sound from a context a tap has woken, so this
   /// is called right inside the tap that opens a trip.
-  void wake() {
+  ///
+  /// On opening a trip the anthem plays along with whatever else the phone is
+  /// playing instead of stopping it; the price is that an iPhone on silent does
+  /// not play it. A tap meant to hear it, [evenOnSilent], plays it on silent too,
+  /// and then other sound on the phone stops.
+  void wake({bool evenOnSilent = false}) {
     try {
-      // Plays along with whatever else the phone is playing instead of stopping
-      // it. The price: an iPhone on silent does not play the anthem.
       final session = web.window.navigator.getProperty<JSObject?>('audioSession'.toJS);
-      session?.setProperty('type'.toJS, 'ambient'.toJS);
+      session?.setProperty('type'.toJS, (evenOnSilent ? 'playback' : 'ambient').toJS);
       _context ??= web.AudioContext();
       if (_context!.state != 'running') _context!.resume();
     } on Object {

@@ -746,6 +746,97 @@ class Song {
       };
 }
 
+/// How one photo of a presentation follows the one before, simplest first. The
+/// first five are there from the start; the rest come with the days of the trip.
+enum Transition {
+  fade('Pretapanje'),
+  push('Guranje'),
+  wipe('Brisanje'),
+  zoom('Približavanje'),
+  circle('Krug'),
+  pushUp('Guranje odozdo'),
+  cover('Pokrivanje'),
+  uncover('Otkrivanje'),
+  split('Zavjesa'),
+  diamond('Romb'),
+  black('Kroz crno'),
+  flip('Okretanje'),
+  blur('Zamućenje'),
+  spin('Vrtlog'),
+  zoomOut('Udaljavanje');
+
+  const Transition(this._label);
+
+  final String _label;
+
+  String get label => tr(_label);
+}
+
+/// How one photo of a presentation comes in.
+class Look {
+  Look(this.transition, [this.extra = 0]);
+
+  factory Look.fromJson(Json json) => Look(
+        Transition.values.asNameMap()[json['transition']] ?? Transition.fade,
+        (json['extra'] as num?)?.toDouble() ?? 0,
+      );
+
+  Transition transition;
+
+  /// Seconds the transition is made longer than usual, in hundredths.
+  double extra;
+
+  Json toJson() => {'transition': transition.name, 'extra': extra};
+}
+
+Map<String, dynamic> _map(Object? raw) =>
+    (raw as Map<dynamic, dynamic>? ?? const {}).cast<String, dynamic>();
+
+/// A presentation one person made of the trip's photos, each coming in with its
+/// own transition. A photo added later joins it with [look].
+class Show {
+  Show({
+    required this.id,
+    required this.name,
+    required this.addedBy,
+    Look? look,
+    Map<String, Look>? looks,
+    Set<String>? leftOut,
+  })  : look = look ?? Look(Transition.fade),
+        looks = looks ?? {},
+        leftOut = leftOut ?? {};
+
+  factory Show.fromJson(Json json) => Show(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        addedBy: json['addedBy'] as String,
+        look: json['look'] == null ? null : Look.fromJson(_map(json['look'])),
+        looks: _map(json['looks'])
+            .map((photo, look) => MapEntry(photo, Look.fromJson(_map(look)))),
+        leftOut: _map(json['leftOut']).keys.toSet(),
+      );
+
+  final String id;
+  String name;
+  final String addedBy;
+  Look look;
+
+  /// Photo id -> the way that photo comes in, when it is not [look].
+  Map<String, Look> looks;
+
+  /// Photos that are not in it.
+  Set<String> leftOut;
+
+  Json toJson() => {
+        'id': id,
+        'name': name,
+        'addedBy': addedBy,
+        'look': look.toJson(),
+        'looks': {for (final entry in looks.entries) entry.key: entry.value.toJson()},
+        'leftOut': {for (final photo in leftOut) photo: true},
+      };
+}
+
 enum TripPhase { upcoming, active, past }
 
 class Trip {
@@ -778,7 +869,11 @@ class Trip {
     List<Payment>? payments,
     List<Photo>? photos,
     List<Song>? songs,
+    List<Show>? shows,
+    Map<String, String>? showPicks,
   })  : uids = uids ?? {},
+        shows = shows ?? [],
+        showPicks = showPicks ?? {},
         polls = polls ?? [],
         offers = offers ?? [],
         places = places ?? [],
@@ -830,6 +925,9 @@ class Trip {
         payments: _list(json['payments'], Payment.fromJson),
         photos: _list(json['photos'], Photo.fromJson),
         songs: _list(json['songs'], Song.fromJson),
+        shows: _list(json['shows'], Show.fromJson),
+        showPicks: (json['showPicks'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>(),
       );
 
   final String id;
@@ -877,6 +975,12 @@ class Trip {
   List<Payment> payments;
   List<Photo> photos;
   List<Song> songs;
+
+  /// The presentations of the photos, one at most from each person.
+  List<Show> shows;
+
+  /// Person -> the presentation playing on their screen, which is also their vote.
+  Map<String, String> showPicks;
 
   int get nights => end.difference(start).inDays;
 
@@ -950,6 +1054,8 @@ class Trip {
     payments = other.payments;
     photos = other.photos;
     songs = other.songs;
+    shows = other.shows;
+    showPicks = other.showPicks;
   }
 
   Json toJson() => {
@@ -983,6 +1089,8 @@ class Trip {
         'payments': [for (final item in payments) item.toJson()],
         'photos': [for (final item in photos) item.toJson()],
         'songs': [for (final item in songs) item.toJson()],
+        'shows': [for (final item in shows) item.toJson()],
+        'showPicks': showPicks,
       };
 }
 

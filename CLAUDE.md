@@ -74,6 +74,18 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Removing anything, and settling a debt, is
   undone within 5 seconds instead of asking first. Only a photo or video still asks, as its
   file is deleted at once.
+- Presentations (`lib/src/domain/show.dart`, `lib/ui/show_*.dart`, `shows_section.dart`):
+  every photo of Uspomene, not videos, follows the one before with one of 15 transitions,
+  lengthened with a bar from 0 to 12 s (`secondsBar`). On the first day of the trip 6 s
+  and 5 transitions are open; each later day adds the rest up to 12 s divided by the days
+  left, in hundredths, so the last day opens 12 s and all 15 (`extraLimit`,
+  `openTransitions`). Numbers show one decimal, cut (`tenths`). Each person makes one; the
+  one you put on your screen plays on the trip's cover and is your vote
+  (`Trip.showPicks`); the most picked is "Prezentacija dana" (`showOfTheDay`). The players
+  of the cover and of watching keep going across redraws (`keptPlayer`).
+- package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
+  pointer positions are read straight from the event (`seconds_bar.dart`).
+- A yes or no poll takes one answer from each person (`onlyOneAnswer`).
 - The postcard has a round seal with no background, as the user asked, so its ink follows
   the photo: dark on a bright corner, light with a shadow otherwise (`lib/src/domain/seal.dart`).
 
@@ -85,9 +97,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   goes through a gain node of an audio context, started inside the tap that opens the
   trip. Moving around inside a trip never restarts it. It plays on every entry unless the
   speaker is muted; muting is remembered.
-- The audio session is `ambient`: the anthem must not stop music or a video already playing
-  on the phone. So an iPhone on silent does not play it (`playback` would, but it stops
-  other sound).
+- On opening a trip the audio session is `ambient`: the anthem must not stop music or a
+  video already playing on the phone, so an iPhone on silent does not play it. A tap meant
+  to hear it (Poslušaj, the note, the speaker) uses `playback`, which plays on silent and
+  stops other sound. The user reported "Himna ne radi" on 2026-11-04; the clip was whole in
+  the cloud and played in a browser, so silent mode is the likely cause, not confirmed.
 - The quiet level on a real iPhone is not tested yet.
 - Booking's API needs a partner contract. Airbnb has no public API and forbids scraping:
   do not build a scraper. Google Hotels data through SerpApi (250 free searches a month,

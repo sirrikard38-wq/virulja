@@ -130,6 +130,10 @@ Tree tripToTree(
       'songs': {
         for (final song in trip.songs) song.id: _withoutId(song.toJson()),
       },
+      'shows': {
+        for (final show in trip.shows) show.id: _withoutId(show.toJson()),
+      },
+      'showPicks': trip.showPicks,
     };
 
 Tree _branch(Tree tree, String key) =>
@@ -234,6 +238,8 @@ CloudTrip? tripFromTree(String id, Tree tree) {
         return Photo.fromJson({...json, 'comments': comments});
       }),
       songs: _items(tree, 'songs', Song.fromJson),
+      shows: _items(tree, 'shows', Show.fromJson),
+      showPicks: _branch(tree, 'showPicks').cast<String, String>(),
     );
     return CloudTrip(trip, {
       for (final person in order)

@@ -6,6 +6,8 @@ import 'package:web/web.dart' as web;
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'anthem.dart';
+import 'show_builder.dart';
+import 'shows_section.dart';
 import 'cloud.dart';
 import 'context.dart';
 import 'costs_screen.dart';
@@ -209,7 +211,7 @@ class ViruljaApp {
   }
 
   void _startAnthem(Trip trip) {
-    _anthem.wake();
+    _anthem.wake(evenOnSilent: true);
     if (!_anthem.isPlaying) _playAnthem(trip);
     if (_data.anthemMuted) {
       _data.anthemMuted = false;
@@ -218,7 +220,7 @@ class ViruljaApp {
   }
 
   void _tapSpeaker(Trip trip) {
-    _anthem.wake();
+    _anthem.wake(evenOnSilent: true);
     if (_data.anthemMuted) {
       _data.anthemMuted = false;
       _playAnthem(trip);
@@ -318,6 +320,10 @@ class ViruljaApp {
         return playlistScreen(_ui, trip, _playAnthem);
       case 'uredi':
         return tripForm(_ui, trip: trip);
+      case 'prezentacija':
+        return showBuilder(_ui, trip);
+      case 'gledaj':
+        return watchScreen(_ui, trip, place.photoId);
       case 'foto':
         for (final photo in trip.photos) {
           if (photo.id == place.photoId) return photoScreen(_ui, trip, photo);
@@ -367,7 +373,8 @@ class ViruljaApp {
 
     final isPhoto = place.section == 'foto';
     final isForm = place.page == 'novo' || place.section == 'uredi';
-    final hasMenu = !isPhoto && !isForm && _data.meId != null;
+    final isWatch = place.section == 'gledaj';
+    final hasMenu = !isPhoto && !isForm && !isWatch && _data.meId != null;
     final hasBack = trip != null || place.page == 'novo';
     final frameClass = isPhoto
         ? 'frame with-composer'

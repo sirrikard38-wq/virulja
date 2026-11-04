@@ -102,6 +102,12 @@ void main() {
     }
   });
 
+  test('every transition has its name in each language', () {
+    for (final transition in Transition.values) {
+      expect(isTranslated(transition.label), isTrue, reason: transition.label);
+    }
+  });
+
   test('every kind of place has its estimate in each language', () {
     expect(PlaceKind.beachBar.estimateTitle, 'Procjena za beach bar');
     for (final other in [Language.en, Language.tr]) {

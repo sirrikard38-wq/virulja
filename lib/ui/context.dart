@@ -70,6 +70,9 @@ class Ui {
 
   /// Whether the list of kinds of notification is open.
   bool noticesOpen = false;
+
+  /// Whether the list of presentations in Uspomene is open.
+  bool showsOpen = false;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;

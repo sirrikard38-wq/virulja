@@ -8,6 +8,7 @@ import '../src/domain/budget.dart';
 import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import '../src/domain/show.dart';
 import 'attack_tab.dart';
 import 'context.dart';
 import 'dom.dart';
@@ -16,6 +17,7 @@ import 'memories_screen.dart';
 import 'people_section.dart';
 import 'polls_section.dart';
 import 'requests_section.dart';
+import 'show_player.dart';
 import 'swipes.dart';
 import 'widgets.dart';
 
@@ -157,6 +159,9 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   final peopleShown = ui.showPeople; // still drawn while it folds shut
   _foldPeople(ui);
   final cover = trip.coverId;
+  // The presentation this person picked, or the group's, plays in place of the cover.
+  final playing = shownTo(trip, ui.meIn(trip));
+  final playable = playing != null && slidesOf(trip, playing).isNotEmpty;
   final tabs = {
     'plan': tr('Plan'),
     'slike': tr('Uspomene'),
@@ -191,7 +196,10 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   ]);
   final page = el('div', cls: 'swipe-area', children: [
     el('div', cls: 'hero', children: [
-      if (cover != null)
+      if (playable) ...[
+        keptPlayer(ui, trip, playing, 'hero').element..classList.add('hero-show'),
+        el('span', cls: 'hero-caption', text: playing.name),
+      ] else if (cover != null)
         storedImage(ui, trip, cover, cls: 'hero-photo', alt: trip.city)
       else
         el('div', cls: 'hero-blank'),

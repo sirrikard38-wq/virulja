@@ -54,6 +54,10 @@ final RegExp _clock = RegExp(r'^\d\d:\d\d$');
 /// The answers of a plain yes or no poll.
 const Set<String> yesOrNo = {'Da', 'Ne', 'Možda'};
 
+/// Whether each person may give only one answer: on a place, and on any yes or no.
+bool onlyOneAnswer(Poll poll) =>
+    poll.single || poll.options.every((option) => yesOrNo.contains(option.time));
+
 /// The days enough of the group can go, in order.
 List<int> agreedDays(Trip trip, Map<int, Set<String>> votes) => [
       for (final day in votes.keys.toList()..sort())

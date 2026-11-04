@@ -211,6 +211,13 @@ String ago(DateTime at, DateTime now) {
   };
 }
 
+/// `2,4`: seconds with only the first decimal showing, cut rather than rounded.
+/// English writes `2.4`.
+String tenths(double seconds) {
+  final all = (seconds * 10 + 1e-6).floor();
+  return '${all ~/ 10}${language == Language.en ? '.' : ','}${all % 10}';
+}
+
 /// `2.420 €`, `12,50 €`, `−8 €`
 String euros(int cents) {
   final sign = cents < 0 ? '−' : '';

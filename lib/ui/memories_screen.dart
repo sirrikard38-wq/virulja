@@ -8,6 +8,7 @@ import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'media.dart';
+import 'shows_section.dart';
 import 'video_work.dart';
 import 'widgets.dart';
 
@@ -89,6 +90,7 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
     byDay.putIfAbsent(photo.day, () => []).add(photo);
   }
   return el('div', children: [
+    showsSection(ui, trip),
     el('div', cls: 'head-row', attrs: {'style': 'align-items:center'}, children: [
       el('span', cls: 'soft', text: photosCount(trip.photos.length)),
       _addPhotos(ui, trip),

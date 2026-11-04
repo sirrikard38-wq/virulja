@@ -51,7 +51,7 @@ web.HTMLElement _anthemCard(Ui ui, Trip trip, void Function(Trip) playAnthem) {
         button(
           cls: 'secondary',
           onTap: () {
-            ui.anthem.wake();
+            ui.anthem.wake(evenOnSilent: true);
             playAnthem(trip);
           },
           children: [

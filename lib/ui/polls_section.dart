@@ -13,7 +13,7 @@ import 'widgets.dart';
 void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
   final agreedBefore = agreedOption(trip, poll) != null;
   final had = option.votes.contains(me);
-  if (poll.single) {
+  if (onlyOneAnswer(poll)) {
     for (final other in poll.options) {
       other.votes.remove(me);
     }
