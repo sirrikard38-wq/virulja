@@ -235,7 +235,9 @@ class ViruljaApp {
     _ui.changed();
   }
 
-  web.HTMLElement _speaker(Trip trip) {
+  /// The speaker of the anthem: in the corner, or under the settings when
+  /// [below].
+  web.HTMLElement _speaker(Trip trip, {bool below = false}) {
     final ring = svg('circle', attrs: {
       'cx': '22',
       'cy': '22',
@@ -244,7 +246,7 @@ class ViruljaApp {
     });
     _ring = ring;
     return button(
-      cls: 'round right',
+      cls: below ? 'round right second' : 'round right',
       ariaLabel: _data.anthemMuted ? tr('Uključi himnu') : tr('Utišaj himnu'),
       onTap: () => _tapSpeaker(trip),
       children: [
@@ -393,10 +395,12 @@ class ViruljaApp {
         if (hasBack) _backButton(),
         if (trip == null && place.page != 'uspomene' && place.page != 'novo')
           ..._languageCorner(),
-        if (trip != null && trip.anthemClipId != null) _speaker(trip),
+        // The settings stand above the speaker.
+        if (trip != null && trip.anthemClipId != null)
+          _speaker(trip, below: _mainTabs.contains(place.section)),
         if (trip != null && _mainTabs.contains(place.section))
           button(
-            cls: trip.anthemClipId != null ? 'round right second' : 'round right',
+            cls: 'round right',
             ariaLabel: tr('Postavke'),
             onTap: () => _go('#/p/${trip.id}/uredi'),
             children: [icon('tool', size: 22)],

@@ -45,6 +45,7 @@ Tree tripToTree(
             'single': poll.single,
             'addedBy': poll.addedBy,
             'activeBy': poll.activeBy,
+            'autoAdded': poll.autoAdded,
             'dayVotes': {
               for (final entry in poll.dayVotes.entries)
                 'd${entry.key}': _set(entry.value),
@@ -202,6 +203,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
             single: json['single'] as bool? ?? false,
             addedBy: json['addedBy'] as String?,
             activeBy: json['activeBy'] as String?,
+            autoAdded: json['autoAdded'] as bool? ?? false,
             dayVotes: dayVotesFrom(json['dayVotes']));
       }),
       coverId: tree['coverId'] as String?,

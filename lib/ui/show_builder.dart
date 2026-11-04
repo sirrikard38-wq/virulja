@@ -10,6 +10,7 @@ import '../src/domain/show.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'photo_drag.dart';
 import 'seconds_bar.dart';
 import 'show_player.dart';
 import 'widgets.dart';
@@ -41,7 +42,7 @@ class _Draft {
   /// The photo whose transition is being set.
   String? current;
 
-  /// How every photo came in before "Isto za sve fotografije", to go back to.
+  /// How every photo came in before they were all made the same, to go back to.
   ({Look look, Map<String, Look> looks})? before;
 
   /// How far each row of photos is scrolled.
@@ -78,13 +79,13 @@ List<web.HTMLElement> _howLong(
 ) {
   if (!photo.isVideo) {
     return [
-      el('p', cls: 'label pad gap-top', text: tr('Koliko dugo se prikazuje')),
+      el('p', cls: 'label pad gap-top bar-title', text: tr('Duljina uspomene')),
       secondsBar(
         value: look.still,
         limit: limit,
         least: leastStill,
         marks: marks,
-        label: tr('Koliko dugo se prikazuje'),
+        label: tr('Duljina uspomene'),
         onChange: (seconds, {required done}) {
           own().still = seconds;
           if (done) ui.rerender();
@@ -96,7 +97,7 @@ List<web.HTMLElement> _howLong(
   final clip = clipOf((photoId: photo.id, look: look, video: length));
   final longest = longestClip(length);
   return [
-    el('p', cls: 'label pad gap-top', text: tr('Koliko videa ide u prezentaciju')),
+    el('p', cls: 'label pad gap-top bar-title', text: tr('Koliko videa ide u prezentaciju')),
     secondsBar(
       value: clip.length,
       limit: longest,
@@ -109,7 +110,7 @@ List<web.HTMLElement> _howLong(
       },
     ),
     if (length - clip.length > .05) ...[
-      el('p', cls: 'label pad gap-top', text: tr('Od koje sekunde')),
+      el('p', cls: 'label pad gap-top bar-title', text: tr('Od koje sekunde')),
       secondsBar(
         value: clip.from,
         limit: length - clip.length,
@@ -159,10 +160,12 @@ web.HTMLElement _thumb(
       ],
     );
 
-/// Makes or changes a presentation of the trip's photos. On top it plays as it
-/// will on the trip's cover, from the photo being set. Under it is the row of the
-/// presentation itself, and under that every day of Uspomene in a row of its own,
-/// the last day on top: a tap there puts a photo in or takes it out.
+/// Makes or changes a presentation of the trip's photos. Under its name is the
+/// row of the presentation itself, where a finger held on a photo changes the
+/// order, and under that every day of Uspomene in a row of its own, the last day
+/// on top: a tap there puts a photo in or takes it out. Then the presentation
+/// plays from the photo being set, and stays in sight while its transition and
+/// time are set under it.
 web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   final me = ui.meIn(trip);
   Show? existing() {
@@ -278,6 +281,29 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
     });
   }
 
+  /// The presentation's own row: a tap picks the photo to set, a finger held on
+  /// it moves it to another place.
+  web.HTMLElement presentationRow() {
+    final thumbs = [
+      for (final id in draft.chosen)
+        _thumb(ui, trip, byId[id]!,
+            cls: id == current ? 'on' : '',
+            label: lookOf(id).transition.label, onTap: () {
+          if (tapEndsMove()) return;
+          draft.current = id;
+          ui.rerender();
+        }),
+    ];
+    final row = _strip(draft, 'top', thumbs);
+    for (var i = 0; i < thumbs.length; i++) {
+      reorderable(thumbs[i], row, i, (from, to) {
+        draft.chosen.insert(to, draft.chosen.removeAt(from));
+        ui.rerender();
+      });
+    }
+    return row;
+  }
+
   final days = <int, List<Photo>>{};
   for (final photo in photos) {
     days.putIfAbsent(trip.photoDay(photo), () => []).add(photo);
@@ -287,27 +313,21 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   return el('div', children: [
     topBar(tr('Prezentacija'))
       ..querySelector('h1')!.append(el('span', cls: 'show-count', text: ' $number/$showsEach')),
-    if (limit < longestExtra)
-      el('p', cls: 'small pad', attrs: {'style': 'margin-bottom:8px'},
-          text: tr('Svaki dan dobivaš dulje prijelaze, fotografije i ekstra efekte.')),
-    el('div', cls: 'show-preview', children: [preview.element]),
     field(tr('Naziv'), name),
+    if (limit < longestExtra)
+      el('p', cls: 'small pad', attrs: {'style': 'margin-top:8px'},
+          text: tr('Svaki dan dobivaš dulje prijelaze, fotografije i ekstra efekte.')),
     if (photos.isEmpty)
       el('p', cls: 'soft pad gap-top', text: tr('Prvo dodajte fotografije u Uspomene.'))
     else ...[
       sectionTitle(tr('Prezentacija ({0})', [draft.chosen.length])),
       if (draft.chosen.isEmpty)
         el('p', cls: 'show-empty', text: tr('Dodirni fotografije ispod i dodaj ih u prezentaciju.'))
-      else
-        _strip(draft, 'top', [
-          for (final id in draft.chosen)
-            _thumb(ui, trip, byId[id]!,
-                cls: id == current ? 'on' : '',
-                label: lookOf(id).transition.label, onTap: () {
-              draft.current = id;
-              ui.rerender();
-            }),
-        ]),
+      else ...[
+        presentationRow(),
+        if (draft.chosen.length > 1)
+          el('p', cls: 'small pad', text: tr('Drži prst na fotografiji i pomakni je da promijeniš redoslijed.')),
+      ],
       sectionTitle(tr('Uspomene')),
       for (final day in shownDays) ...[
         el('div', cls: 'show-day', text: tr('{0} Dan · {1}', [day + 1, weekdayAndDate(trip.dayAt(day))])),
@@ -320,6 +340,9 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
         ]),
       ],
     ],
+    el('div', cls: 'show-preview-wrap', children: [
+      el('div', cls: 'show-preview', children: [preview.element]),
+    ]),
     if (current != null) ...[
       el('p', cls: 'label pad gap-top', text: tr('Prijelaz')),
       el('div', cls: 'checks', children: [
@@ -336,7 +359,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
               onTap: () => ui.toast(tr('Ovaj prijelaz se otvara kasnije tijekom putovanja.')),
             ),
       ]),
-      el('p', cls: 'label pad gap-top', text: tr('Produljenje prijelaza')),
+      el('p', cls: 'label pad gap-top bar-title', text: tr('Produljenje prijelaza')),
       secondsBar(
         value: lookOf(current).extra,
         limit: limit,
@@ -351,7 +374,7 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
       el('div', cls: 'pad centered gap-top', children: [
         button(
           cls: 'text-button',
-          text: draft.before == null ? tr('Isto za sve fotografije') : tr('Vrati natrag'),
+          text: draft.before == null ? tr('Isti prijelazi i duljina uspomene za sve') : tr('Vrati natrag'),
           onTap: () {
             final before = draft.before;
             if (before == null) {

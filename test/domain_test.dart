@@ -398,22 +398,50 @@ void main() {
       expect(agreedOption(two, poll)?.time, 'Da');
     });
 
-    test('only a yes of the whole group, or an answer all of it picked, is unanimous', () {
+    test('only a Da of the whole group is a whole yes', () {
       final group = trip(members: ['x', 'y']);
       final poll = group.polls.single;
-      expect(unanimousOption(group, poll), isNull);
+      expect(allSayYes(group, poll), isFalse);
       poll.options.first.votes.add('gone');
-      expect(unanimousOption(group, poll), isNull);
+      expect(allSayYes(group, poll), isFalse);
       poll.options.first.votes.add('y');
-      expect(unanimousOption(group, poll)?.time, 'Da');
+      expect(allSayYes(group, poll), isTrue);
       poll.options.first.votes.clear();
       poll.options.last.votes.addAll({'x', 'y'});
-      expect(unanimousOption(group, poll), isNull);
+      expect(allSayYes(group, poll), isFalse);
       final times = Poll(id: 'v', title: 'Plaža', options: [
         PollOption(id: 'a', time: '10:00', votes: {'x', 'y'}),
         PollOption(id: 'b', time: '11:30', votes: {'x'}),
       ]);
-      expect(unanimousOption(group, times)?.time, '10:00');
+      expect(allSayYes(group, times), isFalse);
+    });
+
+    test('a whole yes goes into Plan napada once, and stays out when taken out', () {
+      final group = trip(members: ['x', 'y']);
+      final poll = group.polls.single..active = false;
+      expect(addWholeYeses(group, 'x'), isEmpty);
+      poll.options.first.votes.add('y');
+      expect(addWholeYeses(group, 'y'), [poll]);
+      expect(pollInAttack(group, poll), isTrue);
+      setPollInAttack(group, poll, false, 'x');
+      expect(addWholeYeses(group, 'x'), isEmpty);
+      expect(pollInAttack(group, poll), isFalse);
+      poll.options.first.votes.remove('y');
+      expect(wholeYesChanged(group, poll), isTrue);
+      addWholeYeses(group, 'x');
+      poll.options.first.votes.add('y');
+      expect(addWholeYeses(group, 'y'), [poll]);
+    });
+
+    test('an added answer shows in Plan napada, a no never decides', () {
+      final group = trip(members: ['x', 'y']);
+      final poll = group.polls.single
+        ..options.add(PollOption(id: 'o2x', time: 'Sutra', votes: {'y'}));
+      poll.options.first.votes.clear();
+      poll.options[1].votes.addAll({'x', 'y'});
+      expect(agreedOption(group, poll)?.time, isNot('Ne'));
+      final item = planOfAttack(group, DateTime(2026, 6, 1)).firstWhere((i) => i.poll == poll);
+      expect(item.detail, 'Sutra');
     });
 
     test('a no is never agreed, and votes of those not in the group do not count', () {

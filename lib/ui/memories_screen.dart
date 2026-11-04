@@ -109,6 +109,7 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
   }
   return el('div', children: [
     showsSection(ui, trip),
+    el('hr', cls: 'split'),
     el('div', cls: 'head-row', attrs: {'style': 'align-items:center'}, children: [
       el('span', cls: 'soft', text: photosCount(trip.photos.length)),
       _addPhotos(ui, trip),

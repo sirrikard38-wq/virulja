@@ -157,6 +157,10 @@ void _showTabChange(_TabChange change, int index) {
 }
 
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
+  if (trip.polls.any((poll) => wholeYesChanged(trip, poll))) {
+    addWholeYeses(trip, ui.meIn(trip));
+    ui.saved();
+  }
   final peopleShown = ui.showPeople; // still drawn while it folds shut
   _foldPeople(ui);
   final cover = trip.coverId;

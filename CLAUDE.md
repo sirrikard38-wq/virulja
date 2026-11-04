@@ -65,9 +65,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the screen is that of the open category alone, counting what is in the plan.
 - First version also has: drive calculation, actual costs, who owes whom, voting.
 - The group agrees when at least half picks the same, and both when there are two
-  (`Trip.votesToAgree`). A poll on which the whole group picks the same answer ticks its
-  "Plan napada" box by itself (`unanimousOption`), and unticking takes it out; the box in
-  Ankete and the button in Hrana i piće put things there by hand. A
+  (`Trip.votesToAgree`). A poll only goes into Plan napada by itself when every member
+  answered Da (`allSayYes`). This is checked on every look at a trip, not only on a vote,
+  so a yes from any phone counts (`addWholeYeses`); `Poll.autoAdded` remembers it was done,
+  so unticking takes it out for good, until the yes is no longer whole. The box in Ankete
+  and the button in Hrana i piće put things there by hand. Ankete shows no "Izglasano";
+  "+ Nova anketa" stands on top, on the right. A
   place and the yes or no poll about it are one thing in Plan napada (`placeInAttack`).
   Polls have no day any more: people pick days on each thing in Plan napada. The chips
   Sve, 1 Dan, 2 Dan show each thing on the day with most votes, on all equal ones, and on
@@ -86,8 +89,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Presentations (`lib/src/domain/show.dart`, `lib/ui/show_*.dart`, `shows_section.dart`):
   the photos and videos picked for it (`Show.chosen`, in the order picked; older ones have
   all but `leftOut`) follow each other with one of 15 transitions, lengthened with a bar
-  from 0 to 12 s (`secondsBar`). The builder has the presentation's own row on top and a
-  row for each day under it, the last day first. A photo then stands 2.5 s, or what its bar
+  from 0 to 12 s (`secondsBar`). The builder has the name on top, then the presentation's
+  own row (a finger held on a photo changes the order, `reorderable`) and a row for each
+  day under it, the last day first; under them the preview, which stays at the top of the
+  screen (sticky) while the transition, "Produljenje prijelaza" and "Duljina uspomene"
+  are set. A photo then stands 2.5 s, or what its bar
   says, from 0.5 s up to the same daily limit as the transitions; the bars are marked at
   each day's limit (`dayLimits`) and write 6s with no space. A video plays a piece of it, 6 s of every 30 s
   it lasts at most (`longestClip`, `clipOf`); kept videos are 30 s at most, so one piece of
@@ -99,12 +105,17 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   is "Prezentacija dana" (`showOfTheDay`) and plays on the trip's cover, the newest before
   any vote (`onCover`). A tap on the cover or on a presentation plays it over the whole
   screen (`watchShow`); an iPhone keeps its bars, as Safari gives the whole screen only to
-  a video. "Isto za sve fotografije" turns into "Vrati natrag" until something else
-  changes. The players of the cover and of watching keep going across redraws
+  a video. "Isti prijelazi i duljina uspomene za sve" turns into "Vrati natrag" until
+  something else changes. The presentation of the day has a green card with a badge; the
+  vote count is big, and the maker's brush sits in a round button inside the card. The players of the cover and of watching keep going across redraws
   (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
-- A yes or no poll takes one answer from each person (`onlyOneAnswer`).
+- A yes or no poll takes one answer from each person (`onlyOneAnswer`). The + at the right
+  of a poll's answers adds one, up to 5 (`mostOptions`); a yes or no stays one answer per
+  person (`Poll.single`), and in Plan napada the added answer with most votes shows. Ne and
+  Možda never decide a poll.
+- On a trip's main tabs the settings button is in the corner, the anthem's speaker under it.
 - A heading that folds a list open has + before it, and − while open. Unticking "Primaj sve
   obavijesti" stops every notification, so there is no separate button to turn them off.
 - With JS interop types, `is web.HTMLVideoElement` is always true: keep videos in their own

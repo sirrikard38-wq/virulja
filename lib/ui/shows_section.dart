@@ -1,5 +1,6 @@
 import 'package:web/web.dart' as web;
 
+import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import '../src/domain/show.dart';
@@ -15,37 +16,34 @@ import 'widgets.dart';
 web.HTMLElement _showCard(Ui ui, Trip trip, Show show, String me, Show? best) {
   final voted = trip.showPicks[me] == show.id;
   final number = showsBy(trip, show.addedBy).indexOf(show) + 1;
-  final card = el('div', cls: 'poll card show-card', attrs: {
+  final ofTheDay = identical(show, best);
+  final card = el('div', cls: ofTheDay ? 'poll card show-card best' : 'poll card show-card', attrs: {
     'role': 'button',
     'tabindex': '0',
     'aria-label': tr('Gledaj preko cijelog zaslona: {0}', [show.name]),
   }, children: [
-    el('div', cls: 'show-card-head', children: [
-      el('div', cls: 'grow', children: [
-        el('div', cls: 'label', children: [
-          web.document.createTextNode(show.name),
-          el('span', cls: 'show-count', text: ' $number/$showsEach'),
-        ]),
-        if (identical(show, best))
-          el('div', cls: 'small', attrs: {'style': 'color:var(--accent);font-weight:700'},
-              text: tr('Prezentacija dana')),
-        el('div', cls: 'small',
-            text: tr('{0} · glasova: {1}', [ui.nameOf(show.addedBy), picksOf(trip, show)])),
+    el('div', cls: 'grow', children: [
+      if (ofTheDay) el('span', cls: 'badge', text: tr('Prezentacija dana')),
+      el('div', cls: 'label', children: [
+        web.document.createTextNode(show.name),
+        el('span', cls: 'show-count', text: ' $number/$showsEach'),
       ]),
-      if (show.addedBy == me)
-        button(
-          cls: 'icon-button brush',
-          ariaLabel: tr('Uredi'),
-          onTap: () => openShowBuilder(ui, trip, show),
-          children: [icon('brush', size: 22)],
-        ),
+      el('div', cls: 'small', text: ui.nameOf(show.addedBy)),
+      el('div', cls: 'show-actions', children: [
+        tick(tr('Glasaj'), voted, () {
+          voted ? trip.showPicks.remove(me) : trip.showPicks[me] = show.id;
+          ui.changed();
+        }),
+        el('span', cls: 'show-votes', text: votesCount(picksOf(trip, show))),
+      ]),
     ]),
-    el('div', cls: 'show-actions', children: [
-      tick(tr('Glasaj'), voted, () {
-        voted ? trip.showPicks.remove(me) : trip.showPicks[me] = show.id;
-        ui.changed();
-      }),
-    ]),
+    if (show.addedBy == me)
+      button(
+        cls: 'icon-button brush',
+        ariaLabel: tr('Uredi'),
+        onTap: () => openShowBuilder(ui, trip, show),
+        children: [icon('brush', size: 28)],
+      ),
   ]);
   card.onClick.listen((event) {
     // The vote and the brush have their own taps.
@@ -85,7 +83,7 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
       ],
     )..setAttribute('aria-expanded', '$open'),
     if (!open && best != null)
-      el('p', cls: 'small pad', text: tr('{0} · glasova: {1}', [best.name, picksOf(trip, best)])),
+      el('p', cls: 'small pad', text: '${best.name} · ${votesCount(picksOf(trip, best))}'),
     if (open) ...[
       if (trip.shows.isEmpty)
         el('p', cls: 'soft pad', text: tr('Još nema prezentacija. Napravi prvu od fotografija iz Uspomena.')),

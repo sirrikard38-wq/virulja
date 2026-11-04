@@ -84,24 +84,42 @@ List<int> agreedDays(Trip trip, Map<int, Set<String>> votes) => [
 
 /// The answer enough of the group voted for: for a yes or no only a yes counts,
 /// otherwise the one with most votes. Null while the group has not agreed.
-/// The answer of [poll] every member of the group voted for, if there is one; of
-/// a yes or no only Da counts.
-PollOption? unanimousOption(Trip trip, Poll poll) {
-  if (trip.memberIds.isEmpty) return null;
-  final plain = poll.options.every((option) => yesOrNo.contains(option.time));
-  for (final option in poll.options) {
-    if (plain && option.time != 'Da') continue;
-    if (trip.membersAmong(option.votes) == trip.memberIds.length) return option;
+/// Whether every member of the group answered Da to [poll].
+bool allSayYes(Trip trip, Poll poll) =>
+    trip.memberIds.isNotEmpty &&
+    poll.options.any((option) =>
+        option.time == 'Da' && trip.membersAmong(option.votes) == trip.memberIds.length);
+
+/// Puts each poll the whole group said Da to in Plan napada, once: whoever takes
+/// it out again keeps it out, until the yes is no longer whole. It runs on every
+/// look at a trip, so a yes is caught whichever phone it came from. Gives the
+/// polls it put there.
+List<Poll> addWholeYeses(Trip trip, String person) {
+  final added = <Poll>[];
+  for (final poll in trip.polls) {
+    final yes = allSayYes(trip, poll);
+    if (yes && !poll.autoAdded) {
+      poll.autoAdded = true;
+      if (!pollInAttack(trip, poll)) {
+        setPollInAttack(trip, poll, true, person);
+        added.add(poll);
+      }
+    } else if (!yes && poll.autoAdded) {
+      poll.autoAdded = false;
+    }
   }
-  return null;
+  return added;
 }
 
+/// Whether [poll] changed what [addWholeYeses] keeps, so it needs saving.
+bool wholeYesChanged(Trip trip, Poll poll) => allSayYes(trip, poll) != poll.autoAdded;
+
 PollOption? agreedOption(Trip trip, Poll poll) {
-  final plain = poll.options.every((option) => yesOrNo.contains(option.time));
   PollOption? best;
   var most = 0;
   for (final option in poll.options) {
-    if (plain && option.time != 'Da') continue;
+    // A no or a maybe never decides anything.
+    if (option.time == 'Ne' || option.time == 'Možda') continue;
     final votes = trip.membersAmong(option.votes);
     if (votes > most) {
       best = option;
@@ -175,15 +193,20 @@ void setPollInAttack(Trip trip, Poll poll, bool on, String person) {
   if (poll.options.every((option) => yesOrNo.contains(option.time))) {
     return (time: '', detail: null);
   }
+  // Of a yes or no with answers added, the added answer with most votes shows.
   PollOption? best;
   for (final option in poll.options) {
-    if (option.votes.isNotEmpty &&
+    if (!yesOrNo.contains(option.time) &&
+        option.votes.isNotEmpty &&
         (best == null || option.votes.length > best.votes.length)) {
       best = option;
     }
   }
   final choice = best?.time;
-  if (choice == null) return (time: '', detail: tr('Još nema glasova'));
+  if (choice == null) {
+    final yesOrNoToo = poll.options.any((option) => yesOrNo.contains(option.time));
+    return (time: '', detail: yesOrNoToo ? null : tr('Još nema glasova'));
+  }
   return _clock.hasMatch(choice) ? (time: choice, detail: null) : (time: '', detail: choice);
 }
 

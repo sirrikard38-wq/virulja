@@ -76,6 +76,9 @@ class Ui {
 
   /// Whether the list of presentations in Uspomene is open.
   bool showsOpen = false;
+
+  /// The poll that has a new answer being typed in it.
+  String? addingOption;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;

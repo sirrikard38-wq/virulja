@@ -152,6 +152,8 @@ String songsCount(int n) =>
 
 String nightsCount(int n) => _count(n, ('noć', 'noći', 'noći'), 'night', 'nights', 'gece');
 
+String votesCount(int n) => _count(n, ('glas', 'glasa', 'glasova'), 'vote', 'votes', 'oy');
+
 String daysCount(int n) => _count(n, ('dan', 'dana', 'dana'), 'day', 'days', 'gün');
 
 /// `za 224 dana`, `sutra`, `danas`

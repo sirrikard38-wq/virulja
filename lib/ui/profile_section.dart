@@ -154,6 +154,7 @@ web.HTMLElement profilePhoto(Ui ui, {Trip? trip}) {
   return el('div', cls: 'profile', children: [
     picker,
     _name(ui, me),
+    if (trip != null) el('div', cls: 'small', text: tr('Tvoja profilna za ovo putovanje')),
     circle,
     if (own == null)
       el('label', cls: 'secondary profile-button', attrs: {'for': pickerId}, children: [

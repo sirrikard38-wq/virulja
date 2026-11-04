@@ -106,6 +106,9 @@ class PollOption {
   Json toJson() => {'id': id, 'time': time, 'votes': votes.toList()};
 }
 
+/// The most answers a poll may have.
+const int mostOptions = 5;
+
 /// A vote on when to do something.
 class Poll {
   Poll({
@@ -117,6 +120,7 @@ class Poll {
     this.single = false,
     this.addedBy,
     this.activeBy,
+    this.autoAdded = false,
     Map<int, Set<String>>? dayVotes,
   }) : dayVotes = dayVotes ?? {};
 
@@ -129,11 +133,14 @@ class Poll {
         single: json['single'] as bool? ?? false,
         addedBy: json['addedBy'] as String?,
         activeBy: json['activeBy'] as String?,
+        autoAdded: json['autoAdded'] as bool? ?? false,
         dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
   final String title;
+
+  /// What can be voted for: [mostOptions] at most.
   final List<PollOption> options;
 
   /// The day a poll was made for in older versions, or -1: now the group picks
@@ -144,11 +151,15 @@ class Poll {
   bool active;
 
   /// Whether each person may pick only one option.
-  final bool single;
+  bool single;
   final String? addedBy;
 
   /// Who put it in the plan of attack.
   String? activeBy;
+
+  /// Set once the whole group's yes put it in Plan napada, so that whoever takes
+  /// it out keeps it out (`addWholeYeses`).
+  bool autoAdded;
 
   /// The days people can go, once it is in Plan napada.
   Map<int, Set<String>> dayVotes;
@@ -161,6 +172,7 @@ class Poll {
         'single': single,
         'addedBy': addedBy,
         'activeBy': activeBy,
+        'autoAdded': autoAdded,
         'dayVotes': {
           for (final entry in dayVotes.entries)
             'd${entry.key}': entry.value.toList(),
