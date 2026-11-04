@@ -548,7 +548,7 @@ details.adder .wide { width: 100%; }
 .show-thumb { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .show-thumb img { pointer-events: none; -webkit-user-drag: none; }
 .show-thumb.lifted { opacity: .35; }
-hr.split { margin: 22px 20px 6px; border: 0; border-top: 1px solid var(--line); }
+hr.split { margin: 30px 20px 14px; border: 0; border-top: 1px solid color-mix(in srgb, var(--soft) 55%, transparent); }
 .show-thumb-label { font-size: 11px; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .show-thumb.on .show-thumb-label { color: var(--accent); font-weight: 700; }
 .chip.locked { opacity: .4; }
