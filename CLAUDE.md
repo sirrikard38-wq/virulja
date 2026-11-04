@@ -102,6 +102,7 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   to hear it (Poslušaj, the note, the speaker) uses `playback`, which plays on silent and
   stops other sound. The user reported "Himna ne radi" on 2026-11-04; the clip was whole in
   the cloud and played in a browser, so silent mode is the likely cause, not confirmed.
+  Asked again, the user chose to keep `ambient` on opening a trip.
 - The quiet level on a real iPhone is not tested yet.
 - Booking's API needs a partner contract. Airbnb has no public API and forbids scraping:
   do not build a scraper. Google Hotels data through SerpApi (250 free searches a month,
