@@ -39,9 +39,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
-  Screens change with `pushState`; after each step back the app pushes a copy of the
-  screen it lands on, which wipes out the steps forward, so an iPhone's swipe from the
-  right edge has nowhere to go; a copy left behind is skipped on the way back.
+  The on-screen back arrow replaces the screen instead of stepping back, so no step
+  forward is left for an iPhone's swipe from the right edge; the phone's back button
+  skips the step of the same screen this leaves (`App._step`). Pushing history steps
+  while the phone steps back (tried on 2026-11-04) froze an iPhone and left it white.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories and a
   trip's tabs. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
@@ -143,6 +144,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   "Glasaj". With both a location and an offer link, the link icon asks which to open. The name is
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
   deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
+- Hrana i piće: while a category is held, a bin stands at the top in the middle; let go
+  over it and it goes with a puff of sparks and the usual undo. One the group made goes
+  with its places; one of the app's own is hidden on this phone (`AppData.hiddenKinds`)
+  and comes back when one of that name is added.
 - Bars move only by dragging their round knob (or a video's piece); a tap elsewhere on a
   bar changes nothing.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish

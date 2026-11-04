@@ -234,6 +234,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .chips.glide-start .chip.leaving { color: var(--on-accent); }
 .chip-marker { position: absolute; z-index: 0; background: var(--accent); }
 .chips .chip { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.kind-bin { position: fixed; left: 50%; top: calc(var(--top-safe) + 14px); z-index: 40; width: 56px; height: 56px; margin-left: -28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--card); color: var(--soft); box-shadow: 0 4px 14px rgba(0, 0, 0, .35); transition: transform 120ms ease, background 120ms ease, color 120ms ease; animation: bin-in 160ms ease-out; }
+.kind-bin.over { transform: scale(1.18); background: var(--danger); color: #fff; }
+@keyframes bin-in { from { transform: translateY(-20px) scale(.6); opacity: 0; } }
+.puff { position: fixed; z-index: 41; width: 0; height: 0; pointer-events: none; }
+.puff-cloud { position: absolute; left: -26px; top: -26px; width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 70%); animation: puff-cloud 520ms ease-out forwards; }
+.spark { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: hsl(var(--hue), 85%, 62%); animation: spark 620ms cubic-bezier(.2, .8, .3, 1) forwards; }
+@keyframes puff-cloud { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
+@keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; } }
 .chip.lifted { z-index: 2; scale: 1.08; box-shadow: 0 6px 16px rgba(0, 0, 0, .35); }
 .chips.arranging .chip:not(.lifted) { animation: wobble 180ms ease-in-out infinite alternate; }
 @keyframes wobble { from { rotate: -1.2deg; } to { rotate: 1.2deg; } }

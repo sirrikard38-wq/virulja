@@ -72,32 +72,40 @@ class ViruljaApp {
     web.document.addEventListener('gesturestart', ((web.Event event) => event.preventDefault()).toJS);
     final known = _stepOf();
     known == null ? _markStep() : _step = known;
-    // The phone's back button or swipe. Each step back is followed by a fresh
-    // copy of the screen it lands on, which wipes out every step forward: an
-    // iPhone's swipe from the right edge then has nowhere to go. A copy left
-    // behind is skipped on the way back.
-    web.window.addEventListener(
-      'popstate',
-      ((web.Event event) {
-        final hash = web.window.location.hash;
-        if (hash == _shown) {
-          web.window.history.back();
-          return;
-        }
-        if (_trail.isNotEmpty && _trail.last == hash) _trail.removeLast();
-        _arrive();
-        _step = (_stepOf() ?? _step) + 1;
-        web.window.history.pushState({'step': _step}.jsify(), '', hash);
-      }).toJS,
-    );
-    // An address typed or linked by hand.
+    // Every change of screen comes through the address, as phones expect.
     web.window.addEventListener(
       'hashchange',
       ((web.Event event) {
-        if (web.window.location.hash == _shown) return;
-        _step++;
-        _markStep();
+        if (_skipping) {
+          _skipping = false; // a step passed through on the way back
+          return;
+        }
+        final step = _stepOf();
+        if (step == null) {
+          _step++;
+          _markStep();
+        } else {
+          _step = step;
+        }
+        if (_trail.isNotEmpty && _trail.last == web.window.location.hash) {
+          _trail.removeLast(); // the phone's back button
+        }
         _arrive();
+      }).toJS,
+    );
+    // The on-screen arrow leaves the screen in place of a step back, so it
+    // leaves behind a step of the same screen as the one before. The phone's
+    // back button skips that step, as it shows nothing new.
+    web.window.addEventListener(
+      'popstate',
+      ((web.Event event) {
+        final step = _stepOf();
+        final hash = web.window.location.hash;
+        if (_placeOf(hash) == _placeOf(_shown ?? '') && step != null && step < _step) {
+          _step = step;
+          _skipping = hash != _shown; // its address change is still to come
+          web.window.history.back();
+        }
       }).toJS,
     );
     watchForInstall(render);
@@ -172,8 +180,8 @@ class ViruljaApp {
     }
     _trail.add(web.window.location.hash);
     _step++;
-    web.window.history.pushState({'step': _step}.jsify(), '', route);
-    _arrive();
+    web.window.location.hash = route;
+    _markStep();
   }
 
   /// A new screen: the list of people folds, the page starts at the top, and
@@ -193,6 +201,18 @@ class ViruljaApp {
   /// The address last drawn.
   String? _shown;
 
+  /// Set while the phone's back button passes a step that shows nothing new.
+  bool _skipping = false;
+
+  /// Where an address is: the tabs of a trip are one place.
+  String _placeOf(String hash) {
+    final place = _Place(hash);
+    if (place.tripId != null && (place.section == null || _mainTabs.contains(place.section))) {
+      return '#/p/${place.tripId}';
+    }
+    return hash.isEmpty ? '#/' : hash;
+  }
+
   /// Which step of the phone's history the app is on, counted from its start.
   int _step = 0;
 
@@ -203,10 +223,14 @@ class ViruljaApp {
 
   void _markStep() => web.window.history.replaceState({'step': _step}.jsify(), '');
 
+  /// Back to the screen before: in its place, not a step back in the phone's
+  /// history, so no step forward is left that a swipe from the right edge of
+  /// an iPhone would go to.
   void _back() {
     if (_trail.isNotEmpty) {
-      _trail.removeLast();
-      web.window.history.back();
+      final before = _trail.removeLast();
+      web.window.location.replace(before.isEmpty ? '#/' : before);
+      _markStep();
       return;
     }
     final place = _Place(web.window.location.hash);
@@ -231,8 +255,8 @@ class ViruljaApp {
   /// Changes the address without a new history step, so the iPhone's back
   /// swipe skips this screen: tabs of a trip count as one place.
   void _swap(String route) {
-    web.window.history.replaceState({'step': _step}.jsify(), '', route);
-    _arrive();
+    web.window.location.replace(route);
+    _markStep();
   }
 
   /// A tap on a trip in a list. The tap is what lets the phone play sound, so

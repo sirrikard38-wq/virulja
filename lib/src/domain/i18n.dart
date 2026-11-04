@@ -462,6 +462,7 @@ const Map<String, List<String>> _texts = {
   'Sortiraj': ['Sort', 'Sırala'],
   'ukupno': ['in all', 'toplam'],
   'Zatvori': ['Close', 'Kapat'],
+  'Jedna kategorija mora ostati.': ['One category has to stay.', 'Bir kategori kalmalı.'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

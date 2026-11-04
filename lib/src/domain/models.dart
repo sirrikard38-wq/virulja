@@ -1269,6 +1269,7 @@ class AppData {
     Map<String, String>? identities,
     Map<String, String>? waiting,
     Map<String, List<String>>? kindOrder,
+    Map<String, Set<String>>? hiddenKinds,
     Map<String, String>? tripPhotos,
     this.chosenLanguage = Language.hr,
     Set<String>? noticesOff,
@@ -1277,6 +1278,7 @@ class AppData {
         hiddenCodes = hiddenCodes ?? {},
         tripNoticesOff = tripNoticesOff ?? {},
         kindOrder = kindOrder ?? {},
+        hiddenKinds = hiddenKinds ?? {},
         tripPhotos = tripPhotos ?? {},
         people = people ?? [],
         trips = trips ?? [],
@@ -1295,6 +1297,8 @@ class AppData {
             .cast<String, String>(),
         kindOrder: (json['kindOrder'] as Json? ?? const <String, dynamic>{})
             .map((trip, order) => MapEntry(trip, _strings(order))),
+        hiddenKinds: (json['hiddenKinds'] as Json? ?? const <String, dynamic>{})
+            .map((trip, kinds) => MapEntry(trip, _strings(kinds).toSet())),
         chosenLanguage:
             Language.values.asNameMap()[json['language']] ?? Language.hr,
         noticesOff: _strings(json['noticesOff']).toSet(),
@@ -1333,6 +1337,10 @@ class AppData {
   /// Trip id -> this person's order of the categories of food and drink.
   Map<String, List<String>> kindOrder;
 
+  /// Trip id -> the app's own categories of food and drink this person threw
+  /// away; they come back when one of that name is added.
+  Map<String, Set<String>> hiddenKinds;
+
   /// Trip id -> the photo this person uses there instead of the general one.
   Map<String, String> tripPhotos;
 
@@ -1369,6 +1377,9 @@ class AppData {
         'identities': identities,
         'waiting': waiting,
         'kindOrder': kindOrder,
+        'hiddenKinds': {
+          for (final entry in hiddenKinds.entries) entry.key: entry.value.toList(),
+        },
         'tripPhotos': tripPhotos,
         'language': chosenLanguage.name,
         'noticesOff': noticesOff.toList(),

@@ -305,16 +305,40 @@ const double _holdWander = 8;
 /// category.
 double? _rowKept;
 
+/// A little puff of sparks where something was thrown away.
+void _puff(web.HTMLElement over) {
+  final box = over.getBoundingClientRect();
+  final burst = el('div', cls: 'puff', attrs: {
+    'style': 'left:${box.left + box.width / 2}px;top:${box.top + box.height / 2}px',
+  }, children: [
+    el('span', cls: 'puff-cloud'),
+    for (var i = 0; i < 14; i++)
+      el('span', cls: 'spark', attrs: {
+        'style': '--dx:${(cos(i * pi / 7) * (34 + 10 * (i % 3))).toStringAsFixed(1)}px;'
+            '--dy:${(sin(i * pi / 7) * (34 + 10 * (i % 3))).toStringAsFixed(1)}px;'
+            '--hue:${(i * 47) % 360}',
+      }),
+  ]);
+  web.document.body!.append(burst);
+  Timer(const Duration(milliseconds: 750), () => burst.remove());
+}
+
 /// A long press picks a category up, the others wobble as icons do on a phone,
 /// and it goes where the finger drops it. The green goes with it, as it is the
-/// one being worked on. [save] gets the new order and the one that moved.
+/// one being worked on. [save] gets the new order and the one that moved. While
+/// it is up, a bin stands at the top in the middle: let go over it and [trash]
+/// gets the category.
 void _reorderOnHold(
   web.HTMLElement row,
   void Function(List<String> keys, String moved) save,
+  void Function(String key) trash,
 ) {
   Timer? hold;
   web.HTMLElement? held;
   var lifted = false;
+  web.HTMLElement? bin;
+  var overBin = false;
+  double lastX = 0, lastY = 0;
   double startX = 0, startY = 0, startLeft = 0, startScroll = 0;
   final active = web.AddEventListenerOptions(passive: false);
 
@@ -347,6 +371,19 @@ void _reorderOnHold(
     if (!lifted || chip == null) return;
     lifted = false;
     event.preventDefault();
+    final thrown = overBin && event.type == 'touchend';
+    final where = bin;
+    bin = null;
+    overBin = false;
+    if (thrown && where != null) {
+      _puff(where);
+      chip.style.visibility = 'hidden';
+      Timer(const Duration(milliseconds: 160), () => where.remove());
+      row.classList.remove('arranging');
+      trash(chip.getAttribute('data-tab')!);
+      return;
+    }
+    where?.remove();
     chip.classList.remove('lifted');
     chip.style.transform = '';
     row.classList.remove('arranging');
@@ -373,6 +410,8 @@ void _reorderOnHold(
       chip.classList.add('on');
       chip.classList.add('lifted');
       row.classList.add('arranging');
+      bin = el('div', cls: 'kind-bin', children: [icon('trash', size: 26)]);
+      web.document.body!.append(bin!);
       try {
         web.window.navigator.vibrate(15.toJS);
       } on Object {
@@ -394,6 +433,13 @@ void _reorderOnHold(
       return;
     }
     event.preventDefault();
+    lastX = x;
+    lastY = touch.clientY.toDouble();
+    final box = bin?.getBoundingClientRect();
+    overBin = box != null &&
+        lastX > box.left - 16 && lastX < box.right + 16 &&
+        lastY > box.top - 16 && lastY < box.bottom + 16;
+    bin?.classList.toggle('over', overBin);
     if (x < 40) row.scrollLeft -= 6;
     if (x > web.window.innerWidth - 40) row.scrollLeft += 6;
     follow(chip, x);
@@ -426,16 +472,22 @@ web.HTMLElement _newKind(Ui ui, void Function(String label) add) {
 }
 
 web.HTMLElement foodScreen(Ui ui, Trip trip) {
-  final tabs = _inOrder([
+  final hidden = ui.data.hiddenKinds[trip.id] ?? const <String>{};
+  final every = [
     _Tab(tr('Hrana'), ''),
     for (final kind in PlaceKind.values) _Tab(kind.label, kind.searchWord, kind: kind),
     for (final custom in trip.customKinds)
       _Tab(custom.label, custom.label, custom: custom),
+  ];
+  final tabs = _inOrder([
+    for (final item in every)
+      if (!hidden.contains(item.key)) item,
   ], ui.data.kindOrder[trip.id] ?? const []);
   final customAt = tabs.indexWhere((tab) => tab.key == ui.customKindId);
-  final index = customAt >= 0
+  final shownAt = customAt >= 0
       ? customAt
       : tabs.indexWhere((tab) => tab.kind == ui.placeKind);
+  final index = shownAt < 0 ? 0 : shownAt;
   final tab = tabs[index];
   final places = trip.places.where(tab.holds).toList();
 
@@ -456,8 +508,10 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   void addKind(String label) {
     ui.addingKind = false;
     if (label.isNotEmpty) {
-      final same = tabs.where((item) => item.label.toLowerCase() == label.toLowerCase());
+      final same = every.where((item) => item.label.toLowerCase() == label.toLowerCase());
       if (same.isNotEmpty) {
+        // One thrown away earlier comes back.
+        ui.data.hiddenKinds[trip.id]?.remove(same.first.key);
         choose(same.first);
       } else {
         final custom = CustomKind(id: ui.store.newId(), label: label);
@@ -468,13 +522,40 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  void removeKind(CustomKind custom) {
-    if (!web.window.confirm(tr('Obrisati kategoriju {0} i mjesta u njoj?', [custom.label]))) return;
-    trip.places.removeWhere(tab.holds);
-    trip.customKinds.remove(custom);
-    ui.customKindId = null;
+  /// Throws a category away with a moment to change your mind: one the group
+  /// made goes with its places, one of the app's own is hidden on this phone.
+  void throwAway(String key) {
+    final item = every.firstWhere((each) => each.key == key);
+    if (tabs.length <= 1) {
+      ui.toast(tr('Jedna kategorija mora ostati.'));
+      ui.rerender();
+      return;
+    }
+    final custom = item.custom;
+    final open = identical(item, tab);
+    void Function() restore;
+    if (custom != null) {
+      final at = trip.customKinds.indexOf(custom);
+      final places = [for (final place in trip.places) if (item.holds(place)) place];
+      trip.places.removeWhere(item.holds);
+      trip.customKinds.remove(custom);
+      restore = () {
+        trip.customKinds.insert(at.clamp(0, trip.customKinds.length), custom);
+        trip.places.addAll(places);
+      };
+    } else {
+      ui.data.hiddenKinds.putIfAbsent(trip.id, () => {}).add(key);
+      restore = () => ui.data.hiddenKinds[trip.id]?.remove(key);
+    }
+    if (open) choose(tabs.firstWhere((each) => !identical(each, item)));
     ui.changed();
+    ui.offerUndo(tr('Uklonjeno: {0}', [item.label]), () {
+      restore();
+      ui.changed();
+    });
   }
+
+  void removeKind(CustomKind custom) => throwAway(custom.id);
 
   final custom = tab.custom;
   final sliding = el('div', cls: 'slide-page', children: [
@@ -523,6 +604,9 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     _rowKept = chipRow.scrollLeft.toDouble();
     choose(tabs.firstWhere((item) => item.key == moved));
     ui.rerender();
+  }, (key) {
+    _rowKept = chipRow.scrollLeft.toDouble();
+    throwAway(key);
   });
   final page = el('div', cls: 'swipe-area', children: [
     topBar(tr('Hrana i piće')),
