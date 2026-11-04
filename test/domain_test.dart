@@ -321,7 +321,7 @@ void main() {
     });
   });
 
-  test('plan of attack puts what passed last and shows the winning vote', () {
+  test('plan of attack keeps everything in its place and shows the winning vote', () {
     final trip = Trip(
       id: 't',
       country: 'Hrvatska',
@@ -348,9 +348,9 @@ void main() {
       ],
     );
     final items = planOfAttack(trip, DateTime(2026, 7, 1, 9));
-    expect(items.map((item) => item.title), ['Plaža', 'Brod', 'Kava']);
-    expect(items.first.time, '11:00');
-    expect(items.map((item) => item.past), [false, false, true]);
+    expect(items.map((item) => item.title), ['Kava', 'Brod', 'Plaža']);
+    expect(items.last.time, '11:00');
+    expect(items.map((item) => item.past), [true, false, false]);
   });
 
   group('places in the plan of attack', () {

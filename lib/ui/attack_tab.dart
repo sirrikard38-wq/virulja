@@ -80,7 +80,7 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
 }
 
 /// Everything the group wants to do, by the day with most votes: all of it, or
-/// one day. What has gone by stays at the end, grey. While a day is open, what
+/// one day. Nothing moves within the list; what has gone by turns grey. While a day is open, what
 /// was on it stays, even if a vote moves it to another day; it moves once the
 /// day is left.
 web.HTMLElement attackTab(Ui ui, Trip trip) {

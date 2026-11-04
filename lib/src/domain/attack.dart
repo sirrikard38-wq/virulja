@@ -210,8 +210,9 @@ void setPollInAttack(Trip trip, Poll poll, bool on, String person) {
   return _clock.hasMatch(choice) ? (time: choice, detail: null) : (time: '', detail: choice);
 }
 
-/// Everything in Plan napada at [now]: what is still to come by its first day,
-/// then what has no day yet, and at the end what has gone by.
+/// Everything in Plan napada at [now], each always in the same place: the stops
+/// of Plan puta, then the places of Hrana i piće, then the polls, each in the
+/// order it was made.
 List<NextUp> planOfAttack(Trip trip, DateTime now) {
   final day = today(now);
   final hour = now.hour.toString().padLeft(2, '0');
@@ -280,15 +281,8 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
     for (final poll in trip.polls)
       if (poll.active && placeOf(trip, poll) == null) fromPoll(poll),
   ];
-  int first(NextUp item) => item.days.isEmpty ? trip.dayCount : item.days.first;
-  return items
-    ..sort((a, b) {
-      if (a.past != b.past) return a.past ? 1 : -1;
-      final days = first(a).compareTo(first(b));
-      if (days != 0) return days;
-      final times = a.time.compareTo(b.time);
-      return times != 0 ? times : a.title.compareTo(b.title);
-    });
+  // Each thing keeps its place: votes, days and time never move it.
+  return items;
 }
 
 /// The days of [trip] that have not gone by at [now].

@@ -77,7 +77,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   none before the first vote (`votedDays`). Only votes give a day: not the day an older
   poll was made for, nor a stop's day in Plan puta. Days are written "1 Dan", not "Dan 1". While a day is
   open, what was on it stays even when a vote moves it; it moves once the day is left
-  (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`). The tabs
+  (`Ui.attackKept`). "Dogovoreno" news still needs half the group (`agreedDays`). Nothing
+  in Plan napada is sorted: votes, days and time never move a thing in the list. The tabs
   show how many presentations, polls and plans there are, and each day chip its plans; the
   cards show no date, only a past one does.
 - In Troškovi, something in Plan napada with a price is planned until its agreed day is over,
