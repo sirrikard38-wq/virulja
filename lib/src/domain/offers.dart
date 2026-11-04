@@ -1,11 +1,12 @@
 import 'i18n.dart';
 import 'models.dart';
 
+/// What the stays can be sorted by, in the order Sortiraj offers them.
 enum OfferSort {
+  votes('Glasovi'),
   price('Cijena'),
   rating('Ocjena'),
-  beach('Blizina plaže'),
-  votes('Glasovi');
+  beach('Blizina plaže');
 
   const OfferSort(this._label);
 
