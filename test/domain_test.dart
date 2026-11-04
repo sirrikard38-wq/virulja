@@ -902,6 +902,7 @@ void main() {
       expect(sinceCount(const Duration(minutes: 61)), '1 sata');
       expect(sinceCount(const Duration(minutes: 1)), '1 minute');
       expect(sinceCount(const Duration(hours: 5)), '5 sati');
+      expect([listsCount(0), listsCount(1), listsCount(3), listsCount(5)], ['0 lista', '1 lista', '3 liste', '5 lista']);
     });
 
     test('a presentation keeps the photos picked for it in their order', () {

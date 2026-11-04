@@ -179,7 +179,3 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
   ]);
 }
 
-/// How many things are still to buy on every list of [trip].
-int itemsLeft(Trip trip) => trip.shopLists
-    .where((list) => list.expenseId == null)
-    .fold(0, (sum, list) => sum + list.items.where((item) => !item.done).length);
