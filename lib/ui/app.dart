@@ -72,20 +72,26 @@ class ViruljaApp {
     web.document.addEventListener('gesturestart', ((web.Event event) => event.preventDefault()).toJS);
     final known = _stepOf();
     known == null ? _markStep() : _step = known;
+    _firstStep = _step;
     // Every change of screen comes through the address, as phones expect.
     web.window.addEventListener(
       'hashchange',
       ((web.Event event) {
-        if (_skipping) {
-          _skipping = false; // a step passed through on the way back
+        final hash = web.window.location.hash;
+        final again = _rewinding;
+        if (again != null) {
+          // One step past the screen shown, out of sight: from here it is put
+          // back as a fresh step, which wipes out the way forward.
+          _rewinding = null;
+          _returning = again;
+          _step = (_stepOf() ?? _step) + 1;
+          web.window.location.hash = again.isEmpty ? '#/' : again;
           return;
         }
-        final hash = web.window.location.hash;
-        if (_settling == hash) {
-          // The step that wipes out the way forward: the screen stays as it is.
-          _settling = null;
+        if (_returning != null) {
+          // The screen shown, back as a fresh step: nothing changes on it.
+          _returning = null;
           _markStep();
-          _shown = hash;
           return;
         }
         final step = _stepOf();
@@ -101,21 +107,6 @@ class ViruljaApp {
           _trail.removeLast(); // the phone's back button
         }
         _arrive();
-      }).toJS,
-    );
-    // The on-screen arrow leaves the screen in place of a step back, so it
-    // leaves behind a step of the same screen as the one before. The phone's
-    // back button skips that step, as it shows nothing new.
-    web.window.addEventListener(
-      'popstate',
-      ((web.Event event) {
-        final step = _stepOf();
-        final hash = web.window.location.hash;
-        if (_placeOf(hash) == _placeOf(_shown ?? '') && step != null && step < _step) {
-          _step = step;
-          _skipping = hash != _shown; // its address change is still to come
-          web.window.history.back();
-        }
       }).toJS,
     );
     watchForInstall(render);
@@ -208,12 +199,6 @@ class ViruljaApp {
     render();
   }
 
-  /// The address last drawn.
-  String? _shown;
-
-  /// The list of trips, Uspomene and Postavke: the screens the menu leads to.
-  bool _isFirstScreen(String hash) => _Place(hash).tripId == null &&
-      const {'', '~', 'uspomene', 'grupa'}.contains(_Place(hash).page);
 
   /// Where the phone was last found, for the walk to the stay to start there.
   ({double latitude, double longitude})? _here;
@@ -261,50 +246,29 @@ class ViruljaApp {
     return link;
   }
 
-  /// Set while the phone's back button passes a step that shows nothing new.
-  bool _skipping = false;
+  /// The step the app started on: there is nothing of it before that.
+  int _firstStep = 0;
 
-  /// The address of the step being added after a step back.
-  String? _settling;
+  /// The screen being put back as a fresh step, while the step before it passes
+  /// out of sight; then the moment it comes back.
+  String? _rewinding;
+  String? _returning;
 
-  /// After the phone's own step back (its back button, or a swipe from the left
-  /// edge), the screen it left stays as a step forward, which an iPhone reaches
-  /// with a swipe from the right edge. A moment later, once the phone is done,
-  /// one more step of the same screen is added through the address, which wipes
-  /// that step forward out. The phone's back button then skips it.
+  /// After a step back (the arrow, the phone's back button, a swipe from the
+  /// left edge), the screen left behind stays as a step forward, which an
+  /// iPhone reaches with a swipe from the right edge. A moment later, once the
+  /// phone is done, the app goes one more step back out of sight and puts the
+  /// screen shown back as a fresh step, through the address. That wipes the way
+  /// forward out and leaves no copy of a screen to swipe back to. On the first
+  /// step of all there is nothing before, so the way forward stays.
   void _settleAfterBack(String landed) {
-    // A first screen gets no copy: a swipe back there would show it again.
-    if (_isFirstScreen(landed)) return;
+    final step = _stepOf();
+    if (step == null || step <= _firstStep) return;
     Timer(const Duration(milliseconds: 400), () {
-      if (web.window.location.hash != landed) return;
-      final place = _Place(landed);
-      final trip = place.tripId == null ? null : _data.tripById(place.tripId!);
-      final String again;
-      if (landed == '#/~') {
-        again = '#/';
-      } else if (landed.endsWith('/~')) {
-        again = landed.substring(0, landed.length - 2);
-      } else if (trip != null && place.section == null) {
-        again = '#/p/${trip.id}/${defaultTab(trip)}/~';
-      } else if (landed.isEmpty || landed == '#' || landed == '#/') {
-        again = '#/~';
-      } else {
-        again = '$landed/~';
-      }
-      _settling = again;
-      _step++;
-      web.window.location.hash = again;
+      if (web.window.location.hash != landed || _rewinding != null) return;
+      _rewinding = landed;
+      web.window.history.back();
     });
-  }
-
-  /// Where an address is: the tabs of a trip are one place.
-  String _placeOf(String hash) {
-    final place = _Place(hash);
-    if (place.tripId != null && (place.section == null || _mainTabs.contains(place.section))) {
-      return '#/p/${place.tripId}';
-    }
-    final plain = hash.endsWith('/~') ? hash.substring(0, hash.length - 2) : hash;
-    return plain.isEmpty || plain == '#' ? '#/' : plain;
   }
 
   /// Which step of the phone's history the app is on, counted from its start.
@@ -317,21 +281,11 @@ class ViruljaApp {
 
   void _markStep() => web.window.history.replaceState({'step': _step}.jsify(), '');
 
-  /// Back to the screen before: in its place, not a step back in the phone's
-  /// history, so no step forward is left that a swipe from the right edge of
-  /// an iPhone would go to.
+  /// Back to the screen before, a real step back; the way forward it leaves
+  /// is wiped out a moment later (`_settleAfterBack`).
   void _back() {
     if (_trail.isNotEmpty) {
-      final before = _trail.last;
-      // To a first screen the arrow steps back for real: nothing is left behind
-      // it, so a swipe back there has nowhere to go.
-      if (_isFirstScreen(before)) {
-        web.window.history.back();
-        return;
-      }
-      _trail.removeLast();
-      web.window.location.replace(before.isEmpty ? '#/' : before);
-      _markStep();
+      web.window.history.back();
       return;
     }
     final place = _Place(web.window.location.hash);
@@ -528,7 +482,6 @@ class ViruljaApp {
     _redrawWaiting = false;
     _applyTheme();
     final place = _Place(web.window.location.hash);
-    _shown = web.window.location.hash;
     final tripId = place.tripId;
     final trip = tripId == null ? null : _data.tripById(tripId);
     if (trip == null && _anthem.isPlaying) _anthem.stop();

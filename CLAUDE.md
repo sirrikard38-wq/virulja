@@ -39,14 +39,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
-  The on-screen back arrow replaces the screen instead of stepping back, so no step
-  forward is left for an iPhone's swipe from the right edge; the phone's back button
-  skips the step of the same screen this leaves (`App._step`). After the phone's own step
-  back, 400 ms later one more step of the same screen is added through the address
-  (ending in `/~`), which wipes the step forward out (`_settleAfterBack`). The first
-  screens (the trips, Uspomene, Postavke) get no copy, and the arrow steps back to them
-  for real, so a swipe back there has nothing behind it. Pushing history steps
-  while the phone steps back (tried on 2026-11-04) froze an iPhone and left it white.
+  Every step back (the arrow, the phone's back button or swipe) is followed 400 ms later
+  by one more step back out of sight and the screen put back as a fresh step through
+  the address (`_settleAfterBack`): that wipes out the step forward an iPhone's swipe
+  from the right edge would reach, with no copy of a screen left to swipe back to.
+  Copies of screens (`/~`) made a swipe back show the same trip again; pushing history
+  steps while the phone steps back froze an iPhone and left it white (2026-11-04).
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
   trip's tabs and the days of Plan puta. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`

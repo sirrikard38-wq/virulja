@@ -70,11 +70,11 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
           (name) => _rename(ui, trip, place.name, name, (name) => place.name = name)),
       el('div', cls: 'small', text: _placeFacts(place)),
       el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
+        _voteChip(ui, trip, place.name),
         chip(tr('Plan napada'), () {
           setPlaceInAttack(trip, place, !inAttack, ui.meIn(trip));
           ui.changed();
         }, on: inAttack),
-        _voteChip(ui, trip, place.name),
       ]),
     ]),
     if (link != null) linkIcon(link, tr('Otvori {0}', [place.name])),
