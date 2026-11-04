@@ -94,7 +94,7 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) {
     if (trip.photoDay(photo) == day) return;
     photo.dayIndex = day;
     ui.changed();
-    ui.toast(tr('Premješteno: {0} Dan', [day + 1]));
+    ui.toast(tr('Premješteno: {0} Dan', [day + 1]), short: true);
   });
   return shot;
 }
@@ -117,7 +117,8 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
       el('p', cls: 'soft pad gap-top',
           text: tr('Dodajte fotografije i videe iz galerije, a aplikacija će ih sama složiti po danima.')),
     if (trip.photos.isNotEmpty) ...[
-      el('p', cls: 'small pad', text: tr('Drži prst na fotografiji i povuci je na drugi dan.')),
+      el('p', cls: 'small pad', attrs: {'style': 'margin-top:16px'},
+          text: tr('Drži prst na fotografiji i povuci je na drugi dan.')),
       for (var day = 0; day < trip.dayCount; day++)
         el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
           el('div', cls: 'day-title',
