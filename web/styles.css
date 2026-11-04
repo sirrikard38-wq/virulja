@@ -145,6 +145,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .round.left { left: max(14px, calc(50% - 226px)); }
 .round.right { right: max(14px, calc(50% - 226px)); }
 .round.second { top: calc(var(--top-safe) + 64px); }
+.round.third { top: calc(var(--top-safe) + 118px); }
+.sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px calc(var(--bottom-safe) + 16px); background: rgba(0, 0, 0, .45); }
+.sheet-card { width: 100%; max-width: 448px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; }
+.sheet-card .secondary { justify-content: center; text-align: center; }
+.offer-edit { margin-top: 10px; }
+.brush-small { color: var(--accent); }
+.sort-chip { display: inline-flex; align-items: center; gap: 6px; }
+.brush-small.on { border-radius: 50%; background: var(--accent); color: var(--on-accent); }
+.offer-edit .field { margin-left: 0; margin-right: 0; }
 .people-link { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .title-link { display: block; padding: 0; background: none; border: 0; color: inherit; text-align: left; }
 .round .ring { position: absolute; inset: 0; transform: rotate(-90deg); }

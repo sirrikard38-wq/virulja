@@ -133,7 +133,14 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   or no stays one answer per person (`Poll.single`), and in Plan napada the added answer
   with most votes shows. Ne and
   Možda never decide a poll.
-- On a trip's main tabs the settings button is in the corner, the anthem's speaker under it.
+- On a trip's main tabs the settings button is in the corner, the anthem's speaker under it,
+  and under that a pin while a stay is reserved: Google Maps on foot from the phone to it
+  (`walkTo`; a short map link cannot be read, so it just opens).
+- Smještaj: each stay has a location (address or Google Maps link) and "Rezervirano". A
+  reserved stay is planned and spent in Troškovi (`Offer.reserved`, `Trip.reservedOffer`).
+  With both a location and an offer link, the link icon asks which to open. The name is
+  typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
+  deciding most, each removed with its x (`sortOffersBy`).
 - Bars move only by dragging their round knob (or a video's piece); a tap elsewhere on a
   bar changes nothing.
 - Names of polls, places and dishes are typed in place (`editableName`); a place or dish

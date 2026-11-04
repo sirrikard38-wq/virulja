@@ -16,7 +16,11 @@ enum OfferSort {
 
 /// A copy of [offers] in the order of [sort]. Offers without the value being
 /// compared go last.
-List<Offer> sortOffers(List<Offer> offers, OfferSort sort) {
+List<Offer> sortOffers(List<Offer> offers, OfferSort sort) => sortOffersBy(offers, [sort]);
+
+/// A copy of [offers] ordered by each of [sorts] in turn: the first decides, the
+/// next only between equals, and so on. With none they stay as they were added.
+List<Offer> sortOffersBy(List<Offer> offers, List<OfferSort> sorts) {
   int compareMissingLast(num? a, num? b, {bool ascending = true}) {
     if (a == null && b == null) return 0;
     if (a == null) return 1;
@@ -24,19 +28,22 @@ List<Offer> sortOffers(List<Offer> offers, OfferSort sort) {
     return ascending ? a.compareTo(b) : b.compareTo(a);
   }
 
-  final sorted = offers.toList();
-  switch (sort) {
-    case OfferSort.price:
-      sorted.sort((a, b) => a.pricePerNight.compareTo(b.pricePerNight));
-    case OfferSort.rating:
-      sorted.sort(
-          (a, b) => compareMissingLast(a.rating, b.rating, ascending: false));
-    case OfferSort.beach:
-      sorted.sort((a, b) => compareMissingLast(a.beachMeters, b.beachMeters));
-    case OfferSort.votes:
-      sorted.sort((a, b) => b.votes.length.compareTo(a.votes.length));
-  }
-  return sorted;
+  int by(OfferSort sort, Offer a, Offer b) => switch (sort) {
+        OfferSort.price => a.pricePerNight.compareTo(b.pricePerNight),
+        OfferSort.rating => compareMissingLast(a.rating, b.rating, ascending: false),
+        OfferSort.beach => compareMissingLast(a.beachMeters, b.beachMeters),
+        OfferSort.votes => b.votes.length.compareTo(a.votes.length),
+      };
+
+  final places = {for (var i = 0; i < offers.length; i++) offers[i]: i};
+  return offers.toList()
+    ..sort((a, b) {
+      for (final sort in sorts) {
+        final order = by(sort, a, b);
+        if (order != 0) return order;
+      }
+      return places[a]!.compareTo(places[b]!);
+    });
 }
 
 /// How one offer compares with the others. Every number runs from 0 (worst) to

@@ -4,6 +4,7 @@ import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 import '../src/domain/i18n.dart';
+import '../src/domain/links.dart';
 import '../src/domain/models.dart';
 import 'anthem.dart';
 import 'show_builder.dart';
@@ -436,6 +437,15 @@ class ViruljaApp {
             onTap: () => _go('#/p/${trip.id}/uredi'),
             children: [icon('tool', size: 22)],
           ),
+        // Under the speaker: the way to the reserved stay, on foot.
+        if (trip != null && _mainTabs.contains(place.section))
+          if (trip.reservedOffer case final stay?)
+            button(
+              cls: trip.anthemClipId != null ? 'round right third' : 'round right second',
+              ariaLabel: tr('Pješice do smještaja'),
+              onTap: () => web.window.open('${walkTo(stay, trip)}', '_blank'),
+              children: [icon('pin', size: 22)],
+            ),
         if (hasMenu) _menu(place.page),
       ]),
     );

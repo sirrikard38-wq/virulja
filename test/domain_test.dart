@@ -200,6 +200,31 @@ void main() {
       expect(plannedCost(trip, CostCategory.food), 3700 * trip.people + 5600);
     });
 
+    test('a reserved stay is planned and spent', () {
+      final trip = visTrip()
+        ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));
+      final budget = Budget.of(trip);
+      expect(budget.line(CostCategory.stay).planned, 10000 * trip.nights);
+      expect(budget.line(CostCategory.stay).actual, 10000 * trip.nights);
+      expect(trip.reservedOffer?.name, 'Vila Mare');
+    });
+
+    test('the way to a stay is read from its address or its map link', () {
+      expect(mapsPlace('Ulica 5, Vis'), 'Ulica 5, Vis');
+      expect(mapsPlace('https://www.google.com/maps/place/Vila+Mare/@43.06,16.18,17z'), '43.06,16.18');
+      expect(mapsPlace('https://maps.google.com/?q=Komiza+Vis'), 'Komiza Vis');
+      expect(mapsPlace('https://www.google.com/maps/place/Vila+Mare/data=x'), 'Vila Mare');
+      expect(mapsPlace('https://maps.app.goo.gl/abc'), isNull);
+      final trip = visTrip();
+      final walk = walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1, location: 'Ulica 5'), trip);
+      expect(walk.queryParameters['travelmode'], 'walking');
+      expect(walk.queryParameters['destination'], 'Ulica 5');
+      expect(walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1), trip).queryParameters['destination'],
+          'Vila, ${trip.city}');
+      expect('${walkTo(Offer(id: 'o', name: 'Vila', pricePerNight: 1, location: 'https://maps.app.goo.gl/abc'), trip)}',
+          'https://maps.app.goo.gl/abc');
+    });
+
     test('with no offer chosen the stay costs nothing yet', () {
       expect(plannedCost(visTrip(), CostCategory.stay), 0);
     });
@@ -308,6 +333,14 @@ void main() {
       expect(sortOffers(offers, OfferSort.rating).map((o) => o.id), ['g', 'c', 'n']);
       expect(sortOffers(offers, OfferSort.beach).map((o) => o.id), ['n', 'c', 'g']);
       expect(sortOffers(offers, OfferSort.votes).map((o) => o.id), ['n', 'c', 'g']);
+      expect(sortOffersBy(offers, []).map((o) => o.id), offers.map((o) => o.id));
+      final even = [
+        Offer(id: 'a', name: 'A', pricePerNight: 100, rating: 4),
+        Offer(id: 'b', name: 'B', pricePerNight: 100, rating: 5),
+        Offer(id: 'c', name: 'C', pricePerNight: 50, rating: 3),
+      ];
+      expect(sortOffersBy(even, [OfferSort.price, OfferSort.rating]).map((o) => o.id), ['c', 'b', 'a']);
+      expect(sortOffersBy(even, [OfferSort.rating, OfferSort.price]).map((o) => o.id), ['b', 'a', 'c']);
     });
 
     test('facts run from 0 to 1 and the best value gets 1', () {

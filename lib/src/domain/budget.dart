@@ -22,6 +22,12 @@ class Budget {
       actual[expense.category] = actual[expense.category]! + expense.amount;
     }
     final written = {for (final expense in trip.expenses) _same(expense.title)};
+    // A reserved stay is as good as paid.
+    for (final offer in trip.offers) {
+      if (offer.reserved && !written.contains(_same(offer.name))) {
+        actual[CostCategory.stay] = actual[CostCategory.stay]! + offer.pricePerNight * trip.nights;
+      }
+    }
     for (final item in planOfAttack(trip, now ?? DateTime.now())) {
       if (item.happened && !written.contains(_same(item.title))) {
         actual[item.category] = actual[item.category]! + item.cost;
@@ -70,6 +76,10 @@ int dishesCost(Trip trip) =>
 int plannedCost(Trip trip, CostCategory category) {
   switch (category) {
     case CostCategory.stay:
+      final reserved = trip.offers.where((offer) => offer.reserved);
+      if (reserved.isNotEmpty) {
+        return reserved.fold(0, (sum, offer) => sum + offer.pricePerNight * trip.nights);
+      }
       return (trip.chosenOffer?.pricePerNight ?? 0) * trip.nights;
     case CostCategory.food:
       return plannedPlacesCost(trip, trip.places) + dishesCost(trip);

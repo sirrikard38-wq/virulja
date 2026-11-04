@@ -21,6 +21,46 @@ Uri airbnbSearch(Trip trip) => Uri.https(
       },
     );
 
+/// Where [location] is, for directions: coordinates or a place read from a
+/// Google Maps link, or the text itself when it is an address. Null for a link
+/// that does not say, such as a short one.
+String? mapsPlace(String location) {
+  final text = location.trim();
+  if (text.isEmpty) return null;
+  final uri = Uri.tryParse(text);
+  if (uri == null || !uri.hasScheme) return text;
+  final at = RegExp(r'@(-?\d+\.\d+),(-?\d+\.\d+)').firstMatch(text);
+  if (at != null) return '${at[1]},${at[2]}';
+  for (final key in ['destination', 'query', 'q', 'daddr', 'll']) {
+    final value = uri.queryParameters[key];
+    if (value != null && value.trim().isNotEmpty) return value.trim();
+  }
+  final place = RegExp(r'/place/([^/]+)').firstMatch(uri.path);
+  if (place != null) return Uri.decodeComponent(place[1]!.replaceAll('+', ' '));
+  return null;
+}
+
+/// Google Maps showing [location]: its own link, or a search for an address.
+Uri mapsOf(String location) {
+  final text = location.trim();
+  final uri = Uri.tryParse(text);
+  if (uri != null && uri.hasScheme) return uri;
+  return Uri.https('www.google.com', '/maps/search/', {'api': '1', 'query': text});
+}
+
+/// Google Maps on foot from where the phone is to [offer], or its map when its
+/// link does not say where it is.
+Uri walkTo(Offer offer, Trip trip) {
+  final location = offer.location;
+  final place = location == null ? '${offer.name}, ${trip.city}' : mapsPlace(location);
+  if (place == null) return mapsOf(location!);
+  return Uri.https('www.google.com', '/maps/dir/', {
+    'api': '1',
+    'destination': place,
+    'travelmode': 'walking',
+  });
+}
+
 String _slug(String text) => text.trim().replaceAll(RegExp(r'\s+'), '-');
 
 /// Google Maps search for places of one kind in the trip's city.

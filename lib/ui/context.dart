@@ -57,7 +57,11 @@ class Ui {
   final void Function(String message, void Function() undo) offerUndo;
 
   // What the screens remember while the app is open.
-  OfferSort offerSort = OfferSort.price;
+  /// What the stays are sorted by, first to last; none keeps them as added.
+  List<OfferSort> offerSorts = [];
+
+  /// Whether the choices of Sortiraj are showing.
+  bool sortOpen = false;
   PlaceKind placeKind = PlaceKind.restaurant;
 
   /// The category that is open instead of [placeKind]: the group's own one, or
@@ -81,6 +85,9 @@ class Ui {
   /// The poll whose answers are being changed: each has an x, and a new one
   /// can be typed.
   String? editingPoll;
+
+  /// The stay whose details are being changed.
+  String? editingOffer;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;

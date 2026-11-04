@@ -193,6 +193,8 @@ class Offer {
     this.beachMeters,
     this.source = 'Ručno',
     this.link,
+    this.location,
+    this.reserved = false,
     Set<String>? votes,
   }) : votes = votes ?? {};
 
@@ -204,6 +206,8 @@ class Offer {
         beachMeters: json['beachMeters'] as int?,
         source: json['source'] as String? ?? 'Ručno',
         link: json['link'] as String?,
+        location: json['location'] as String?,
+        reserved: json['reserved'] as bool? ?? false,
         votes: _strings(json['votes']).toSet(),
       );
 
@@ -214,12 +218,20 @@ class Offer {
   int? beachMeters;
   String source;
   String? link;
+
+  /// Where it is: an address or a Google Maps link.
+  String? location;
+
+  /// Booked: its price counts as spent, and the way there is one tap away.
+  bool reserved;
   Set<String> votes;
 
   Json toJson() => {
         'id': id,
         'name': name,
         'pricePerNight': pricePerNight,
+        'location': location,
+        'reserved': reserved,
         'rating': rating,
         'beachMeters': beachMeters,
         'source': source,
@@ -1067,6 +1079,14 @@ class Trip {
   String? dayShowId;
 
   int get nights => end.difference(start).inDays;
+
+  /// Where the group sleeps: the first stay that is reserved.
+  Offer? get reservedOffer {
+    for (final offer in offers) {
+      if (offer.reserved) return offer;
+    }
+    return null;
+  }
 
   /// Calendar days from the first to the last, both included.
   int get dayCount => nights + 1;
