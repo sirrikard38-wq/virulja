@@ -15,8 +15,8 @@ import 'profile_section.dart';
 import 'range_picker.dart';
 import 'widgets.dart';
 
-/// The group of a trip: nobody is added by hand, people appear when they enter
-/// the code.
+/// The code of a trip: nobody is added by hand, people appear when they enter
+/// it.
 web.HTMLElement _members(Ui ui, Trip trip) {
   return el('div', children: [
     sectionTitle(tr('Šifra putovanja')),
@@ -40,8 +40,6 @@ web.HTMLElement _members(Ui ui, Trip trip) {
         ui.rerender();
       }),
     ]),
-    sectionTitle(tr('Putolovci')),
-    for (final id in trip.memberIds) memberRow(ui, trip, id),
   ]);
 }
 
@@ -181,9 +179,6 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     ]),
     if (trip != null) profilePhoto(ui, trip: trip),
     dates.element,
-    sectionTitle(tr('Valuta')),
-    // Kept when the settings are left, so that turning past others changes nothing.
-    currencyWheel(ui, money, (chosen) => money = chosen),
     sectionTitle(tr('Razglednica')),
     el('label', cls: 'secondary wide', attrs: {'style': 'margin-top:6px'}, children: [
       cover,
@@ -195,6 +190,14 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     ],
     if (trip != null && ui.cloud != null) _members(ui, trip),
     if (trip != null && ui.cloud?.pushKey != null) notificationsSection(ui, trip: trip),
+    if (trip != null && ui.cloud != null)
+      ...foldSection(ui, 'travellers', tr('Putolovci'), () => [
+            for (final id in trip.memberIds) memberRow(ui, trip, id),
+          ]),
+    // Kept when the settings are left, so that turning past others changes nothing.
+    ...foldSection(ui, 'trip-currency', tr('Valuta'), () => [
+          currencyWheel(ui, money, (chosen) => money = chosen),
+        ]),
     if (trip != null)
       el('div', cls: 'pad gap-top', children: [
         button(

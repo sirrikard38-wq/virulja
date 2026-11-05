@@ -222,7 +222,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`AppData.hiddenCodes`); with any hidden, a tap on the heading folds them open, faded,
   each with "Prikaži". The anthem takes sound files only. The page does not zoom.
 - A heading that folds a list open has + before it, and − while open. In Postavke,
-  Jezik, Izgled and Valuta fold so under Obavijesti (`_fold`, `Ui.openFolds`).
+  Jezik, Izgled and Valuta fold so under Obavijesti, and in a trip's settings
+  Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).
+- In Plan napada the day chips sit under the card's buttons and fill its width
+  (`attack-days`).
 - Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),
   in boxes too. Planirano is only what the group planned per person
   ("Planirani trošak po osobi"), times everyone; the app's estimate (`BudgetLine.estimate`)

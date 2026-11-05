@@ -84,26 +84,6 @@ List<web.HTMLElement> _codesSection(Ui ui) {
   ];
 }
 
-/// A heading with + that folds [body] open, and − while it is open, as
-/// Obavijesti does.
-List<web.HTMLElement> _fold(Ui ui, String key, String title, List<web.HTMLElement> Function() body) {
-  final open = ui.openFolds.contains(key);
-  return [
-    button(
-      cls: open ? 'fold open' : 'fold',
-      onTap: () {
-        open ? ui.openFolds.remove(key) : ui.openFolds.add(key);
-        ui.rerender();
-      },
-      children: [
-        icon(open ? 'minus' : 'plus', size: 22),
-        el('span', cls: 'section', text: title),
-      ],
-    )..setAttribute('aria-expanded', '$open'),
-    if (open) ...body(),
-  ];
-}
-
 /// This phone's settings: who you are, and how the app looks.
 web.HTMLElement groupScreen(Ui ui) {
   final me = ui.data.personById(ui.meId)!;
@@ -134,8 +114,8 @@ web.HTMLElement groupScreen(Ui ui) {
         el('p', cls: 'small pad gap-top', text: tr('Putovanja se dijele s grupom.')),
     ],
     if (cloud?.pushKey != null) notificationsSection(ui),
-    ..._fold(ui, 'jezik', tr('Jezik'), () => [languageChips(ui)]),
-    ..._fold(ui, 'izgled', tr('Izgled'), () => [
+    ...foldSection(ui, 'language', tr('Jezik'), () => [languageChips(ui)]),
+    ...foldSection(ui, 'look', tr('Izgled'), () => [
           el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
             for (final theme in ThemeChoice.values)
               chip(theme.label, () {
@@ -144,7 +124,7 @@ web.HTMLElement groupScreen(Ui ui) {
               }, on: ui.data.theme == theme),
           ]),
         ]),
-    ..._fold(ui, 'valuta', tr('Valuta'), () => [
+    ...foldSection(ui, 'currency', tr('Valuta'), () => [
           el('p', cls: 'small pad', text: tr('Za nova putovanja. Svako putovanje ima svoju u postavkama putovanja.')),
           currencyWheel(ui, ui.data.currencies, (chosen) {
             ui.data.currencies = chosen;

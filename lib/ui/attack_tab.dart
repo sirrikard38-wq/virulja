@@ -50,10 +50,14 @@ void _remove(Ui ui, Trip trip, NextUp item) {
 web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
   final me = ui.meIn(trip);
   final votes = item.dayVotes;
+  final days = remainingDays(trip, DateTime.now());
   return el('div', children: [
     el('div', cls: 'small', attrs: {'style': 'margin-top:8px'}, text: tr('Koji dan idemo?')),
-    el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
-      for (final day in remainingDays(trip, DateTime.now()))
+    // One row of equal buttons; a long trip goes on in the next row.
+    el('div', cls: 'attack-days', attrs: {
+      'style': 'grid-template-columns:repeat(${days.length.clamp(1, 5)},minmax(0,1fr))',
+    }, children: [
+      for (final day in days)
         chip(tr('{0} Dan · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
           toggleDayVote(votes, day, me);
           ui.changed();
@@ -73,11 +77,11 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
   final written = _written(trip, item);
   return el('div', cls: item.past ? 'poll card attack-card past' : 'poll card attack-card',
       children: [
+    el('div', cls: 'attack-top', children: [
     el('div', cls: 'grow', children: [
       if (_when(trip, item).isNotEmpty) el('div', cls: 'small', text: _when(trip, item)),
       el('div', cls: 'title', text: item.title),
       if (detail != null) el('div', cls: 'label', text: detail),
-      if (!item.past) _dayVotes(ui, trip, item),
     ]),
     // Writes it in Troškovi, as a new cost: what it cost, who paid, for whom.
     button(
@@ -101,6 +105,9 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
       onTap: () => _remove(ui, trip, item),
       children: [icon('close', size: 20)],
     ),
+    ]),
+    // The days under it all, filling the whole width of the card.
+    if (!item.past) _dayVotes(ui, trip, item),
   ]);
 }
 

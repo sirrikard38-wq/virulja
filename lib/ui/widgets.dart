@@ -89,6 +89,26 @@ web.HTMLSelectElement select<T>(
   return node;
 }
 
+/// A heading with + that folds [body] open, and − while it is open, as
+/// Obavijesti does. [key] remembers it in `Ui.openFolds`.
+List<web.HTMLElement> foldSection(Ui ui, String key, String title, List<web.HTMLElement> Function() body) {
+  final open = ui.openFolds.contains(key);
+  return [
+    button(
+      cls: open ? 'fold open' : 'fold',
+      onTap: () {
+        open ? ui.openFolds.remove(key) : ui.openFolds.add(key);
+        ui.rerender();
+      },
+      children: [
+        icon(open ? 'minus' : 'plus', size: 22),
+        el('span', cls: 'section', text: title),
+      ],
+    )..setAttribute('aria-expanded', '$open'),
+    if (open) ...body(),
+  ];
+}
+
 /// A field with its unit in dark letters at the right, inside the box.
 web.HTMLElement unitField(String label, web.HTMLInputElement control, String unit) =>
     el('label', cls: 'field tight', children: [
