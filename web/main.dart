@@ -14,17 +14,24 @@ Future<void> main() async {
   app.render();
   cloud?.start();
 
-  // A newer version of the app arrives by itself; show it on the home screen,
-  // never in the middle of filling in a form.
+  // A newer version of the app arrives by itself; show it at the next change of
+  // screen, never in the middle of filling in a form.
   var updateWaiting = false;
   void reloadIfIdle() {
     if (updateWaiting && app.isIdle) web.window.location.reload();
   }
 
+  // On the next change of screen, or when the app comes back to the screen.
   web.window.addEventListener(
     'hashchange',
     ((web.Event event) {
       reloadIfIdle();
+    }).toJS,
+  );
+  web.document.addEventListener(
+    'visibilitychange',
+    ((web.Event event) {
+      if (web.document.visibilityState == 'visible') reloadIfIdle();
     }).toJS,
   );
   registerServiceWorker(updateReady: () {

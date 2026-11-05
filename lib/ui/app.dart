@@ -174,8 +174,14 @@ class ViruljaApp {
 
   AppData get _data => _store.data;
 
-  /// True on the home screen, a good moment to show a new version of the app.
-  bool get isIdle => _Place(web.window.location.hash).page.isEmpty;
+  /// A good moment to show a new version of the app: nothing is being typed,
+  /// no form or box is open and nothing plays. The address keeps the screen,
+  /// so the new version opens where this one was.
+  bool get isIdle {
+    final place = _Place(web.window.location.hash);
+    final form = place.page == 'novo' || place.section == 'uredi' || place.section == 'foto';
+    return !form && !_busy && web.document.querySelector('.sheet') == null;
+  }
 
   void _go(String route) {
     if (web.window.location.hash == route) {

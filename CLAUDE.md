@@ -38,6 +38,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/anthem.dart`: the trip's anthem.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
+- A new version loads at the next change of screen or return to the app, on any
+  screen but a form, a box or typing (`isIdle`); it used to wait for the home
+  screen, so someone staying in a trip kept the old one. Postavke shows "Verzija".
 - The address (`#/p/<trip>/<section>`) is the route, so the phone's back button works.
   Every step back (the arrow, the phone's back button or swipe) is followed 400 ms later
   by one more step back out of sight and the screen put back as a fresh step through
