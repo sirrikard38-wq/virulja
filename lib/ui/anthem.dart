@@ -51,10 +51,11 @@ class AnthemPlayer {
   }
 
   /// Plays the clip in [wav]. Failing quietly is fine: it is only an extra.
-  Future<void> play(web.Blob wav) async {
+  /// False when it could not start.
+  Future<bool> play(web.Blob wav) async {
     stop();
     final context = _context;
-    if (context == null) return;
+    if (context == null) return false;
     try {
       if (context.state != 'running') {
         // Some phones never answer; start anyway rather than stay silent.
@@ -93,8 +94,10 @@ class AnthemPlayer {
           onProgress?.call(passed / length);
         }
       });
+      return true;
     } on Object {
       stop();
+      return false;
     }
   }
 

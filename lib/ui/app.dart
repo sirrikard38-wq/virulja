@@ -336,11 +336,20 @@ class ViruljaApp {
     (fromForm ? _swap : _go)('#/p/${trip.id}');
   }
 
-  Future<void> _playAnthem(Trip trip) async {
+  /// Plays the trip's anthem. When it cannot, and [say] is set (a tap meant to
+  /// hear it), a message says why: the file has not reached this phone, or the
+  /// phone cannot play it.
+  Future<void> _playAnthem(Trip trip, {bool say = false}) async {
     final clip = trip.anthemClipId;
     if (clip == null) return;
     final wav = await _store.getBlob(clip) ?? await _cloud?.fetchBlob(trip, clip);
-    if (wav != null) await _anthem.play(wav);
+    if (wav == null) {
+      if (say) _showToast(tr('Himna još nije stigla na ovaj mobitel. Neka je pošalje mobitel koji ju je dodao: dovoljno je da na njemu otvoriš putovanje.'), long: true);
+      return;
+    }
+    if (!await _anthem.play(wav) && say) {
+      _showToast(tr('Ovaj mobitel ne može pustiti himnu. Probaj je dodati ponovo.'), long: true);
+    }
   }
 
   /// How far the anthem is, kept so that a new screen's ring starts there.
@@ -355,7 +364,7 @@ class ViruljaApp {
 
   void _startAnthem(Trip trip) {
     _anthem.wake(evenOnSilent: true);
-    if (!_anthem.isPlaying) _playAnthem(trip);
+    if (!_anthem.isPlaying) _playAnthem(trip, say: true);
     if (_data.anthemMuted) {
       _data.anthemMuted = false;
       _ui.changed();
@@ -366,12 +375,12 @@ class ViruljaApp {
     _anthem.wake(evenOnSilent: true);
     if (_data.anthemMuted) {
       _data.anthemMuted = false;
-      _playAnthem(trip);
+      _playAnthem(trip, say: true);
     } else if (_anthem.isPlaying) {
       _anthem.stop();
       _data.anthemMuted = true;
     } else {
-      _playAnthem(trip);
+      _playAnthem(trip, say: true);
     }
     _ui.changed();
   }

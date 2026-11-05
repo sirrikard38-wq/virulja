@@ -238,6 +238,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the cloud and played in a browser, so silent mode is the likely cause, not confirmed.
   Asked again, the user chose to keep `ambient` on opening a trip.
 - The quiet level on a real iPhone is not tested yet.
+- 2026-11-05 "Krug ne ide": the ring did not move, so the anthem never started (not silent
+  mode). Likely its file never left the phone that added it while pushes failed
+  (2026-11-04/05). A tap on the speaker or the note now says why it cannot play: the file
+  has not reached this phone, or this phone cannot play it.
 - Booking's API needs a partner contract. Airbnb has no public API and forbids scraping:
   do not build a scraper. Google Hotels data through SerpApi (250 free searches a month,
   unofficial) may give automatic prices; whether Booking shows up as a source is untested.

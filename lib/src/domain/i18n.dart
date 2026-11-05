@@ -513,6 +513,8 @@ const Map<String, List<String>> _texts = {
   'Do plaže': ['To the beach', 'Plaja'],
   'Cijena po noći': ['Price per night', 'Gecelik fiyat'],
   'Iznos': ['Amount', 'Tutar'],
+  'Ovaj mobitel ne može pustiti himnu. Probaj je dodati ponovo.': ['This phone cannot play the anthem. Try adding it again.', 'Bu telefon marşı çalamıyor. Yeniden eklemeyi dene.'],
+  'Himna još nije stigla na ovaj mobitel. Neka je pošalje mobitel koji ju je dodao: dovoljno je da na njemu otvoriš putovanje.': ['The anthem has not reached this phone yet. The phone that added it sends it: just open the trip on it.', 'Marş henüz bu telefona ulaşmadı. Onu ekleyen telefon gönderir: o telefonda geziyi açman yeterli.'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],
