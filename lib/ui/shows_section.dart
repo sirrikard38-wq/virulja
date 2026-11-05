@@ -68,12 +68,13 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
   final best = showOfTheDay(trip);
   final open = ui.showsOpen;
   final mine = showsBy(trip, me);
-  return el('div', cls: 'shows', children: [
+  late final web.HTMLElement section;
+  section = el('div', cls: 'shows', children: [
     button(
       cls: open ? 'fold open' : 'fold',
       onTap: () {
         ui.showsOpen = !open;
-        ui.rerender();
+        section.replaceWith(showsSection(ui, trip));
       },
       children: [
         icon(open ? 'minus' : 'plus', size: 22),
@@ -93,6 +94,7 @@ web.HTMLElement showsSection(Ui ui, Trip trip) {
       el('p', cls: 'small pad gap-top', text: tr('Na naslovnoj stranici putovanja prikazuje se prezentacija s najviše glasova. Svatko ima jedan glas i može napraviti do 3 prezentacije.')),
     ],
   ]);
+  return section;
 }
 
 /// A presentation over the whole screen, each photo whole.

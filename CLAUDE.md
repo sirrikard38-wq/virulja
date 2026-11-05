@@ -212,6 +212,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   are as wide as their words; with no room the payer goes to the next row. Amount boxes
   write 1.250,50 once typed (`amountInput`). A trip's settings fold Šifra putovanja too,
   above Obavijesti.
+- A picture already opened on this phone gets its address at once on a redraw
+  (`AppStore.knownAddress`); waiting for it flashed every picture blank, which looked
+  like the screen jumping. Prezentacija dana folds in place, nothing else redrawn.
 - Taking something out of a list leaves what is above where it was: a redraw of the
   same screen keeps the page tall enough for its scroll (`_drawnHash` in `app.dart`). A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what

@@ -218,6 +218,9 @@ class AppStore implements KeyValueStore {
   }
 
   /// An address an <img> can show the stored picture from.
+  /// The address of a picture already opened on this phone, or null.
+  String? knownAddress(String id) => _addresses[id];
+
   Future<String?> blobAddress(String id) async {
     final known = _addresses[id];
     if (known != null) return known;

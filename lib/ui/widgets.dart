@@ -337,10 +337,13 @@ web.HTMLElement storedImage(
   required String cls,
   String alt = '',
 }) {
-  final image = el('img', cls: cls, attrs: {'alt': alt});
-  ui.imageAddress(trip, id).then((address) {
-    if (address != null) image.setAttribute('src', address);
-  });
+  final known = ui.store.knownAddress(id);
+  final image = el('img', cls: cls, attrs: {'alt': alt, if (known != null) 'src': known});
+  if (known == null) {
+    ui.imageAddress(trip, id).then((address) {
+      if (address != null) image.setAttribute('src', address);
+    });
+  }
   return image;
 }
 
