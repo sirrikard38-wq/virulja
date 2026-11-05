@@ -126,12 +126,15 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
 
   return el('div', children: [
     topBar(trip == null ? tr('Novo putovanje') : tr('Postavke')),
-    if (trip != null) profilePhoto(ui, trip: trip),
     el('datalist', attrs: {'id': 'drzave'}, children: [
       for (final name in countryNames()) el('option', attrs: {'value': name}),
     ]),
-    field(tr('Država'), country),
-    field(tr('Grad'), city),
+    // Where the trip goes, in one row at the top.
+    el('div', cls: 'form-row', attrs: {'style': 'margin-bottom:16px'}, children: [
+      field(tr('Država'), country, tight: true),
+      field(tr('Grad'), city, tight: true),
+    ]),
+    if (trip != null) profilePhoto(ui, trip: trip),
     dates.element,
     el('p', cls: 'label pad gap-top', text: tr('Valuta')),
     if (trip != null)
