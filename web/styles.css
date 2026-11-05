@@ -223,6 +223,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .tile .small { display: block; }
 .three .tile { padding: 8px 10px; }
 .three .value { font-size: 15px; white-space: nowrap; }
+.totals .tile { text-align: center; }
+.cost-tick { color: var(--soft); }
+.cost-tick.on { color: var(--accent); }
 
 /* Buttons */
 .primary, .secondary {

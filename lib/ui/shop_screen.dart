@@ -4,81 +4,23 @@ import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
+import 'cost_sheet.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'plan_cost.dart';
 import 'widgets.dart';
 
-/// Asks what [list] cost and whom it is for, everyone at first, and writes it
-/// in Troškovi under Dućan, paid by this person. Troškovi can change it later.
-void _buy(Ui ui, Trip trip, ShopList list) {
-  final amount = numberInput();
-  final shared = {...trip.memberIds};
-  final card = el('div', cls: 'sheet-card card');
-  late final web.HTMLElement sheet;
-  final letGo = holdPage();
-  void close() {
-    sheet.remove();
-    letGo();
-  }
-
-  void save() {
-    final cents = parseEuros(amount.value);
-    if (cents == null || cents == 0) {
-      ui.toast(tr('Upiši iznos.'));
-      return;
-    }
-    if (shared.isEmpty) {
-      ui.toast(tr('Odaberi barem jednu osobu.'));
-      return;
-    }
-    final cost = Expense(
-      id: ui.store.newId(),
+/// Asks what [list] cost, who paid and whom it is for, and writes it in
+/// Troškovi under Dućan. Troškovi can change it later.
+void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
+      ui,
+      trip,
       title: list.name,
-      amount: cents,
-      payerId: ui.meIn(trip),
-      sharedBy: [for (final id in trip.memberIds) if (shared.contains(id)) id],
+      question: tr('Unesi iznos'),
+      action: tr('Kupljeno'),
       category: CostCategory.shop,
+      done: (cost) => list.expenseId = cost.id,
     );
-    trip.expenses.add(cost);
-    list.expenseId = cost.id;
-    close();
-    ui.changed();
-  }
-
-  amount.onKeyDown.listen((event) {
-    if (event.key == 'Enter') save();
-  });
-  final people = el('div', cls: 'ticks');
-  void drawPeople() {
-    people.textContent = '';
-    for (final id in trip.memberIds) {
-      people.append(tick(ui.nameOf(id), shared.contains(id), () {
-        shared.contains(id) ? shared.remove(id) : shared.add(id);
-        drawPeople();
-      }));
-    }
-  }
-
-  drawPeople();
-  for (final part in [
-    button(cls: 'icon-button sheet-x', ariaLabel: tr('Zatvori'), onTap: close,
-        children: [icon('close', size: 20)]),
-    el('p', cls: 'label', text: tr('Unesi iznos')),
-    el('p', cls: 'small', text: list.name),
-    field(inMoney(tr('Iznos (€)')), amount),
-    el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Na koga se odnosi?')),
-    people,
-    primaryButton(tr('Kupljeno'), save),
-  ]) {
-    card.append(part);
-  }
-  sheet = el('div', cls: 'sheet', attrs: {'role': 'dialog', 'aria-modal': 'true'}, children: [card]);
-  sheet.onClick.listen((event) {
-    if (event.target == sheet) close();
-  });
-  web.document.body!.append(sheet);
-}
 
 /// Takes the purchase of [list] back, with its cost in Troškovi.
 void _unbuy(Ui ui, Trip trip, ShopList list) {

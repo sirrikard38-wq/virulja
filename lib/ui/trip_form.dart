@@ -40,7 +40,7 @@ web.HTMLElement _members(Ui ui, Trip trip) {
         ui.rerender();
       }),
     ]),
-    sectionTitle(tr('Grupa')),
+    sectionTitle(tr('Putolovci')),
     for (final id in trip.memberIds) memberRow(ui, trip, id),
   ]);
 }

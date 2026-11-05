@@ -36,9 +36,9 @@ List<Place> toSplit(Trip trip, [DateTime? now]) {
   ];
 }
 
-/// What a trip should cost and what it has cost so far at [now]. Something in
-/// Plan napada whose day is over counts as spent, unless a real cost of the same
-/// name was written down: then that one counts instead.
+/// What a trip is planned to cost and what it has really cost: only what was
+/// written in Troškovi counts as spent. A reserved stay, a plan whose day is
+/// over or a list that was bought counts once its cost is written.
 class Budget {
   Budget._(this.lines, this._people);
 
@@ -46,20 +46,6 @@ class Budget {
     final actual = {for (final category in CostCategory.values) category: 0};
     for (final expense in trip.expenses) {
       actual[expense.category] = actual[expense.category]! + expense.amount;
-    }
-    final written = {for (final expense in trip.expenses) _same(expense.title)};
-    // A reserved stay is as good as paid.
-    for (final offer in trip.offers) {
-      final booked = trip.expenses.any((cost) => cost.id == offer.expenseId);
-      if (offer.reserved && !booked && !written.contains(_same(offer.name))) {
-        actual[CostCategory.stay] = actual[CostCategory.stay]! + offer.pricePerNight * trip.nights;
-      }
-    }
-    final plan = planOfAttack(trip, now ?? DateTime.now());
-    for (final item in plan) {
-      if (item.happened && !written.contains(_same(item.title))) {
-        actual[item.category] = actual[item.category]! + item.cost;
-      }
     }
     return Budget._([
       for (final category in CostCategory.values)

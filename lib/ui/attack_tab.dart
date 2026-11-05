@@ -5,6 +5,7 @@ import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
+import 'cost_sheet.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'widgets.dart';
@@ -62,8 +63,14 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
   ]);
 }
 
+/// Whether [item] is already written in Troškovi: its own cost, or one of its name.
+bool _written(Trip trip, NextUp item) => trip.expenses.any((cost) =>
+    cost.id == item.place?.expenseId ||
+    cost.title.trim().toLowerCase() == item.title.trim().toLowerCase());
+
 web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
   final detail = item.detail;
+  final written = _written(trip, item);
   return el('div', cls: item.past ? 'poll card attack-card past' : 'poll card attack-card',
       children: [
     el('div', cls: 'grow', children: [
@@ -72,6 +79,22 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
       if (detail != null) el('div', cls: 'label', text: detail),
       if (!item.past) _dayVotes(ui, trip, item),
     ]),
+    // Writes it in Troškovi, as a new cost: what it cost, who paid, for whom.
+    button(
+      cls: written ? 'icon-button cost-tick on' : 'icon-button cost-tick',
+      ariaLabel: tr('Dodaj u troškove: {0}', [item.title]),
+      onTap: () => costSheet(
+        ui,
+        trip,
+        title: item.title,
+        question: tr('Koliko je bilo?'),
+        action: tr('Dodaj u troškove'),
+        category: item.category,
+        guess: item.cost,
+        done: (cost) => item.place?.expenseId = cost.id,
+      ),
+      children: [icon('check', size: 20)],
+    ),
     button(
       cls: 'icon-button',
       ariaLabel: tr('Makni: {0}', [item.title]),

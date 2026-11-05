@@ -93,8 +93,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   in Plan napada is sorted: votes, days and time never move a thing in the list. The tabs
   show how many presentations, polls and plans there are, and each day chip its plans; the
   cards show no date, only a past one does.
-- In Troškovi, something in Plan napada with a price is planned until its agreed day is over,
-  then spent, unless a real cost of the same name was written down. A paid debt stays in the
+- Spent (Potrošeno, the tiles of Plan, "tvoj trošak") is only what is written in Troškovi
+  (2026-11-05). Each thing in Plan napada has a tick that opens the cost box
+  (`costSheet`: amount, who paid, for whom, x to close); it is green once a cost of its
+  name is written. Kupljeno in Dućan and Razdijeli use the same box. A paid debt stays in the
   list, green, where it stood.
 - Removing anything, and settling a debt, is
   undone within 5 seconds instead of asking first. Only a photo or video still asks, as its
@@ -174,8 +176,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   tick that greys and strikes it out. A list folds as "+ Naziv"; while wishes are typed
   it shows "Dodaj želju" with a Dodaj that closes it, then Dodaj and Kupljeno; its brush opens the names
   of the list and its things for changing, with an x each. No box lets the page behind
-  it scroll (`holdPage`). Kupljeno asks the amount and whom it is for (all
-  ticked at first) and writes it in Troškovi under Dućan, paid by whoever tapped; a tap
+  it scroll (`holdPage`). Kupljeno asks the amount, who paid and whom it is for
+  (all ticked at first) and writes it in Troškovi under Dućan; a tap
   on it in Troškovi changes it (`ShopList.expenseId`). Adding to
   or taking off a list is news of the kind Notice.shop; what was taken off is kept in
   `ShopList.removed` for the robot, and undo takes it out again (news mark `#3`).

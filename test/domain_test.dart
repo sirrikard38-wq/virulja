@@ -407,11 +407,13 @@ void main() {
       expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).budgets, {'food': 50000});
     });
 
-    test('a reserved stay is planned and spent', () {
+    test('a reserved stay is estimated, and spent once its cost is written', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));
+      expect(Budget.of(trip).line(CostCategory.stay).estimate, 10000 * trip.nights);
+      expect(Budget.of(trip).line(CostCategory.stay).actual, 0);
+      trip.expenses.add(Expense(id: 'v', title: 'Vila Mare', amount: 10000 * trip.nights, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.stay));
       final budget = Budget.of(trip);
-      expect(budget.line(CostCategory.stay).estimate, 10000 * trip.nights);
       expect(budget.line(CostCategory.stay).actual, 10000 * trip.nights);
       expect(trip.reservedOffer?.name, 'Vila Mare');
     });
@@ -856,13 +858,12 @@ void main() {
           ],
         );
 
-    test('is planned before its day and spent once the day is over', () {
+    test('is only an estimate, before its day and after it, until its cost is written', () {
       final before = Budget.of(trip(), DateTime(2026, 6, 30));
       expect(before.line(CostCategory.food).estimate, 5000);
       expect(before.actualTotal, 0);
       final after = Budget.of(trip(), DateTime(2026, 7, 3));
-      expect(after.line(CostCategory.food).actual, 4000);
-      expect(after.line(CostCategory.activities).actual, 3000);
+      expect(after.actualTotal, 0);
       expect(after.plannedTotal, before.plannedTotal);
     });
 
@@ -879,9 +880,9 @@ void main() {
       expect(Budget.of(paid, DateTime(2026, 7, 3)).line(CostCategory.food).actual, 5500);
     });
 
-    test('something with no agreed day is never spent', () {
+    test('something long over is still not spent until it is written', () {
       final over = Budget.of(trip(), DateTime(2026, 8, 1));
-      expect(over.line(CostCategory.food).actual, 4000);
+      expect(over.actualTotal, 0);
     });
   });
 
