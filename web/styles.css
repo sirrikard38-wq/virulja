@@ -152,6 +152,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sheet-card { position: relative; }
 .sheet-card .secondary { justify-content: center; text-align: center; }
 .sheet-x { position: absolute; top: 4px; right: 4px; }
+/* While a box is open the page behind it does not bounce; a tall box scrolls. */
+html.held, html.held body { overscroll-behavior: none; }
+.sheet-card { max-height: calc(100dvh - var(--bottom-safe) - 48px); overflow-y: auto; overscroll-behavior: contain; }
 .sheet-card .ticks { padding: 0; }
 .sheet-card .field { margin-left: 0; margin-right: 0; }
 .sheet-card .label, .sheet-card .small { margin: 0; }

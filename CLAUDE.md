@@ -212,6 +212,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   are as wide as their words; with no room the payer goes to the next row. Amount boxes
   write 1.250,50 once typed (`amountInput`). A trip's settings fold Šifra putovanja too,
   above Obavijesti.
+- A box over the page holds it by stopping the finger's scroll (`holdPage`), never by
+  pinning the body in place: that moved the page, and at its bottom an iPhone jolted
+  (2026-11-05). A box taller than the screen scrolls itself.
 - A picture already opened on this phone gets its address at once on a redraw
   (`AppStore.knownAddress`); waiting for it flashed every picture blank, which looked
   like the screen jumping. Prezentacija dana folds in place, nothing else redrawn.

@@ -220,31 +220,33 @@ web.HTMLElement linkIcon(String address, String label) => el(
       children: [icon('link', size: 20)],
     );
 
-/// Takes [item] out of [list] at once, with a moment to take that back.
-/// [also] runs with the removal and gives back what puts the rest as it was.
-/// Holds the page still behind a box that is open, as a phone would otherwise
-/// scroll it under the finger. Gives what lets it go again, where it was.
+/// Holds the page still behind a box that is open: a finger can no longer
+/// scroll it, while it stays exactly where it was. Pinning the page in place
+/// instead moved it, and an iPhone at the bottom of a page jolted. A box that
+/// is taller than the screen still scrolls itself. Gives what lets it go.
 void Function() holdPage() {
-  final most = web.document.documentElement!.scrollHeight - web.window.innerHeight;
-  final at = web.window.scrollY.clamp(0, most < 0 ? 0 : most).toDouble();
-  final body = web.document.body!;
-  body.style
-    ..position = 'fixed'
-    ..top = '-${at}px'
-    ..left = '0'
-    ..right = '0'
-    ..width = '100%';
+  final root = web.document.documentElement! as web.HTMLElement;
+  root.classList.add('held');
+  final block = ((web.Event event) {
+    final target = event.target;
+    final card = target != null && target.isA<web.Element>()
+        ? (target as web.Element).closest('.sheet-card') as web.HTMLElement?
+        : null;
+    if (card != null && card.scrollHeight > card.clientHeight) return;
+    event.preventDefault();
+  }).toJS;
+  final options = web.AddEventListenerOptions(passive: false);
+  web.document.addEventListener('touchmove', block, options);
+  web.document.addEventListener('wheel', block, options);
   return () {
-    body.style
-      ..position = ''
-      ..top = ''
-      ..left = ''
-      ..right = ''
-      ..width = '';
-    web.window.scrollTo(0.toJS, at);
+    web.document.removeEventListener('touchmove', block, options);
+    web.document.removeEventListener('wheel', block, options);
+    root.classList.remove('held');
   };
 }
 
+/// Takes [item] out of [list] at once, with a moment to take that back.
+/// [also] runs with the removal and gives back what puts the rest as it was.
 /// A name that a tap opens for typing, like any text; [rename] hears the new
 /// one once the keyboard closes, if it changed and is not empty.
 web.HTMLElement editableName(String name, String label, void Function(String name) rename) {
