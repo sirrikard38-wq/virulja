@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/attack.dart';
@@ -46,6 +48,20 @@ void _remove(Ui ui, Trip trip, NextUp item) {
   });
 }
 
+/// Draws Plan napada again in its place, and nothing else: the page above it
+/// and where it is scrolled stay as they are. A full redraw made an iPhone
+/// jump to the top when a day was voted at the bottom of the list.
+void _redrawTab(Ui ui, Trip trip) {
+  final tab = web.document.querySelector('.attack-tab');
+  if (tab == null) {
+    ui.rerender();
+    return;
+  }
+  final at = web.window.scrollY;
+  tab.replaceWith(attackTab(ui, trip));
+  if ((web.window.scrollY - at).abs() > 1) web.window.scrollTo(0.toJS, at);
+}
+
 /// Which of the days left suit each person. The day with most votes is marked.
 web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
   final me = ui.meIn(trip);
@@ -60,7 +76,8 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
       for (final day in days)
         chip(tr('{0} Dan · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
           toggleDayVote(votes, day, me);
-          ui.changed();
+          ui.saved();
+          _redrawTab(ui, trip);
         }, on: votes[day]?.contains(me) ?? false)
           ..classList.toggle('agreed', item.days.contains(day)),
     ]),
@@ -131,10 +148,10 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
   void pick(int? next) {
     next == null ? ui.attackDays.remove(trip.id) : ui.attackDays[trip.id] = next;
     ui.attackKept = null;
-    ui.rerender();
+    _redrawTab(ui, trip);
   }
 
-  return el('div', children: [
+  return el('div', cls: 'attack-tab', children: [
     el('div', cls: 'chips', children: [
       chip('${tr('Sve')} (${items.length})', () => pick(null), on: shown == null),
       for (var i = 0; i < trip.dayCount; i++)

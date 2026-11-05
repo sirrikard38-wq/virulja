@@ -240,7 +240,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Jezik, Izgled and Valuta fold so under Obavijesti, and in a trip's settings
   Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).
 - In Plan napada the day chips sit under the card's buttons and fill its width
-  (`attack-days`).
+  (`attack-days`). A day vote and the day chips redraw only Plan napada in place
+  (`_redrawTab`): a full redraw made an iPhone jump to the top (2026-11-05).
 - Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),
   in boxes too. Planirano is only what the group planned per person
   ("Planirani trošak po osobi"), times everyone; the app's estimate (`BudgetLine.estimate`)
