@@ -66,18 +66,6 @@ List<String> cleanCurrencies(Iterable<String> codes) {
   return kept.isEmpty ? ['EUR'] : kept;
 }
 
-/// [chosen] after a tap on [code]: a chosen one is let go, unless it is the
-/// only one; another is taken while there is room for two. Null when the tap
-/// changes nothing, so that the phone can say why.
-List<String>? tapCurrency(List<String> chosen, String code) {
-  if (chosen.contains(code)) {
-    if (chosen.length == 1) return null;
-    return [for (final each in chosen) if (each != code) each];
-  }
-  if (chosen.length >= 2) return null;
-  return [...chosen, code];
-}
-
 /// [cents] of [from] in [to], with rates as units per euro. Null when a rate
 /// is not known yet.
 int? convert(int cents, String from, String to, Map<String, double> perEuro) {

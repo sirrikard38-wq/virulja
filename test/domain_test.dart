@@ -339,10 +339,6 @@ void main() {
     test('a trip has one or two currencies, the first the one amounts are in', () {
       expect(cleanCurrencies([]), ['EUR']);
       expect(cleanCurrencies(['TRY', 'TRY', 'EUR', 'USD']), ['TRY', 'EUR']);
-      expect(tapCurrency(['EUR'], 'EUR'), isNull);
-      expect(tapCurrency(['EUR'], 'TRY'), ['EUR', 'TRY']);
-      expect(tapCurrency(['EUR', 'TRY'], 'USD'), isNull);
-      expect(tapCurrency(['EUR', 'TRY'], 'EUR'), ['TRY']);
       expect(convert(10000, 'EUR', 'TRY', {'TRY': 50}), 500000);
       expect(convert(500000, 'TRY', 'USD', {'TRY': 50, 'USD': 1.1}), 11000);
       expect(convert(100, 'EUR', 'XXX', {}), isNull);

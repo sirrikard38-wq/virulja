@@ -343,11 +343,14 @@ class ViruljaApp {
     if (wav != null) await _anthem.play(wav);
   }
 
+  /// How far the anthem is, kept so that a new screen's ring starts there.
+  double _progress = 0;
+
+  String _dashes(double progress) => '${(progress * _ringLength).toStringAsFixed(1)} $_ringLength';
+
   void _showProgress(double progress) {
-    _ring?.setAttribute(
-      'stroke-dasharray',
-      '${(progress * _ringLength).toStringAsFixed(1)} $_ringLength',
-    );
+    _progress = progress;
+    _ring?.setAttribute('stroke-dasharray', _dashes(progress));
   }
 
   void _startAnthem(Trip trip) {
@@ -380,7 +383,8 @@ class ViruljaApp {
       'cx': '22',
       'cy': '22',
       'r': '20',
-      'stroke-dasharray': '0 $_ringLength',
+      // Where the anthem already is: a ring from nothing at each screen would jump.
+      'stroke-dasharray': _dashes(_progress),
     });
     _ring = ring;
     return button(
@@ -517,7 +521,7 @@ class ViruljaApp {
     // Amounts in the trip's currency, and the one beside them converted.
     final money = trip?.currencies ?? _data.currencies;
     moneyCode = money.first;
-    alsoCode = money.length > 1 ? money.last : null;
+    alsoCode = null; // a second currency beside, for later
     ratesPerEuro = _data.rates;
     if (alsoCode != null) loadRates(_ui, done: _groupChanged);
 

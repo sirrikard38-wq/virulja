@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
+import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
@@ -39,51 +40,50 @@ Future<void> loadRates(Ui ui, {void Function()? done}) async {
   }
 }
 
-/// A wheel of currencies: a tap circles one in green and takes it, another tap
-/// lets it go. Two at most, the first taken the one amounts are written in;
-/// one always stays. [onChange] gets the new choice; the wheel shows it itself,
-/// with no redraw, so it stays where it was turned.
+/// A wheel of currencies, turned as the time is: the one standing in the
+/// middle, under the green ring, is the chosen one. [onChange] gets it once the
+/// wheel stops; the wheel shows it itself, with no redraw, so it stays where it
+/// was turned. One currency for now; a second one beside it may come back.
 web.HTMLElement currencyWheel(Ui ui, List<String> chosen, void Function(List<String>) onChange) {
-  var now = cleanCurrencies(chosen);
-  final note = el('p', cls: 'small pad');
-  final rows = <String, web.HTMLElement>{};
-
-  void show() {
-    rows.forEach((code, row) {
-      final at = now.indexOf(code);
-      row.classList.toggle('on', at >= 0);
-      row.setAttribute('aria-pressed', '${at >= 0}');
-    });
-    note.textContent = now.length == 1
-        ? tr('Iznosi se pišu u: {0}', [now.first])
-        : tr('Iznosi se pišu u: {0} · Pored: {1}', [now.first, now.last]);
-  }
-
-  final wheel = el('div', cls: 'currency-wheel', attrs: {'role': 'list'}, children: [
+  var now = cleanCurrencies(chosen).first;
+  final note = el('p', cls: 'small pad centered');
+  final rows = <web.HTMLElement>[
     for (final currency in currencies)
-      rows[currency.code] = (el('button', cls: 'currency-row', attrs: {'type': 'button'}, children: [
+      el('div', cls: 'currency-row', children: [
         el('span', cls: 'currency-code', text: currency.code),
         el('span', cls: 'currency-sign', text: currency.sign),
-      ])
-        ..onClick.listen((_) {
-          final next = tapCurrency(now, currency.code);
-          if (next == null) {
-            ui.toast(now.contains(currency.code) ? tr('Jedna valuta mora ostati.') : tr('Najviše dvije valute.'));
-            return;
-          }
-          now = next;
-          show();
-          onChange(now);
-          if (now.length > 1) loadRates(ui);
-        })),
-  ]);
-  show();
-  // Turned so that the first chosen one stands in the middle.
-  scheduleMicrotask(() {
-    final first = rows[now.first];
-    if (first == null) return;
-    wheel.scrollTop = first.offsetTop - (wheel.clientHeight - first.offsetHeight) / 2;
+      ]),
+  ];
+  final wheel = el('div', cls: 'currency-wheel', attrs: {'role': 'listbox', 'aria-label': tr('Valuta')}, children: rows);
+
+  /// The row in the middle, as far as the wheel has turned.
+  int middle() {
+    final height = rows.first.offsetHeight;
+    return height == 0 ? 0 : (wheel.scrollTop / height).round().clamp(0, rows.length - 1);
+  }
+
+  void show(int at) {
+    for (var i = 0; i < rows.length; i++) {
+      rows[i].classList.toggle('on', i == at);
+    }
+    note.textContent = tr('Iznosi se pišu u: {0}', [currencies[at].code]);
+  }
+
+  Timer? settle;
+  wheel.onScroll.listen((_) {
+    show(middle());
+    settle?.cancel();
+    settle = Timer(const Duration(milliseconds: 160), () {
+      final code = currencies[middle()].code;
+      if (code == now) return;
+      now = code;
+      onChange([code]);
+    });
   });
+  final first = max(0, currencies.indexWhere((currency) => currency.code == now));
+  show(first);
+  // Turned so that the chosen one stands in the middle.
+  scheduleMicrotask(() => wheel.scrollTop = first * rows.first.offsetHeight.toDouble());
   return el('div', children: [
     el('div', cls: 'currency-frame', children: [wheel]),
     note,

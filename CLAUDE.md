@@ -63,6 +63,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   stores `afterTrip`), and a finger held on a photo drags it to any of them
   (`Photo.dayIndex`, `lib/ui/photo_drag.dart`).
 - Photos have reactions and comments, one reaction per person.
+- The speaker's ring starts each new screen where the anthem already is (`_progress` in
+  `app.dart`); drawn from nothing, it jumped back at every screen.
 - Videos are photos with `videoType` (`lib/ui/video_work.dart`). A video from a phone would
   fill the free storage, so the app keeps the first 30 seconds at 3 to 6 MB. A browser can
   only do that by playing the video into a canvas and recording it (`MediaRecorder`), so it
@@ -193,8 +195,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   day's ECB rates from the free `api.frankfurter.dev/v2/rates` (`loadRates`, once a
   day, kept in `AppData.rates`). Changing a trip's currency converts nothing already
   written. Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
-  wheel (`currencyWheel`): a tap circles one in green, another lets it go, two at most,
-  one always. `euros()` writes the open trip's sign (`moneyCode`), labels with € go
+  narrow wheel (`currencyWheel`) turned like the time: the one in the middle, under a
+  green ring that stands still, is chosen once the wheel stops. The second currency is
+  off for now (2026-11-05, the user's wish): the wheel sets one and `alsoCode` stays
+  null; the data still takes two. `euros()` writes the open trip's sign (`moneyCode`), labels with € go
   through `inMoney`.
 - Forms of Smještaj and of Dodaj trošak: the name on half the width, then rows of two or
   three fields (`form-row`, `thirds`), units in dark letters inside the box (`unitField`).
