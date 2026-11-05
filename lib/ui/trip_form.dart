@@ -17,9 +17,8 @@ import 'widgets.dart';
 
 /// The code of a trip: nobody is added by hand, people appear when they enter
 /// it.
-web.HTMLElement _members(Ui ui, Trip trip) {
-  return el('div', children: [
-    sectionTitle(tr('Šifra putovanja')),
+List<web.HTMLElement> _members(Ui ui, Trip trip) {
+  return [
     el('div', cls: 'row', children: [
       el('div', cls: 'grow title', text: trip.code ?? tr('Priprema se...')),
     ]),
@@ -40,7 +39,7 @@ web.HTMLElement _members(Ui ui, Trip trip) {
         ui.rerender();
       }),
     ]),
-  ]);
+  ];
 }
 
 /// Makes a new trip, or changes [trip] when there is one.
@@ -188,7 +187,8 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
       error,
       primaryButton(tr('Napravi putovanje'), save),
     ],
-    if (trip != null && ui.cloud != null) _members(ui, trip),
+    if (trip != null && ui.cloud != null)
+      ...foldSection(ui, 'trip-code', tr('Šifra putovanja'), () => _members(ui, trip)),
     if (trip != null && ui.cloud?.pushKey != null) notificationsSection(ui, trip: trip),
     if (trip != null && ui.cloud != null)
       ...foldSection(ui, 'travellers', tr('Putolovci'), () => [

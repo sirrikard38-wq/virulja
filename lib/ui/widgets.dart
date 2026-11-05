@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 import 'dart:math';
 
@@ -43,6 +44,38 @@ web.HTMLInputElement input({
 /// A number or amount field that brings up the phone's number keys.
 web.HTMLInputElement numberInput({String value = '', String placeholder = ''}) =>
     input(value: value, placeholder: placeholder, inputMode: 'decimal');
+
+/// A box for an amount: once typed it is written as all amounts are, 1.250,50.
+web.HTMLInputElement amountInput({String value = ''}) {
+  final box = numberInput(value: value);
+  box.onChange.listen((_) {
+    final cents = parseEuros(box.value);
+    if (cents != null) box.value = plainAmount(cents);
+  });
+  return box;
+}
+
+web.CanvasRenderingContext2D? _ruler;
+
+/// Lets [field], on half of its row, grow with the text in [box] up to the
+/// whole row; a longer text then scrolls in the box as usual.
+web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box) {
+  void fit() {
+    final row = field.parentElement;
+    if (row == null || !field.isConnected) return;
+    final ruler = _ruler ??= (web.document.createElement('canvas') as web.HTMLCanvasElement)
+        .getContext('2d') as web.CanvasRenderingContext2D;
+    ruler.font = web.window.getComputedStyle(box).font;
+    final need = ruler.measureText(box.value).width + 32;
+    final whole = row.clientWidth.toDouble();
+    final half = whole / 2 - 5;
+    field.style.flex = '0 0 ${need.clamp(half, whole)}px';
+  }
+
+  box.onInput.listen((_) => fit());
+  scheduleMicrotask(fit);
+  return field;
+}
 
 web.HTMLElement field(String label, web.Node control, {bool tight = false}) =>
     el(

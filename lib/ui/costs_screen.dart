@@ -61,10 +61,7 @@ web.HTMLElement _line(BudgetLine line) {
 /// in Plaćeno opens.
 List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
   final title = input(value: editing?.title ?? '');
-  final amount = numberInput()
-    ..value = editing == null
-        ? ''
-        : plainAmount(editing.amount);
+  final amount = amountInput(value: editing == null ? '' : plainAmount(editing.amount));
   final category = select(CostCategory.values, (c) => c.label,
       selected: editing?.category ?? CostCategory.food);
   final payer = select(trip.memberIds, ui.nameOf,
@@ -114,11 +111,15 @@ List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
 
   return [
     // As in Smještaj: the name on half the width, then a row of three.
-    el('div', cls: 'form-row', children: [field(tr('Što'), title, tight: true)..classList.add('half')]),
+    el('div', cls: 'form-row', children: [
+      growWithText(field(tr('Što'), title, tight: true)..classList.add('half'), title),
+    ]),
+    // The kind and the payer are as wide as their words; with no room, the
+    // payer goes to the next row.
     el('div', cls: 'form-row thirds', children: [
       unitField(tr('Iznos'), amount, moneySign()),
-      field(tr('Vrsta'), category, tight: true),
-      field(tr('Tko je platio'), payer, tight: true),
+      field(tr('Vrsta'), category, tight: true)..classList.add('fit'),
+      field(tr('Tko je platio'), payer, tight: true)..classList.add('fit'),
     ]),
     el('p', cls: 'label', text: tr('Tko dijeli trošak'), attrs: {'style': 'margin-top:12px'}),
     el('div', cls: 'checks', children: [

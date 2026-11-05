@@ -162,7 +162,9 @@ List<web.HTMLElement> _offerFields({
 }) =>
     [
       if (name != null)
-        el('div', cls: 'form-row', children: [field(tr('Naziv'), name, tight: true)..classList.add('half')]),
+        el('div', cls: 'form-row', children: [
+          growWithText(field(tr('Naziv'), name, tight: true)..classList.add('half'), name),
+        ]),
       el('div', cls: 'form-row', children: [
         field(tr('Link ponude'), link, tight: true),
         field(tr('Lokacija'), location, tight: true),
@@ -178,7 +180,7 @@ List<web.HTMLElement> _offerFields({
 web.HTMLElement _offerEdit(Ui ui, Offer offer) {
   final link = input(type: 'url', value: offer.link ?? '');
   final location = input(value: offer.location ?? '', placeholder: tr('Adresa ili Maps'));
-  final price = numberInput()..value = plainAmount(offer.pricePerNight);
+  final price = amountInput(value: plainAmount(offer.pricePerNight));
   final rating = numberInput()..value = offer.rating == null ? '' : decimal(offer.rating!);
   final beach = numberInput()..value = offer.beachMeters?.toString() ?? '';
   final error = errorLine();
@@ -290,7 +292,7 @@ String _sourceOf(String link) {
 
 web.HTMLElement _addOffer(Ui ui, Trip trip) {
   final name = input();
-  final price = numberInput();
+  final price = amountInput();
   final rating = numberInput();
   final beach = numberInput();
   final link = input(type: 'url');

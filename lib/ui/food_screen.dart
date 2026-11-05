@@ -154,7 +154,7 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
 
 web.HTMLElement _addDish(Ui ui, Trip trip) {
   final name = input();
-  final price = numberInput();
+  final price = amountInput();
   final servings = numberInput(value: '1');
   final place = input();
   final error = errorLine();

@@ -369,7 +369,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .form-row { display: flex; gap: 10px; margin: 12px 20px 0; }
 .form-row > .field { margin: 0; flex: 1 1 0; min-width: 0; }
 .form-row > .field.half { flex: 0 0 calc(50% - 5px); }
-.form-row.thirds > .field { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.form-row.thirds { flex-wrap: wrap; }
+.form-row.thirds > .field { flex: 1 1 100px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 100px; }
+/* A choice as wide as its words, so that they are all seen. */
+.form-row.thirds > .field.fit { flex: 1 0 auto; }
+.form-row > .field.fit select.input { width: auto; min-width: 100%; padding-right: 28px; }
 .unit-box { position: relative; display: block; }
 .also { color: var(--soft); }
 /* A wheel of currencies: three rows in sight, the chosen ones in a green ring. */

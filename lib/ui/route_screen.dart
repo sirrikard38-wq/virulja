@@ -19,7 +19,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
   final picker = timePicker();
   final time = picker.value;
   final title = input();
-  final cost = numberInput();
+  final cost = amountInput();
   final error = errorLine();
 
   void add() {
@@ -51,7 +51,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
 
 web.HTMLElement _addLeg(Ui ui, Trip trip) {
   final title = input();
-  final cost = numberInput();
+  final cost = amountInput();
   final error = errorLine();
 
   void add() {
@@ -80,10 +80,10 @@ web.HTMLElement _driveForm(Ui ui, Trip trip) {
   final route = input(value: drive.route);
   final km = numberInput(value: drive.kilometres == 0 ? '' : _number(drive.kilometres));
   final litres = numberInput(value: _number(drive.litresPer100));
-  final fuel = numberInput(value: plainAmount(drive.fuelPrice));
+  final fuel = amountInput(value: plainAmount(drive.fuelPrice));
   final cars = numberInput(value: '${drive.cars}');
-  final tolls = numberInput(value: drive.tolls == 0 ? '' : plainAmount(drive.tolls));
-  final ferry = numberInput(value: drive.ferry == 0 ? '' : plainAmount(drive.ferry));
+  final tolls = amountInput(value: drive.tolls == 0 ? '' : plainAmount(drive.tolls));
+  final ferry = amountInput(value: drive.ferry == 0 ? '' : plainAmount(drive.ferry));
   final both = checkInput(checked: drive.roundTrip);
 
   void update() {

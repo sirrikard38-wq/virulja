@@ -206,8 +206,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   off for now (2026-11-05, the user's wish): the wheel sets one and `alsoCode` stays
   null; the data still takes two. `euros()` writes the open trip's sign (`moneyCode`), labels with € go
   through `inMoney`.
-- Forms of Smještaj and of Dodaj trošak: the name on half the width, then rows of two or
-  three fields (`form-row`, `thirds`), units in dark letters inside the box (`unitField`).
+- Forms of Smještaj and of Dodaj trošak: the name on half the width, growing with its text
+  up to the whole row (`growWithText`), then rows of two or three fields (`form-row`,
+  `thirds`), units in dark letters inside the box (`unitField`). Vrsta and Tko je platio
+  are as wide as their words; with no room the payer goes to the next row. Amount boxes
+  write 1.250,50 once typed (`amountInput`). A trip's settings fold Šifra putovanja too,
+  above Obavijesti.
 - Taking something out of a list leaves what is above where it was: a redraw of the
   same screen keeps the page tall enough for its scroll (`_drawnHash` in `app.dart`). A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what

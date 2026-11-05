@@ -91,7 +91,6 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
         ui,
         trip,
         title: item.title,
-        question: tr('Koliko je bilo?'),
         action: tr('Dodaj u troškove'),
         category: item.category,
         guess: item.cost,

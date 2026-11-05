@@ -16,13 +16,13 @@ void costSheet(
   Ui ui,
   Trip trip, {
   required String title,
-  required String question,
+  String? question,
   required String action,
   required CostCategory category,
   int guess = 0,
   void Function(Expense cost)? done,
 }) {
-  final amount = numberInput();
+  final amount = amountInput();
   if (guess > 0) amount.value = plainAmount(guess);
   var payer = ui.meIn(trip);
   if (!trip.memberIds.contains(payer) && trip.memberIds.isNotEmpty) payer = trip.memberIds.first;
@@ -69,8 +69,8 @@ void costSheet(
     for (final part in [
       button(cls: 'icon-button sheet-x', ariaLabel: tr('Zatvori'), onTap: close,
           children: [icon('close', size: 20)]),
-      el('p', cls: 'label', text: question),
-      el('p', cls: 'small', text: title),
+      if (question != null) el('p', cls: 'label', text: question),
+      el('p', cls: question == null ? 'label' : 'small', text: title),
       unitField(tr('Iznos'), amount..value = typed, moneySign())..classList.remove('tight'),
       el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Tko je platio?')),
       el('div', cls: 'checks', attrs: {'style': 'margin:0'}, children: [
