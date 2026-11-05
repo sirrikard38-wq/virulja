@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import '../src/domain/seal.dart';
@@ -292,8 +293,8 @@ web.HTMLElement storedImage(
 
 /// `2.420` with the right word; the small line under a place to stay.
 String offerFacts(Offer offer) => [
-      if (offer.rating != null) offer.rating!.toString().replaceAll('.', ','),
-      if (offer.beachMeters != null) tr('{0} m do plaže', [offer.beachMeters]),
+      if (offer.rating != null) decimal(offer.rating!),
+      if (offer.beachMeters != null) tr('{0} m do plaže', [decimal(offer.beachMeters!)]),
       tr(offer.source),
     ].join(' · ');
 

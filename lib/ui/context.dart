@@ -79,6 +79,9 @@ class Ui {
   /// Whether the list of kinds of notification is open.
   bool noticesOpen = false;
 
+  /// Which of Jezik, Izgled and Valuta in Postavke are folded open.
+  final Set<String> openFolds = {};
+
   /// Whether the list of presentations in Uspomene is open.
   bool showsOpen = false;
 

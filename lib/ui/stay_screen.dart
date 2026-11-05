@@ -178,8 +178,8 @@ List<web.HTMLElement> _offerFields({
 web.HTMLElement _offerEdit(Ui ui, Offer offer) {
   final link = input(type: 'url', value: offer.link ?? '');
   final location = input(value: offer.location ?? '', placeholder: tr('Adresa ili Maps'));
-  final price = numberInput()..value = (offer.pricePerNight / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
-  final rating = numberInput()..value = offer.rating?.toString().replaceAll('.', ',') ?? '';
+  final price = numberInput()..value = plainAmount(offer.pricePerNight);
+  final rating = numberInput()..value = offer.rating == null ? '' : decimal(offer.rating!);
   final beach = numberInput()..value = offer.beachMeters?.toString() ?? '';
   final error = errorLine();
 

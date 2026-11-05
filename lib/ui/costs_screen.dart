@@ -25,7 +25,7 @@ const Set<CostCategory> _always = {
 void _split(Ui ui, Trip trip, Place place) {
   final amount = numberInput();
   final guess = (place.pricePerPerson ?? 0) * trip.people;
-  if (guess > 0) amount.value = (guess / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
+  if (guess > 0) amount.value = plainAmount(guess);
   var payer = ui.meIn(trip);
   final shared = {...trip.memberIds};
   final card = el('div', cls: 'sheet-card card');
@@ -130,7 +130,7 @@ List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
   final amount = numberInput()
     ..value = editing == null
         ? ''
-        : (editing.amount / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
+        : plainAmount(editing.amount);
   final category = select(CostCategory.values, (c) => c.label,
       selected: editing?.category ?? CostCategory.food);
   final payer = select(trip.memberIds, ui.nameOf,

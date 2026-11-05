@@ -16,10 +16,10 @@ String? _askedOn;
 /// Reads the day's rates from the European Central Bank, through the free
 /// Frankfurter service, once a day; then [done] runs. Without a connection the
 /// last rates stay.
-Future<void> loadRates(Ui ui, {void Function()? done}) async {
+Future<void> loadRates(Ui ui, {void Function()? done, bool now = false}) async {
   final day = DateTime.now().toUtc().toIso8601String().substring(0, 10);
   if (ui.data.ratesDay == day && ui.data.rates.isNotEmpty) return;
-  if (_askedOn == day) return; // once a day, even when it failed
+  if (_askedOn == day && !now) return; // once a day, even when it failed
   _askedOn = day;
   try {
     final response = await web.window

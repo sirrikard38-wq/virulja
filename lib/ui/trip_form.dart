@@ -2,6 +2,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import '../src/domain/trip_currency.dart';
 import 'currency_wheel.dart';
 import 'context.dart';
 import 'country_names.dart';
@@ -73,6 +74,15 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
       error.textContent = message;
       return;
     }
+    // A new currency for the trip: every amount in it is converted first.
+    if (trip != null && money.first != trip.currencies.first) {
+      await loadRates(ui, now: true);
+      if (!changeTripCurrency(trip, money.first, ui.data.rates)) {
+        error.textContent = tr('Za preračun treba internet. Valuta nije promijenjena.');
+        return;
+      }
+      ui.toast(tr('Svi iznosi su preračunati u {0} po današnjem tečaju.', [money.first]), long: true);
+    }
     final saved = trip ??
         Trip(
           id: ui.store.newSecretId(),
@@ -138,14 +148,9 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     dates.element,
     el('p', cls: 'label pad gap-top', text: tr('Valuta')),
     if (trip != null)
-      el('p', cls: 'small pad', text: tr('Za cijelu grupu. Već upisani iznosi se ne preračunavaju.')),
-    currencyWheel(ui, money, (chosen) {
-      money = chosen;
-      if (trip != null) {
-        trip.currencies = chosen;
-        ui.saved();
-      }
-    }),
+      el('p', cls: 'small pad', text: tr('Za cijelu grupu. Kad je promijeniš i spremiš, svi iznosi putovanja preračunaju se po današnjem tečaju.')),
+    // Only Spremi converts, so that turning past other currencies changes nothing.
+    currencyWheel(ui, money, (chosen) => money = chosen),
     el('p', cls: 'label pad gap-top', text: tr('Fotografija za razglednicu')),
     el('label', cls: 'secondary wide', attrs: {'style': 'margin-top:6px'}, children: [
       cover,

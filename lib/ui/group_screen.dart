@@ -84,6 +84,26 @@ List<web.HTMLElement> _codesSection(Ui ui) {
   ];
 }
 
+/// A heading with + that folds [body] open, and − while it is open, as
+/// Obavijesti does.
+List<web.HTMLElement> _fold(Ui ui, String key, String title, List<web.HTMLElement> Function() body) {
+  final open = ui.openFolds.contains(key);
+  return [
+    button(
+      cls: open ? 'fold open' : 'fold',
+      onTap: () {
+        open ? ui.openFolds.remove(key) : ui.openFolds.add(key);
+        ui.rerender();
+      },
+      children: [
+        icon(open ? 'minus' : 'plus', size: 22),
+        el('span', cls: 'section', text: title),
+      ],
+    )..setAttribute('aria-expanded', '$open'),
+    if (open) ...body(),
+  ];
+}
+
 /// This phone's settings: who you are, and how the app looks.
 web.HTMLElement groupScreen(Ui ui) {
   final me = ui.data.personById(ui.meId)!;
@@ -114,20 +134,23 @@ web.HTMLElement groupScreen(Ui ui) {
         el('p', cls: 'small pad gap-top', text: tr('Putovanja se dijele s grupom.')),
     ],
     if (cloud?.pushKey != null) notificationsSection(ui),
-    sectionTitle(tr('Valuta')),
-    el('p', cls: 'small pad', text: tr('Za nova putovanja. Svako putovanje ima svoju u postavkama putovanja.')),
-    currencyWheel(ui, ui.data.currencies, (chosen) {
-      ui.data.currencies = chosen;
-      ui.store.save();
-    }),
-    sectionTitle(tr('Izgled')),
-    el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
-      for (final theme in ThemeChoice.values)
-        chip(theme.label, () {
-          ui.data.theme = theme;
-          ui.changed();
-        }, on: ui.data.theme == theme),
-    ]),
+    ..._fold(ui, 'jezik', tr('Jezik'), () => [languageChips(ui)]),
+    ..._fold(ui, 'izgled', tr('Izgled'), () => [
+          el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
+            for (final theme in ThemeChoice.values)
+              chip(theme.label, () {
+                ui.data.theme = theme;
+                ui.changed();
+              }, on: ui.data.theme == theme),
+          ]),
+        ]),
+    ..._fold(ui, 'valuta', tr('Valuta'), () => [
+          el('p', cls: 'small pad', text: tr('Za nova putovanja. Svako putovanje ima svoju u postavkama putovanja.')),
+          currencyWheel(ui, ui.data.currencies, (chosen) {
+            ui.data.currencies = chosen;
+            ui.store.save();
+          }),
+        ]),
     if (help == InstallHelp.prompt) ...[
       sectionTitle(tr('Aplikacija')),
       el('div', cls: 'pad', children: [
@@ -139,8 +162,6 @@ web.HTMLElement groupScreen(Ui ui) {
       el('p', cls: 'soft pad',
           text: tr('U Safariju dodirni Dijeli, zatim Dodaj na početni zaslon.')),
     ],
-    sectionTitle(tr('Jezik')),
-    languageChips(ui),
     if (ui.mayOpenAll) ...[
       sectionTitle(tr('Prezentacije')),
       el('div', cls: 'ticks', children: [

@@ -15,6 +15,7 @@ import 'package:virulja/src/domain/offers.dart';
 import 'package:virulja/src/domain/seal.dart';
 import 'package:virulja/src/domain/settlement.dart';
 import 'package:virulja/src/domain/show.dart';
+import 'package:virulja/src/domain/trip_currency.dart';
 import 'package:virulja/src/domain/trip_events.dart';
 import 'package:virulja/src/domain/wav.dart';
 
@@ -172,12 +173,13 @@ void main() {
 
       final budget = Budget.of(trip);
 
-      expect(budget.line(CostCategory.stay).planned, 40000);
-      expect(budget.line(CostCategory.food).planned, 9000 + 8400);
-      expect(budget.line(CostCategory.transport).planned, 5000);
-      expect(budget.line(CostCategory.activities).planned, 6000);
-      expect(budget.plannedTotal, 68400);
-      expect(budget.plannedPerPerson, 22800);
+      expect(budget.line(CostCategory.stay).estimate, 40000);
+      expect(budget.line(CostCategory.food).estimate, 9000 + 8400);
+      expect(budget.line(CostCategory.transport).estimate, 5000);
+      expect(budget.line(CostCategory.activities).estimate, 6000);
+      // Nothing is planned until the group plans it.
+      expect(budget.plannedTotal, 0);
+      expect(budget.plannedPerPerson, 0);
     });
 
     test('a category counts only its own planned places', () {
@@ -274,7 +276,7 @@ void main() {
         expect(list.expenseId, 'e1');
       }
       expect(Budget.of(trip).line(CostCategory.shop).actual, 2300);
-      expect(Budget.of(trip).line(CostCategory.shop).planned, 2300);
+      expect(Budget.of(trip).line(CostCategory.shop).estimate, 2300);
     });
 
     test('a place whose day has come waits to be split, until its cost is written', () {
@@ -291,9 +293,8 @@ void main() {
         3: {'ana'},
       }));
       final line = Budget.of(trip, DateTime(2027, 6, 13, 12)).line(CostCategory.food);
-      // Konoba cost 55 € for real; only the pizza is still ahead.
+      // Konoba cost 55 € for real; the pizza is still only an estimate.
       expect(line.actual, 5500);
-      expect(line.ahead, 3000);
     });
 
     test('a member is found again by name and the last eight digits of the number', () {
@@ -312,14 +313,23 @@ void main() {
       expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).access, {'uid1': 'ana', 'uid2': 'ana'});
     });
 
-    test('each category of Hrana i piće has its own planned cost, the rest its estimate', () {
+    test('each category of Hrana i piće has its own plan per person, never mixed with estimates', () {
       final trip = visTrip();
       final every = foodKinds(trip).fold<int>(0, (sum, kind) => sum + foodKindCost(trip, kind));
       expect(every, plannedCost(trip, CostCategory.food));
       expect(setBudget(trip, CostCategory.food), isNull);
-      trip.budgets[foodBudgetKey('restaurant')] = 50000;
-      expect(setBudget(trip, CostCategory.food), 50000 + every - foodKindCost(trip, 'restaurant'));
-      expect(Budget.of(trip).line(CostCategory.food).planned, setBudget(trip, CostCategory.food));
+      trip.budgets[foodBudgetKey('restaurant')] = 5000;
+      trip.budgets[foodBudgetKey('cafe')] = 1000;
+      expect(setBudget(trip, CostCategory.food), 6000);
+      expect(Budget.of(trip).line(CostCategory.food).planned, 6000 * trip.people);
+    });
+
+    test('your cost is only your part of what was really spent', () {
+      final trip = visTrip()
+        ..budgets['stay'] = 30000
+        ..expenses.add(Expense(id: 'x', title: 'Ručak', amount: 9000, payerId: 'ana', sharedBy: ['ana', 'marko', 'iva'], category: CostCategory.food));
+      expect(Budget.shareOf(trip, 'ana'), 3000);
+      expect(Budget.shareOf(trip, 'nobody'), 0);
     });
 
     test('a trip saved before a map existed can still be changed', () {
@@ -349,6 +359,26 @@ void main() {
       expect(Trip.fromJson(jsonDecode(jsonEncode(visTrip().toJson()..remove('currencies'))) as Json).currencies, ['EUR']);
     });
 
+    test('changing a trip\'s currency converts every amount in it', () {
+      final trip = visTrip()
+        ..offers.add(Offer(id: 'o', name: 'Vila', pricePerNight: 10000))
+        ..dishes.add(Dish(id: 'd', name: 'Peka', price: 2000, servings: 1))
+        ..expenses.add(Expense(id: 'x', title: 'Ručak', amount: 9000, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food))
+        ..payments.add(Payment(id: 'p', fromId: 'marko', toId: 'ana', amount: 3000))
+        ..budgets['stay'] = 5000
+        ..drive = Drive(tolls: 1000, ferry: 0);
+      expect(changeTripCurrency(trip, 'XXX', {}), isFalse);
+      expect(trip.offers.single.pricePerNight, 10000);
+      expect(changeTripCurrency(trip, 'TRY', {'TRY': 50}), isTrue);
+      expect(trip.currencies, ['TRY']);
+      expect(trip.offers.single.pricePerNight, 500000);
+      expect(trip.dishes.single.price, 100000);
+      expect(trip.expenses.single.amount, 450000);
+      expect(trip.payments.single.amount, 150000);
+      expect(trip.budgets['stay'], 250000);
+      expect(trip.drive.tolls, 50000);
+    });
+
     test('amounts are written in the currency of the open trip', () {
       addTearDown(() {
         moneyCode = 'EUR';
@@ -365,12 +395,13 @@ void main() {
       expect(alsoIn(500000), '≈ 100 €');
     });
 
-    test('a planned whole for a kind of cost is what is ahead of what was spent', () {
+    test('a plan per person counts for everyone, and what it leaves is ahead', () {
       final trip = visTrip()
         ..budgets['food'] = 50000
         ..expenses.add(Expense(id: 'x', title: 'Ručak', amount: 12000, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food));
       final line = Budget.of(trip).line(CostCategory.food);
-      expect([line.planned, line.actual, line.ahead], [50000, 12000, 38000]);
+      final whole = 50000 * trip.people;
+      expect([line.planned, line.actual, line.ahead], [whole, 12000, whole - 12000]);
       final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
       expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.budgets, {'food': 50000});
       expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).budgets, {'food': 50000});
@@ -380,7 +411,7 @@ void main() {
       final trip = visTrip()
         ..offers.add(Offer(id: 'r', name: 'Vila Mare', pricePerNight: 10000, reserved: true));
       final budget = Budget.of(trip);
-      expect(budget.line(CostCategory.stay).planned, 10000 * trip.nights);
+      expect(budget.line(CostCategory.stay).estimate, 10000 * trip.nights);
       expect(budget.line(CostCategory.stay).actual, 10000 * trip.nights);
       expect(trip.reservedOffer?.name, 'Vila Mare');
     });
@@ -827,7 +858,7 @@ void main() {
 
     test('is planned before its day and spent once the day is over', () {
       final before = Budget.of(trip(), DateTime(2026, 6, 30));
-      expect(before.line(CostCategory.food).planned, 5000);
+      expect(before.line(CostCategory.food).estimate, 5000);
       expect(before.actualTotal, 0);
       final after = Budget.of(trip(), DateTime(2026, 7, 3));
       expect(after.line(CostCategory.food).actual, 4000);
@@ -1286,6 +1317,16 @@ void main() {
       expect(euros(5), '0,05 €');
       expect(euros(-800), '−8 €');
       expect(euros(123456700), '1.234.567 €');
+    });
+
+    test('numbers are written with a dot between thousands and no ,00', () {
+      expect(decimal(4), '4');
+      expect(decimal(4.5), '4,5');
+      expect(decimal(1200), '1.200');
+      expect(decimal(1234567.891), '1.234.567,89');
+      expect(euros(20000), '200 €');
+      expect(euros(125050), '1.250,50 €');
+      expect(plainAmount(125000), '1.250');
     });
 
     test('amounts as people type them', () {

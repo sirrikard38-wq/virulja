@@ -61,13 +61,14 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
       )..setAttribute('style', 'margin:0;padding:6px 12px;width:100%'),
     ]),
     el('div', cls: 'two', children: [
-      _tile(tr('Hrana i piće'), euros(budget.line(CostCategory.food).planned),
+      // Each shows only what was really spent on it.
+      _tile(tr('Hrana i piće'), euros(budget.line(CostCategory.food).actual),
           () => ui.go(ui.tripRoute(trip, 'hrana'))),
-      _tile(tr('Dućan'), listsCount(trip.shopLists.length),
+      _tile(tr('Dućan'), euros(budget.line(CostCategory.shop).actual),
           () => ui.go(ui.tripRoute(trip, 'ducan'))),
-      _tile(tr('Prijevoz'), daysCount(trip.dayCount),
+      _tile(tr('Prijevoz'), euros(budget.line(CostCategory.transport).actual),
           () => ui.go(ui.tripRoute(trip, 'put'))),
-      _tile(tr('Smještaj'), euros(budget.line(CostCategory.stay).planned),
+      _tile(tr('Smještaj'), euros(budget.line(CostCategory.stay).actual),
           () => ui.go(ui.tripRoute(trip, 'smjestaj'))),
       _tile(tr('Troškovi'), euros(budget.actualTotal),
           () => ui.go(ui.tripRoute(trip, 'troskovi'))),

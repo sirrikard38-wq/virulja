@@ -3,14 +3,21 @@ import 'models.dart';
 
 /// Plan and reality of one kind of cost.
 class BudgetLine {
-  const BudgetLine(this.category, {required this.planned, required this.actual, this.ahead = 0});
+  const BudgetLine(this.category, {required this.planned, required this.actual, this.estimate = 0});
 
   final CostCategory category;
+
+  /// Planirano: what the group planned to spend, per person times everyone.
   final int planned;
+
+  /// Potrošeno.
   final int actual;
 
-  /// Planirano: what is planned and has not happened yet, nor been written down.
-  final int ahead;
+  /// The app's own estimate, from what was chosen and voted (see [plannedCost]).
+  final int estimate;
+
+  /// What the plan leaves, never below nothing.
+  int get ahead => planned > actual ? planned - actual : 0;
 }
 
 /// Places of Hrana i piće in Plan napada whose day has come and whose real cost
@@ -48,52 +55,22 @@ class Budget {
         actual[CostCategory.stay] = actual[CostCategory.stay]! + offer.pricePerNight * trip.nights;
       }
     }
-    // What is still to come: each planned thing that has not happened and has
-    // no real cost of its name.
-    final ahead = {for (final category in CostCategory.values) category: 0};
-    void later(CostCategory category, String title, int cost) {
-      if (!written.contains(_same(title))) ahead[category] = ahead[category]! + cost;
-    }
-
     final plan = planOfAttack(trip, now ?? DateTime.now());
     for (final item in plan) {
       if (item.happened && !written.contains(_same(item.title))) {
         actual[item.category] = actual[item.category]! + item.cost;
       }
-      if (!item.happened) later(item.category, item.title, item.cost);
-    }
-    final inPlan = {for (final item in plan) _same(item.title)};
-    for (final dish in trip.dishes) {
-      if (!inPlan.contains(_same(dish.name))) later(CostCategory.food, dish.name, dish.price * dish.servings);
-    }
-    if (!trip.offers.any((offer) => offer.reserved)) {
-      final chosen = trip.chosenOffer;
-      if (chosen != null) later(CostCategory.stay, chosen.name, chosen.pricePerNight * trip.nights);
-    }
-    for (final leg in trip.legs) {
-      if (!leg.reserved) later(CostCategory.transport, leg.title, leg.cost);
-    }
-    ahead[CostCategory.transport] = ahead[CostCategory.transport]! + trip.drive.totalCost;
-    for (final stop in trip.stops) {
-      if (stop.hiddenInAttack) later(CostCategory.activities, stop.title, stop.cost);
     }
     return Budget._([
       for (final category in CostCategory.values)
-        if (setBudget(trip, category) case final whole?)
-          // The group set what it means to spend: what is not spent yet is ahead.
-          BudgetLine(
-            category,
-            planned: whole,
-            actual: actual[category]!,
-            ahead: whole > actual[category]! ? whole - actual[category]! : 0,
-          )
-        else
-          BudgetLine(
-            category,
-            planned: plannedCost(trip, category),
-            actual: actual[category]!,
-            ahead: ahead[category]!,
-          ),
+        // Planirano is only what the group planned, per person, for everyone;
+        // the app's estimate stands apart and is never added to it.
+        BudgetLine(
+          category,
+          planned: (setBudget(trip, category) ?? 0) * trip.people,
+          actual: actual[category]!,
+          estimate: plannedCost(trip, category),
+        ),
     ], trip.people);
   }
 
@@ -106,24 +83,12 @@ class Budget {
 
   int get aheadTotal => lines.fold(0, (sum, line) => sum + line.ahead);
 
-  /// What the trip costs [person]: their part of each written cost they share,
-  /// and an equal part of what is planned and not yet written down.
-  static int shareOf(Trip trip, String person, [DateTime? now]) {
-    final budget = Budget.of(trip, now);
+  /// What the trip has really cost [person]: their part of each written cost
+  /// they share, nothing planned.
+  static int shareOf(Trip trip, String person) {
     var share = 0.0;
-    final written = {for (final category in CostCategory.values) category: 0};
     for (final cost in trip.expenses) {
-      written[cost.category] = written[cost.category]! + cost.amount;
-      if (cost.sharedBy.contains(person) && cost.sharedBy.isNotEmpty) {
-        share += cost.amount / cost.sharedBy.length;
-      }
-    }
-    final people = trip.people;
-    if (people > 0) {
-      for (final line in budget.lines) {
-        final open = line.planned - written[line.category]!;
-        if (open > 0) share += open / people;
-      }
+      if (cost.sharedBy.contains(person)) share += cost.amount / cost.sharedBy.length;
     }
     return share.round();
   }
@@ -159,14 +124,17 @@ int foodKindCost(Trip trip, String kind) => kind == dishesKind
     ? dishesCost(trip)
     : plannedPlacesCost(trip, trip.places.where((place) => (place.customKindId ?? place.kind.name) == kind));
 
-/// The whole the group set for [category] with Planirani trošak, or null. Food
-/// is set per category of Hrana i piće; one with nothing set counts its
-/// estimate.
+/// What the group planned per person for [category] with Planirani trošak po
+/// osobi, or null. Food is planned per category of Hrana i piće, and is the
+/// sum of those planned; one with nothing planned adds nothing.
 int? setBudget(Trip trip, CostCategory category) {
   if (category != CostCategory.food) return trip.budgets[category.name];
-  if (!trip.budgets.keys.any((key) => key.startsWith('food:'))) return trip.budgets['food'];
-  return foodKinds(trip).fold<int>(
-      0, (sum, kind) => sum + (trip.budgets[foodBudgetKey(kind)] ?? foodKindCost(trip, kind)));
+  final parts = [
+    for (final entry in trip.budgets.entries)
+      if (entry.key.startsWith('food:')) entry.value,
+  ];
+  if (parts.isEmpty) return trip.budgets['food'];
+  return parts.fold<int>(0, (sum, cents) => sum + cents);
 }
 
 /// What those of [places] in Plan napada cost the whole group.

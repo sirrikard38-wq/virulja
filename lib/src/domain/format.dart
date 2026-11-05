@@ -264,6 +264,23 @@ String alsoIn(int cents) {
   return converted == null ? '' : '≈ ${plainAmount(converted)} ${currencyOf(other).sign}';
 }
 
+/// `1.200`, `4,5`, `4`: any number as people here write it, a dot between
+/// thousands, a comma before decimals, and no decimals for a whole number.
+String decimal(num value, {int digits = 2}) {
+  final scale = pow(10, digits).toInt();
+  final scaled = (value * scale).round();
+  final sign = scaled < 0 ? '−' : '';
+  final whole = (scaled.abs() ~/ scale).toString();
+  final grouped = StringBuffer();
+  for (var i = 0; i < whole.length; i++) {
+    if (i > 0 && (whole.length - i) % 3 == 0) grouped.write('.');
+    grouped.write(whole[i]);
+  }
+  var rest = (scaled.abs() % scale).toString().padLeft(digits, '0');
+  rest = rest.replaceFirst(RegExp(r'0+$'), '');
+  return '$sign$grouped${rest.isEmpty ? '' : ',$rest'}';
+}
+
 /// `2.420`, `12,50`: an amount without its sign.
 String plainAmount(int cents) {
   final sign = cents < 0 ? '−' : '';

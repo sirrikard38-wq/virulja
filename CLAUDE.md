@@ -194,8 +194,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   "TRY,EUR"). Amounts are written and kept in the first; the second shows small beside
   the sums in Troškovi, the header and the food estimate (`alsoIn`), converted at the
   day's ECB rates from the free `api.frankfurter.dev/v2/rates` (`loadRates`, once a
-  day, kept in `AppData.rates`). Changing a trip's currency converts nothing already
-  written. Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
+  day, kept in `AppData.rates`). Changing a trip's currency converts every amount of
+  the trip at the day's rate (`changeTripCurrency`; with no rate it says so and keeps
+  the currency). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
   narrow wheel (`currencyWheel`) turned like the time: the one in the middle, under a
   green ring that stands still, is chosen once the wheel stops. The second currency is
   off for now (2026-11-05, the user's wish): the wheel sets one and `alsoCode` stays
@@ -216,7 +217,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Codes in Postavke: the next trip first, past ones last; "Sakrij" hides one on this phone
   (`AppData.hiddenCodes`); with any hidden, a tap on the heading folds them open, faded,
   each with "Prikaži". The anthem takes sound files only. The page does not zoom.
-- A heading that folds a list open has + before it, and − while open. Unticking "Primaj sve
+- A heading that folds a list open has + before it, and − while open. In Postavke,
+  Jezik, Izgled and Valuta fold so under Obavijesti (`_fold`, `Ui.openFolds`).
+- Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),
+  in boxes too. Planirano is only what the group planned per person
+  ("Planirani trošak po osobi"), times everyone; the app's estimate (`BudgetLine.estimate`)
+  is never added to it. The tiles of Plan and "tvoj trošak" show only what was spent. Unticking "Primaj sve
   obavijesti" stops every notification, so there is no separate button to turn them off.
 - With JS interop types, `is web.HTMLVideoElement` is always true: keep videos in their own
   map instead of checking (`show_player.dart`).

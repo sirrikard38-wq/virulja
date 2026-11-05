@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:web/web.dart' as web;
@@ -9,18 +10,26 @@ import 'context.dart';
 import 'dom.dart';
 import 'widgets.dart';
 
-/// "Planirani trošak:" at the bottom of a screen of Plan, on the right: the
-/// whole amount the group means to spend on what [key] names in `Trip.budgets`
-/// (a kind of cost, or one category of Hrana i piće), which then counts as its
-/// Planirano in Troškovi. It keeps itself as it is typed; an empty field goes
-/// back to the app's own estimate. The box grows with a longer number.
+/// "Planirani trošak po osobi:" at the bottom of a screen of Plan, written as
+/// "Procjena za" is: what the group means to spend per person on what [key]
+/// names in `Trip.budgets` (a kind of cost, or one category of Hrana i piće).
+/// For everyone together it is Planirano in Troškovi. It keeps itself as it is
+/// typed; an empty field plans nothing. The box has room for three digits and
+/// grows with a longer number.
 web.HTMLElement planCost(Ui ui, Trip trip, String key) {
   final set = trip.budgets[key];
-  final amount = numberInput(placeholder: '0')
-    ..value = set == null ? '' : (set / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
+  final amount = numberInput(placeholder: '0')..value = set == null ? '' : plainAmount(set);
+  // The same letters as the box, out of sight, to measure what is typed.
+  final measure = el('span', cls: 'plan-cost-measure', attrs: {'aria-hidden': 'true'});
 
-  // Room for three digits; a longer number widens it.
-  void fit() => amount.style.width = 'calc(${max(3, amount.value.length)}ch + 16px)';
+  void fit() {
+    final text = amount.value;
+    measure.textContent = text.length < 3 ? '000' : text;
+    final width = measure.offsetWidth;
+    amount.style.width = width > 0
+        ? '${width + 22}px'
+        : 'calc(${max(3, text.length)}ch + 22px)';
+  }
 
   amount.onInput.listen((_) {
     fit();
@@ -35,14 +44,21 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key) {
     // No redraw: it would take the keyboard away.
     ui.saved();
   });
+  // Once typed, the amount is written as all amounts are: 1.250,50.
+  amount.onChange.listen((_) {
+    final cents = parseEuros(amount.value);
+    if (cents != null) amount.value = plainAmount(cents);
+    fit();
+  });
   amount.onKeyDown.listen((event) {
     if (event.key == 'Enter') amount.blur();
   });
   fit();
-  // Written as "Procjena za" is: the words on the left, the amount on the right.
+  scheduleMicrotask(fit); // measured once it is on the screen
   return el('label', cls: 'plan-cost', children: [
-    el('span', cls: 'grow', text: tr('Planirani trošak:')),
+    el('span', cls: 'grow', text: tr('Planirani trošak po osobi:')),
     amount,
-    el('span', text: moneySign()),
+    el('span', cls: 'price', text: moneySign()),
+    measure,
   ]);
 }
