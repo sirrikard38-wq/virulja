@@ -143,7 +143,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - A poll's brush opens and closes in place (`_setBrush`): the page stays where it is, the
   card grows or shrinks smoothly and the polls under it follow; opened where it cannot all
   be seen, the page glides just far enough to show it whole. A poll in Plan napada
-  ("Dodaj u plan napada" ticked) is green and keeps its votes: a tap on an answer says
+  ("Dodaj u plan napada" ticked) is green and goes last, the last one in first, as bought
+  lists do (`pollsInOrder`, `Poll.activeAt`); while Ankete is open nothing moves, it sorts
+  once Ankete is left (`Ui.pollsKept`). It keeps its votes: a tap on an answer says
   so; untick it to vote again.
 - A yes or no poll takes one answer from each person (`onlyOneAnswer`). A tap on a poll's name
   opens it for typing; a poll about a place or a dish renames that too, as they are found

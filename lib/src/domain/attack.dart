@@ -180,6 +180,20 @@ void setPlaceInAttack(Trip trip, Place place, bool on, String person) {
   }
 }
 
+/// The polls of Ankete as they show: those not in Plan napada in the order
+/// made, then those in it, the last one in first, as bought lists in Dućan.
+List<Poll> pollsInOrder(Trip trip) {
+  final planned = [
+    for (final poll in trip.polls)
+      if (pollInAttack(trip, poll)) poll,
+  ]..sort((a, b) => (b.activeAt ?? 0).compareTo(a.activeAt ?? 0));
+  return [
+    for (final poll in trip.polls)
+      if (!pollInAttack(trip, poll)) poll,
+    ...planned,
+  ];
+}
+
 /// Whether the result of [poll] is in Plan napada.
 bool pollInAttack(Trip trip, Poll poll) {
   final place = placeOf(trip, poll);
@@ -188,7 +202,8 @@ bool pollInAttack(Trip trip, Poll poll) {
 
 /// Puts the result of [poll] in Plan napada or takes it out. A poll on a place
 /// moves the place itself, so that it is there once.
-void setPollInAttack(Trip trip, Poll poll, bool on, String person) {
+void setPollInAttack(Trip trip, Poll poll, bool on, String person, [DateTime? now]) {
+  poll.activeAt = on ? (now ?? DateTime.now()).millisecondsSinceEpoch : null;
   final place = placeOf(trip, poll);
   if (place != null) {
     setPlaceInAttack(trip, place, on, person);

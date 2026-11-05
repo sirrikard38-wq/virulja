@@ -121,6 +121,7 @@ class Poll {
     this.single = false,
     this.addedBy,
     this.activeBy,
+    this.activeAt,
     this.autoAdded = false,
     Map<int, Set<String>>? dayVotes,
   }) : dayVotes = dayVotes ?? {};
@@ -134,6 +135,7 @@ class Poll {
         single: json['single'] as bool? ?? false,
         addedBy: json['addedBy'] as String?,
         activeBy: json['activeBy'] as String?,
+        activeAt: (json['activeAt'] as num?)?.toInt(),
         autoAdded: json['autoAdded'] as bool? ?? false,
         dayVotes: dayVotesFrom(json['dayVotes']),
       );
@@ -160,6 +162,10 @@ class Poll {
   /// Who put it in the plan of attack.
   String? activeBy;
 
+  /// When it went into Plan napada, in milliseconds: the last one in shows
+  /// first of those in Ankete.
+  int? activeAt;
+
   /// Set once the whole group's yes put it in Plan napada, so that whoever takes
   /// it out keeps it out (`addWholeYeses`).
   bool autoAdded;
@@ -175,6 +181,7 @@ class Poll {
         'single': single,
         'addedBy': addedBy,
         'activeBy': activeBy,
+        'activeAt': activeAt,
         'autoAdded': autoAdded,
         'dayVotes': {
           for (final entry in dayVotes.entries)

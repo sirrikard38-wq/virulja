@@ -73,6 +73,10 @@ class Ui {
   /// Trip id -> the day its Plan napada shows; without one, all of them.
   final Map<String, int> attackDays = {};
 
+  /// The order of Ankete while it is open: a poll put in Plan napada moves to
+  /// the bottom only once Ankete is left.
+  ({String trip, List<String> ids})? pollsKept;
+
   /// The week open in Plan napada on a trip of more than 7 days.
   final Map<String, int> attackWeeks = {};
 

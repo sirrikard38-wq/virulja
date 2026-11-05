@@ -173,10 +173,26 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
 /// Votes on what to do and when: "Na plažu" at 10:00 or 11:30. The days are
 /// picked in Plan napada.
 web.HTMLElement pollsTab(Ui ui, Trip trip) {
+  // Those in Plan napada go last, the last one in first; while Ankete is open
+  // nothing moves, and a new poll comes in under the others.
+  final kept = ui.pollsKept;
+  final List<Poll> shown;
+  if (kept != null && kept.trip == trip.id) {
+    final byId = {for (final poll in trip.polls) poll.id: poll};
+    shown = [
+      for (final id in kept.ids)
+        if (byId[id] case final poll?) poll,
+      for (final poll in trip.polls)
+        if (!kept.ids.contains(poll.id)) poll,
+    ];
+  } else {
+    shown = pollsInOrder(trip);
+  }
+  ui.pollsKept = (trip: trip.id, ids: [for (final poll in shown) poll.id]);
   return el('div', children: [
     _newPoll(ui, trip)..classList.add('on-top'),
     if (trip.polls.isEmpty) el('p', cls: 'soft pad gap-top', text: tr('Još nema anketa.')),
-    for (final poll in trip.polls) _pollCard(ui, trip, poll),
+    for (final poll in shown) _pollCard(ui, trip, poll),
   ]);
 }
 

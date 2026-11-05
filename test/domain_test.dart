@@ -359,6 +359,25 @@ void main() {
       expect(Trip.fromJson(jsonDecode(jsonEncode(visTrip().toJson()..remove('currencies'))) as Json).currencies, ['EUR']);
     });
 
+    test('polls in Plan napada go last, the last one in first', () {
+      final trip = visTrip();
+      trip.polls
+        ..clear()
+        ..addAll([
+          for (final name in ['A', 'B', 'C', 'D'])
+            Poll(id: name, title: name, options: [PollOption(id: 'o', time: 'Da')]),
+        ]);
+      setPollInAttack(trip, trip.polls[0], true, 'ana', DateTime(2027, 1, 1, 10));
+      setPollInAttack(trip, trip.polls[2], true, 'ana', DateTime(2027, 1, 1, 11));
+      expect(pollsInOrder(trip).map((poll) => poll.id), ['B', 'D', 'C', 'A']);
+      setPollInAttack(trip, trip.polls[2], false, 'ana');
+      expect(trip.polls[2].activeAt, isNull);
+      expect(pollsInOrder(trip).map((poll) => poll.id), ['B', 'C', 'D', 'A']);
+      trip.polls[0].activeAt = 123;
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
+      expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.polls.first.activeAt, 123);
+    });
+
     test('bought lists of Dućan go last, the last bought first', () {
       final trip = visTrip()
         ..shopLists.addAll([
