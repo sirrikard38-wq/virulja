@@ -183,7 +183,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   time field offers every minute.
 - Troškovi shows Potrošeno, Planirano (the whole plan) and Preostalo (plan less spent;
   not "Ostalo", which is a kind of cost), and each kind as "Potrošeno X · Planirano Y".
-  "Planirani trošak:" is a small box on the right, kept as it is typed with no button,
+  "Planirani trošak:" is written as "Procjena za" is, words left, with a box on the right
+  for three digits, kept as it is typed with no button,
   that sets the whole the group means to spend (`Trip.budgets`), which is then the plan;
   it widens for a long number. Dućan, Prijevoz and Smještaj have one at the foot of the
   screen (`fill-page`). In Hrana i piće each category has its own under "Procjena za"

@@ -19,7 +19,8 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key) {
   final amount = numberInput(placeholder: '0')
     ..value = set == null ? '' : (set / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
 
-  void fit() => amount.style.width = 'calc(${max(4, amount.value.length) + 1}ch + 18px)';
+  // Room for three digits; a longer number widens it.
+  void fit() => amount.style.width = 'calc(${max(3, amount.value.length)}ch + 16px)';
 
   amount.onInput.listen((_) {
     fit();
@@ -38,9 +39,10 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key) {
     if (event.key == 'Enter') amount.blur();
   });
   fit();
+  // Written as "Procjena za" is: the words on the left, the amount on the right.
   return el('label', cls: 'plan-cost', children: [
-    el('span', cls: 'small', text: tr('Planirani trošak:')),
+    el('span', cls: 'grow', text: tr('Planirani trošak:')),
     amount,
-    el('span', cls: 'small', text: moneySign()),
+    el('span', text: moneySign()),
   ]);
 }
