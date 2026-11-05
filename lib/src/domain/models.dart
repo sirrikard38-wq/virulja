@@ -1106,8 +1106,8 @@ class Trip {
         anthemTitle: json['anthemTitle'] as String?,
         anthemClipId: json['anthemClipId'] as String?,
         code: json['code'] as String?,
-        uids: (json['uids'] as Json? ?? const <String, dynamic>{})
-            .cast<String, String>(),
+        uids: Map<String, String>.of((json['uids'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>()),
         polls: _list(json['polls'], Poll.fromJson),
         offers: _list(json['offers'], Offer.fromJson),
         places: _list(json['places'], Place.fromJson),
@@ -1118,9 +1118,9 @@ class Trip {
         customKinds: _list(json['customKinds'], CustomKind.fromJson),
         kickVotes: (json['kickVotes'] as Json? ?? const <String, dynamic>{})
             .map((person, voters) => MapEntry(person, _strings(voters).toSet())),
-        memberPhotos: (json['memberPhotos'] as Json? ?? const <String, dynamic>{})
-            .cast<String, String>(),
-        gone: (json['gone'] as Json? ?? const <String, dynamic>{}).cast<String, String>(),
+        memberPhotos: Map<String, String>.of((json['memberPhotos'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>()),
+        gone: Map<String, String>.of((json['gone'] as Json? ?? const <String, dynamic>{}).cast<String, String>()),
         drive: json['drive'] == null
             ? null
             : Drive.fromJson(json['drive'] as Json),
@@ -1130,10 +1130,10 @@ class Trip {
         songs: _list(json['songs'], Song.fromJson),
         shopLists: _list(json['shopLists'], ShopList.fromJson),
         shows: _list(json['shows'], Show.fromJson),
-        showPicks: (json['showPicks'] as Json? ?? const <String, dynamic>{})
-            .cast<String, String>(),
+        showPicks: Map<String, String>.of((json['showPicks'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>()),
         dayShowId: json['dayShowId'] as String?,
-        access: (json['access'] as Json? ?? const <String, dynamic>{}).cast<String, String>(),
+        access: Map<String, String>.of((json['access'] as Json? ?? const <String, dynamic>{}).cast<String, String>()),
         currencies: _strings(json['currencies']),
         budgets: (json['budgets'] as Json? ?? const <String, dynamic>{})
             .map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
@@ -1434,12 +1434,12 @@ class AppData {
         people: _list(json['people'], Person.fromJson),
         meId: json['meId'] as String?,
         trips: _list(json['trips'], Trip.fromJson),
-        identities: (json['identities'] as Json? ?? const <String, dynamic>{})
-            .cast<String, String>(),
-        waiting: (json['waiting'] as Json? ?? const <String, dynamic>{})
-            .cast<String, String>(),
-        tripPhotos: (json['tripPhotos'] as Json? ?? const <String, dynamic>{})
-            .cast<String, String>(),
+        identities: Map<String, String>.of((json['identities'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>()),
+        waiting: Map<String, String>.of((json['waiting'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>()),
+        tripPhotos: Map<String, String>.of((json['tripPhotos'] as Json? ?? const <String, dynamic>{})
+            .cast<String, String>()),
         kindOrder: (json['kindOrder'] as Json? ?? const <String, dynamic>{})
             .map((trip, order) => MapEntry(trip, _strings(order))),
         hiddenKinds: (json['hiddenKinds'] as Json? ?? const <String, dynamic>{})

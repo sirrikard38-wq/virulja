@@ -322,6 +322,20 @@ void main() {
       expect(Budget.of(trip).line(CostCategory.food).planned, setBudget(trip, CostCategory.food));
     });
 
+    test('a trip saved before a map existed can still be changed', () {
+      final json = jsonDecode(jsonEncode(visTrip().toJson())) as Json;
+      for (final key in ['access', 'uids', 'memberPhotos', 'gone', 'showPicks']) {
+        json.remove(key);
+      }
+      final trip = Trip.fromJson(json);
+      trip.access['uid1'] = 'ana';
+      trip.uids['ana'] = 'uid1';
+      trip.memberPhotos['ana'] = 'p';
+      trip.gone['ivo'] = 'Ivo';
+      trip.showPicks['ana'] = 's';
+      expect(trip.access, {'uid1': 'ana'});
+    });
+
     test('a trip has one or two currencies, the first the one amounts are in', () {
       expect(cleanCurrencies([]), ['EUR']);
       expect(cleanCurrencies(['TRY', 'TRY', 'EUR', 'USD']), ['TRY', 'EUR']);
