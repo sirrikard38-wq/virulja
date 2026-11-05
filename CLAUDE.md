@@ -171,7 +171,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
   deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
 - Hrana i piće: a swipe past the last category opens the field for a new one, as the +
-  does, without the keyboard; a swipe back closes it.
+  does, without the keyboard; a swipe back closes it. While it is open the + is green, not
+  the category before it.
 - Hrana i piće: while a category is held, a bin stands at the top in the middle; let go
   over it and it goes with a puff of sparks and the usual undo. One the group made goes
   with its places; one of the app's own is hidden on this phone (`AppData.hiddenKinds`)

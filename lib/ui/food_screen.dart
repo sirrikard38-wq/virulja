@@ -578,10 +578,11 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
   ]);
   final chipRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (final item in tabs)
-        chip(item.label, () => show(item), on: identical(item, tab))
+        chip(item.label, () => show(item), on: identical(item, tab) && !ui.addingKind)
           ..setAttribute('data-tab', item.key),
       button(
-        cls: ui.addingKind ? 'chip on-outline' : 'chip',
+        // Green while the field for a new category is open, as a chosen one is.
+        cls: ui.addingKind ? 'chip on' : 'chip',
         ariaLabel: tr('Nova kategorija'),
         onTap: () {
           ui.addingKind = !ui.addingKind;
