@@ -159,6 +159,49 @@ void _showTabChange(_TabChange change, int index) {
   });
 }
 
+/// What one tab of a trip shows.
+web.HTMLElement _tabContent(Ui ui, Trip trip, String tab) => switch (tab) {
+      'slike' => galleryTab(ui, trip),
+      'ankete' => pollsTab(ui, trip),
+      'napad' => attackTab(ui, trip),
+      _ => _planTab(ui, trip),
+    };
+
+/// How many presentations, polls and plans there are, after the tab's name.
+Map<String, int> _tabCounts(Trip trip) => {
+      'slike': trip.shows.length,
+      'ankete': trip.polls.length,
+      'napad': planOfAttack(trip, DateTime.now()).length,
+    };
+
+/// Draws the open tab of a trip again in its place, with the counts on the
+/// tabs, and nothing else: the cover, the header and where the page is
+/// scrolled stay as they are. A full redraw made an iPhone jump.
+void redrawTripTab(Ui ui, Trip trip) {
+  final page = web.document.querySelector('.slide-page');
+  final parts = web.window.location.hash.split('/');
+  if (page == null || parts.length < 3) {
+    ui.rerender();
+    return;
+  }
+  final tab = parts.length > 3 ? parts[3] : defaultTab(trip);
+  final at = web.window.scrollY;
+  page.textContent = '';
+  page.append(_tabContent(ui, trip, tab));
+  final counts = _tabCounts(trip);
+  final tabs = web.document.querySelectorAll('[data-tab-key]');
+  for (var i = 0; i < tabs.length; i++) {
+    final button = tabs.item(i) as web.HTMLElement;
+    final count = counts[button.getAttribute('data-tab-key')];
+    final shown = button.querySelector('.tab-count');
+    if (count == null || shown == null) continue;
+    shown.textContent = ' ($count)';
+    final label = button.getAttribute('data-label') ?? '';
+    button.setAttribute('data-label', label.replaceFirst(RegExp(r' \(\d+\)$'), ' ($count)'));
+  }
+  if ((web.window.scrollY - at).abs() > 1) web.window.scrollTo(0.toJS, at);
+}
+
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   // Whatever came from another phone: a whole yes goes into Plan napada, and the
   // presentation of the day changes only for more votes.
@@ -178,11 +221,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     'ankete': tr('Ankete'),
     'napad': tr('Plan napada'),
   };
-  final counts = {
-    'slike': trip.shows.length,
-    'ankete': trip.polls.length,
-    'napad': planOfAttack(trip, DateTime.now()).length,
-  };
+  final counts = _tabCounts(trip);
   final keys = tabs.keys.toList();
   final index = max(keys.indexOf(tab), 0);
   final change = _tabChange;
@@ -201,14 +240,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     ui.swap(ui.tripRoute(trip, next));
   }
 
-  final sliding = el('div', cls: 'slide-page', children: [
-    switch (tab) {
-      'slike' => galleryTab(ui, trip),
-      'ankete' => pollsTab(ui, trip),
-      'napad' => attackTab(ui, trip),
-      _ => _planTab(ui, trip),
-    },
-  ]);
+  final sliding = el('div', cls: 'slide-page', children: [_tabContent(ui, trip, tab)]);
   final page = el('div', cls: 'swipe-area', children: [
     if (playing != null && player != null)
       button(
@@ -277,8 +309,10 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
             if (counts[entry.key] != null)
               el('span', cls: 'tab-count', text: ' (${counts[entry.key]})'),
           ],
-        )..setAttribute('data-label',
-            counts[entry.key] == null ? entry.value : '${entry.value} (${counts[entry.key]})'),
+        )
+          ..setAttribute('data-tab-key', entry.key)
+          ..setAttribute('data-label',
+              counts[entry.key] == null ? entry.value : '${entry.value} (${counts[entry.key]})'),
     ]),
     el('div', cls: 'slide-clip', children: [sliding]),
   ]);

@@ -1,5 +1,3 @@
-import 'dart:js_interop';
-
 import 'package:web/web.dart' as web;
 
 import '../src/domain/attack.dart';
@@ -8,6 +6,7 @@ import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'cost_sheet.dart';
+import 'trip_screen.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'widgets.dart';
@@ -51,16 +50,7 @@ void _remove(Ui ui, Trip trip, NextUp item) {
 /// Draws Plan napada again in its place, and nothing else: the page above it
 /// and where it is scrolled stay as they are. A full redraw made an iPhone
 /// jump to the top when a day was voted at the bottom of the list.
-void _redrawTab(Ui ui, Trip trip) {
-  final tab = web.document.querySelector('.attack-tab');
-  if (tab == null) {
-    ui.rerender();
-    return;
-  }
-  final at = web.window.scrollY;
-  tab.replaceWith(attackTab(ui, trip));
-  if ((web.window.scrollY - at).abs() > 1) web.window.scrollTo(0.toJS, at);
-}
+void _redrawTab(Ui ui, Trip trip) => redrawTripTab(ui, trip);
 
 /// Which of the days left suit each person. The day with most votes is marked.
 web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {

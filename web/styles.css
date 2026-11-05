@@ -61,6 +61,10 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: pan-x pan-y; }
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--soft) 45%, transparent) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--soft) 45%, transparent); border-radius: 3px; }
 
 body {
   margin: 0;
@@ -345,14 +349,10 @@ html.held, html.held body { overscroll-behavior: none; }
 .slide-clip { overflow-x: clip; margin-bottom: 12px; }
 .swipe-area .stick-bottom { margin-top: auto; }
 
+/* The foot of a page: at the bottom of the screen, or after all there is. */
 .stick-bottom {
-  position: sticky;
-  z-index: 3;
-  bottom: calc(var(--nav-height) + var(--bottom-safe));
   margin: 12px 20px 0;
   padding: 9px 0;
-  background: var(--bg);
-  box-shadow: -20px 0 var(--bg), 20px 0 var(--bg);
   border-top: 1px solid var(--line);
 }
 

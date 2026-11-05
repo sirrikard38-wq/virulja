@@ -8,6 +8,7 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'trip_screen.dart';
 import 'widgets.dart';
 
 /// Casts or takes back the vote of [me]. The vote that makes the whole group say
@@ -23,7 +24,8 @@ void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
   }
   if (!had) option.votes.add(me);
   if (addWholeYeses(trip, me).isNotEmpty) ui.toast(tr('Izglasano! Dodano u Plan napada.'));
-  ui.changed();
+  ui.saved();
+  redrawTripTab(ui, trip);
 }
 
 /// Closes the brush of a poll and puts the page back where it stood before it
@@ -140,7 +142,8 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     el('div', attrs: {'style': 'margin-top:6px'}, children: [
       tick(tr('Plan napada'), inAttack, () {
         setPollInAttack(trip, poll, !inAttack, me);
-        ui.changed();
+        ui.saved();
+        redrawTripTab(ui, trip);
       }),
     ]),
   ]);

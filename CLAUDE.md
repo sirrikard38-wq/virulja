@@ -76,7 +76,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   card, or a separate free video service.
 - Food planning has both: places with a price per person and dishes with prices. The
   dishes are only in their own category of that row, named Hrana. The sum at the bottom of
-  the screen is that of the open category alone, counting what is in the plan.
+  the screen is that of the open category alone, counting what is in the plan; it is part
+  of the page, after a form that is open, never over it.
 - First version also has: drive calculation, actual costs, who owes whom, voting.
 - The group agrees when at least half picks the same, and both when there are two
   (`Trip.votesToAgree`). A poll only goes into Plan napada by itself when every member
@@ -243,8 +244,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).
 - In Plan napada the day chips sit under the card's buttons and fill its width
   (`attack-days`), four of one length a row; a trip of more than 7 days shows weeks
-  ("1. tjedan"), and a tap on one opens its days (`Ui.openWeek`). A day vote and the day chips redraw only Plan napada in place
-  (`_redrawTab`): a full redraw made an iPhone jump to the top (2026-11-05).
+  ("1. tjedan"), and a tap on one opens its days (`Ui.openWeek`). A day vote, the day chips, a poll's vote and its Plan
+  napada tick redraw only the open tab in place, with the counts on the tabs
+  (`redrawTripTab`): a full redraw made an iPhone jump to the top (2026-11-05).
 - Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),
   in boxes too. Planirano is only what the group planned per person
   ("Planirani trošak po osobi"), times everyone; the app's estimate (`BudgetLine.estimate`)
