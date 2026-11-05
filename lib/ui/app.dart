@@ -568,7 +568,9 @@ class ViruljaApp {
     // height to stay where it was scrolled, so what is above stands still and
     // what is below moves up. A new screen starts with no such height.
     final hash = web.window.location.hash;
-    final keep = hash == _drawnHash ? web.window.scrollY + web.window.innerHeight : 0;
+    final sameScreen = hash == _drawnHash;
+    final scrolled = web.window.scrollY;
+    final keep = sameScreen ? scrolled + web.window.innerHeight : 0;
     _drawnHash = hash;
     final frame = el('div', cls: frameClass, children: [
         page,
@@ -595,6 +597,18 @@ class ViruljaApp {
       ]);
     if (keep > 0) frame.style.minHeight = '${keep.round()}px';
     show(_root, frame);
+    // A redraw of the same screen leaves the page exactly where it was: an
+    // iPhone may move it while the old screen is swapped for the new one,
+    // which looked like a jump to the top.
+    if (sameScreen) _stayAt(scrolled);
+  }
+
+  void _stayAt(double y) {
+    web.document.documentElement?.scrollHeight; // lays the new screen out first
+    if ((web.window.scrollY - y).abs() > 1) web.window.scrollTo(0.toJS, y);
+    web.window.requestAnimationFrame(((double _) {
+      if ((web.window.scrollY - y).abs() > 1) web.window.scrollTo(0.toJS, y);
+    }).toJS);
   }
 
   void _offerUndo(String message, void Function() undo) {

@@ -55,10 +55,12 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key) {
   });
   fit();
   scheduleMicrotask(fit); // measured once it is on the screen
-  return el('label', cls: 'plan-cost', children: [
-    el('span', cls: 'grow', text: tr('Planirani trošak po osobi:')),
-    amount,
-    el('span', cls: 'price', text: moneySign()),
-    measure,
+  return el('div', cls: 'plan-cost-foot', children: [
+    el('label', cls: 'plan-cost', children: [
+      el('span', cls: 'grow', text: tr('Planirani trošak po osobi:')),
+      amount,
+      el('span', cls: 'price', text: moneySign()),
+      measure,
+    ]),
   ]);
 }

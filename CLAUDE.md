@@ -218,6 +218,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - A picture already opened on this phone gets its address at once on a redraw
   (`AppStore.knownAddress`); waiting for it flashed every picture blank, which looked
   like the screen jumping. Prezentacija dana folds in place, nothing else redrawn.
+- A redraw of the same screen puts the page back exactly where it was (`_stayAt` in
+  `app.dart`): an iPhone moved it while the screen was swapped (2026-11-05).
 - Taking something out of a list leaves what is above where it was: a redraw of the
   same screen keeps the page tall enough for its scroll (`_drawnHash` in `app.dart`). A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what

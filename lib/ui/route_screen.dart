@@ -38,7 +38,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
     ui.changed();
   }
 
-  return adder(tr('Dodaj u plan'), [
+  return adder(tr('Dodaj prijevoz'), [
     field(tr('Što'), title),
     el('div', cls: 'fields', children: [
       field(tr('Vrijeme'), picker.view, tight: true),
