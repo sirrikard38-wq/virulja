@@ -114,14 +114,18 @@ web.HTMLElement groupScreen(Ui ui) {
         el('p', cls: 'small pad gap-top', text: tr('Putovanja se dijele s grupom.')),
     ],
     if (cloud?.pushKey != null) notificationsSection(ui),
-    ...foldSection(ui, 'language', tr('Jezik'), () => [languageChips(ui)]),
+    ...foldSection(ui, 'language', tr('Jezik'), () => [
+          el('div', cls: 'fold-body', children: [languageChips(ui)]),
+        ]),
     ...foldSection(ui, 'look', tr('Izgled'), () => [
-          el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
-            for (final theme in ThemeChoice.values)
-              chip(theme.label, () {
-                ui.data.theme = theme;
-                ui.changed();
-              }, on: ui.data.theme == theme),
+          el('div', cls: 'fold-body', children: [
+            el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
+              for (final theme in ThemeChoice.values)
+                chip(theme.label, () {
+                  ui.data.theme = theme;
+                  ui.changed();
+                }, on: ui.data.theme == theme),
+            ]),
           ]),
         ]),
     ...foldSection(ui, 'currency', tr('Valuta'), () => [

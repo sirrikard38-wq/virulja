@@ -619,6 +619,8 @@ details.adder .wide { width: 100%; }
 .chip.agreed:not(.on) { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 .attack-card { display: block; }
 .attack-top { display: flex; gap: 8px; }
+.attack-card .title { font-size: 24px; }
+.attack-card .label { font-size: 14px; }
 .attack-days { display: grid; gap: 6px; margin-top: 6px; }
 .attack-days .chip { width: 100%; min-width: 0; padding-left: 2px; padding-right: 2px; font-size: 13px; white-space: nowrap; }
 
@@ -691,6 +693,8 @@ hr.split { margin: 30px 20px 14px; border: 0; border-top: 1px solid color-mix(in
 /* A heading that folds a list open. */
 .fold { display: flex; align-items: center; gap: 8px; width: calc(100% - 40px); margin: 0 20px; padding: 24px 0 8px; text-align: left; }
 .fold .section { padding: 0; line-height: 1.2; }
+/* Under a fold, a little in from its words. */
+.fold-body { padding-left: 30px; }
 .fold .icon { flex: none; color: var(--accent); }
 
 .past { opacity: 0.45; }

@@ -225,19 +225,22 @@ web.HTMLElement linkIcon(String address, String label) => el(
 /// Holds the page still behind a box that is open, as a phone would otherwise
 /// scroll it under the finger. Gives what lets it go again, where it was.
 void Function() holdPage() {
-  final at = web.window.scrollY;
+  final most = web.document.documentElement!.scrollHeight - web.window.innerHeight;
+  final at = web.window.scrollY.clamp(0, most < 0 ? 0 : most).toDouble();
   final body = web.document.body!;
   body.style
     ..position = 'fixed'
     ..top = '-${at}px'
     ..left = '0'
-    ..right = '0';
+    ..right = '0'
+    ..width = '100%';
   return () {
     body.style
       ..position = ''
       ..top = ''
       ..left = ''
-      ..right = '';
+      ..right = ''
+      ..width = '';
     web.window.scrollTo(0.toJS, at);
   };
 }
