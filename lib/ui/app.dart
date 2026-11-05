@@ -504,6 +504,12 @@ class ViruljaApp {
   }
 
   void render() {
+    // Leaving a screen that keeps something then, such as a trip's settings.
+    if (web.window.location.hash != _drawnHash) {
+      final leave = _ui.onLeave;
+      _ui.onLeave = null;
+      leave?.call();
+    }
     language = _data.chosenLanguage;
     web.document.documentElement?.setAttribute('lang', language.name);
     _redrawWaiting = false;

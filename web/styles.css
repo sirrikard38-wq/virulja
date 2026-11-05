@@ -224,6 +224,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .three .tile { padding: 8px 10px; }
 .three .value { font-size: 15px; white-space: nowrap; }
 .totals .tile { text-align: center; }
+/* A trip's settings: every heading alike, with room between them. */
+.trip-settings .section { padding-top: 34px; }
+.trip-settings .fold { padding-top: 34px; }
+.trip-settings .profile { margin-top: 22px; }
 .cost-tick { color: var(--soft); }
 .cost-tick.on { color: var(--accent); }
 

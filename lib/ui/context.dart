@@ -79,6 +79,10 @@ class Ui {
   /// Whether the list of kinds of notification is open.
   bool noticesOpen = false;
 
+  /// What a screen keeps once it is left, such as a trip's settings: run once,
+  /// before the next screen is drawn.
+  void Function()? onLeave;
+
   /// Which of Jezik, Izgled and Valuta in Postavke are folded open.
   final Set<String> openFolds = {};
 

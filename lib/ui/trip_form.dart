@@ -57,9 +57,53 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     'accept': 'image/*',
   }) as web.HTMLInputElement;
   final coverName = el('span', text: tr('Odaberi fotografiju'));
-  cover.onChange.listen((_) {
-    if (pickedFiles(cover).isNotEmpty) coverName.textContent = tr('Fotografija odabrana');
+  cover.onChange.listen((_) async {
+    if (pickedFiles(cover).isEmpty) return;
+    coverName.textContent = tr('Fotografija odabrana');
+    if (trip == null) return; // a new trip takes it with Napravi putovanje
+    final id = ui.store.newId();
+    try {
+      await storePicture(ui.store, id, pickedFiles(cover).first);
+      trip.coverId = id;
+      ui.saved();
+      ui.toast(tr('Spremljeno.'));
+    } on Object {
+      ui.toast(tr('Tu fotografiju ne mogu pročitati.'));
+    }
   });
+
+  // A trip's settings have no Spremi: what is typed is kept as it is typed,
+  // and the dates and the currency once the settings are left. A new currency
+  // converts every amount of the trip at the day's rate.
+  if (trip != null) {
+    void keepText() {
+      if (country.value.trim().isNotEmpty) trip.country = country.value.trim();
+      if (city.value.trim().isNotEmpty) trip.city = city.value.trim();
+      ui.saved();
+    }
+
+    country.onInput.listen((_) => keepText());
+    city.onInput.listen((_) => keepText());
+    ui.onLeave = () {
+      final from = dates.start, to = dates.end;
+      if (from != null && to != null) {
+        trip
+          ..start = from
+          ..end = to;
+        ui.saved();
+      }
+      final next = money.first;
+      if (next == trip.currencies.first) return;
+      loadRates(ui, now: true).then((_) {
+        if (changeTripCurrency(trip, next, ui.data.rates)) {
+          ui.changed();
+          ui.toast(tr('Svi iznosi su preračunati u {0} po današnjem tečaju.', [next]), long: true);
+        } else {
+          ui.toast(tr('Za preračun treba internet. Valuta nije promijenjena.'), long: true);
+        }
+      });
+    };
+  }
 
   Future<void> save() async {
     final from = dates.start, to = dates.end;
@@ -73,15 +117,6 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     if (message != null) {
       error.textContent = message;
       return;
-    }
-    // A new currency for the trip: every amount in it is converted first.
-    if (trip != null && money.first != trip.currencies.first) {
-      await loadRates(ui, now: true);
-      if (!changeTripCurrency(trip, money.first, ui.data.rates)) {
-        error.textContent = tr('Za preračun treba internet. Valuta nije promijenjena.');
-        return;
-      }
-      ui.toast(tr('Svi iznosi su preračunati u {0} po današnjem tečaju.', [money.first]), long: true);
     }
     final saved = trip ??
         Trip(
@@ -134,7 +169,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     ui.go('#/');
   }
 
-  return el('div', children: [
+  return el('div', cls: 'trip-settings', children: [
     topBar(trip == null ? tr('Novo putovanje') : tr('Postavke')),
     el('datalist', attrs: {'id': 'drzave'}, children: [
       for (final name in countryNames()) el('option', attrs: {'value': name}),
@@ -146,18 +181,18 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     ]),
     if (trip != null) profilePhoto(ui, trip: trip),
     dates.element,
-    el('p', cls: 'label pad gap-top', text: tr('Valuta')),
-    if (trip != null)
-      el('p', cls: 'small pad', text: tr('Za cijelu grupu. Kad je promijeniš i spremiš, svi iznosi putovanja preračunaju se po današnjem tečaju.')),
-    // Only Spremi converts, so that turning past other currencies changes nothing.
+    sectionTitle(tr('Valuta')),
+    // Kept when the settings are left, so that turning past others changes nothing.
     currencyWheel(ui, money, (chosen) => money = chosen),
-    el('p', cls: 'label pad gap-top', text: tr('Fotografija za razglednicu')),
+    sectionTitle(tr('Razglednica')),
     el('label', cls: 'secondary wide', attrs: {'style': 'margin-top:6px'}, children: [
       cover,
       coverName,
     ]),
-    error,
-    primaryButton(trip == null ? tr('Napravi putovanje') : tr('Spremi'), save),
+    if (trip == null) ...[
+      error,
+      primaryButton(tr('Napravi putovanje'), save),
+    ],
     if (trip != null && ui.cloud != null) _members(ui, trip),
     if (trip != null && ui.cloud?.pushKey != null) notificationsSection(ui, trip: trip),
     if (trip != null)

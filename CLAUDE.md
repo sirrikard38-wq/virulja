@@ -198,7 +198,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   day's ECB rates from the free `api.frankfurter.dev/v2/rates` (`loadRates`, once a
   day, kept in `AppData.rates`). Changing a trip's currency converts every amount of
   the trip at the day's rate (`changeTripCurrency`; with no rate it says so and keeps
-  the currency). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
+  the currency). A trip's settings have no Spremi: Država and Grad keep as typed, the
+  postcard photo once picked, the dates and the currency once the settings are left
+  (`Ui.onLeave`, run by `render` when the address changes). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
   narrow wheel (`currencyWheel`) turned like the time: the one in the middle, under a
   green ring that stands still, is chosen once the wheel stops. The second currency is
   off for now (2026-11-05, the user's wish): the wheel sets one and `alsoCode` stays
