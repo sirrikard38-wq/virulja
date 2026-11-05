@@ -26,14 +26,28 @@ void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
   ui.changed();
 }
 
+/// Closes the brush of a poll and puts the page back where it stood before it
+/// opened, as if it had never moved.
+void _closeBrush(Ui ui) {
+  ui.editingPoll = null;
+  ui.rerender();
+  final before = ui.pollScrollBefore;
+  ui.pollScrollBefore = null;
+  if (before == null) return;
+  Timer(const Duration(milliseconds: 60), () {
+    web.window.scrollTo(web.ScrollToOptions(top: before, behavior: 'smooth'));
+    // Then the page is as tall as before too, with no room left under it.
+    Timer(const Duration(milliseconds: 600), () {
+      (web.document.querySelector('.frame') as web.HTMLElement?)?.style.minHeight = '';
+    });
+  });
+}
+
 /// One more answer to vote for, typed in the poll's card while its answers are
 /// being changed. A yes or no stays one answer per person.
 web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
   final answer = input(placeholder: tr('Nova mogućnost'));
-  void close() {
-    ui.editingPoll = null;
-    ui.rerender();
-  }
+  void close() => _closeBrush(ui);
 
   void add() {
     final text = answer.value.trim();
@@ -104,16 +118,20 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
         cls: editing ? 'icon-button more-option on' : 'icon-button more-option',
         ariaLabel: tr('Uredi mogućnosti'),
         onTap: () {
-          ui.editingPoll = editing ? null : poll.id;
-          ui.rerender();
-          // Opened at the bottom of the screen, the poll moves up into sight.
-          if (!editing) {
-            Timer(const Duration(milliseconds: 60), () {
-              web.document
-                  .querySelector('[data-poll="${poll.id}"]')
-                  ?.scrollIntoView(web.ScrollIntoViewOptions(block: 'nearest', behavior: 'smooth'));
-            });
+          if (editing) {
+            _closeBrush(ui);
+            return;
           }
+          // Opened at the bottom of the screen, the poll moves up into sight;
+          // closed, the page goes back to where it stood.
+          ui.pollScrollBefore ??= web.window.scrollY;
+          ui.editingPoll = poll.id;
+          ui.rerender();
+          Timer(const Duration(milliseconds: 60), () {
+            web.document
+                .querySelector('[data-poll="${poll.id}"]')
+                ?.scrollIntoView(web.ScrollIntoViewOptions(block: 'nearest', behavior: 'smooth'));
+          });
         },
         children: [icon('brush', size: 20)],
       )..setAttribute('aria-pressed', '$editing'),

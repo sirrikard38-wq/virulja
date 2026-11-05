@@ -99,6 +99,10 @@ class Ui {
   /// can be typed.
   String? editingPoll;
 
+  /// Where the page stood before a poll's brush opened, to go back there when
+  /// it closes.
+  double? pollScrollBefore;
+
   /// The stay whose details are being changed.
   String? editingOffer;
 

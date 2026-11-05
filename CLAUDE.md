@@ -139,6 +139,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
+- A poll's brush at the bottom of the screen brings the poll into sight, and closing it
+  puts the page back where it stood (`Ui.pollScrollBefore`).
 - A yes or no poll takes one answer from each person (`onlyOneAnswer`). A tap on a poll's name
   opens it for typing; a poll about a place or a dish renames that too, as they are found
   by name (`renamePoll`). The brush at the right of the answers (`Ui.editingPoll`) puts an
