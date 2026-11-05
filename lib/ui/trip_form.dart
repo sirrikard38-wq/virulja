@@ -23,7 +23,7 @@ List<web.HTMLElement> _members(Ui ui, Trip trip) {
       el('div', cls: 'grow title', text: trip.code ?? tr('Priprema se...')),
     ]),
     el('div', cls: 'two', children: [
-      secondaryButton(tr('Pošalji na WhatsApp'), () => sendCodeOnWhatsApp(trip)),
+      whatsAppLink(trip),
       secondaryButton(tr('Kopiraj'), () => copyCode(ui, trip)),
     ]),
     el('div', cls: 'pad gap-top', children: [
@@ -192,7 +192,9 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     if (trip != null && ui.cloud?.pushKey != null) notificationsSection(ui, trip: trip),
     if (trip != null && ui.cloud != null)
       ...foldSection(ui, 'travellers', tr('Putolovci'), () => [
-            for (final id in trip.memberIds) memberRow(ui, trip, id),
+            el('div', cls: 'fold-body', children: [
+              for (final id in trip.memberIds) memberRow(ui, trip, id),
+            ]),
           ]),
     // Kept when the settings are left, so that turning past others changes nothing.
     ...foldSection(ui, 'trip-currency', tr('Valuta'), () => [

@@ -240,7 +240,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Jezik, Izgled and Valuta fold so under Obavijesti, and in a trip's settings
   Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).
 - In Plan napada the day chips sit under the card's buttons and fill its width
-  (`attack-days`). A day vote and the day chips redraw only Plan napada in place
+  (`attack-days`), four of one length a row; a trip of more than 7 days shows weeks
+  ("1. tjedan"), and a tap on one opens its days (`Ui.openWeek`). A day vote and the day chips redraw only Plan napada in place
   (`_redrawTab`): a full redraw made an iPhone jump to the top (2026-11-05).
 - Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),
   in boxes too. Planirano is only what the group planned per person
@@ -291,7 +292,8 @@ also be pasted into the Firebase console.
   (`kickVotes`), and they may ask to come back, so the group decides again. Changing the
   code keeps the members. Names and phone numbers
   are entered once per device and changed in Postavke. The WhatsApp button is one tap
-  (automatic sending needs the paid Business API). The anthem stays an uploaded file.
+  (automatic sending needs the paid Business API), a plain link (`whatsAppLink`):
+  `window.open` left the iPhone app white on return. The anthem stays an uploaded file.
 - The database lets only members in (2026-11-04). `Trip.access` (sign-in id -> member)
   lists the phones of a trip; only they read and change it and its blobs, and move its
   codes; a person may have several. A trip without `access` is from before and stays open

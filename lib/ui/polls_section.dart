@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/attack.dart';
@@ -79,7 +81,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
   final inAttack = pollInAttack(trip, poll);
   final editing = ui.editingPoll == poll.id;
-  return el('div', cls: 'poll card', children: [
+  return el('div', cls: 'poll card', attrs: {'data-poll': poll.id}, children: [
     el('div', attrs: {'style': 'display:flex;align-items:center'}, children: [
       el('div', cls: 'grow', children: [_pollTitle(ui, trip, poll)]),
       removeWithUndo(ui, trip.polls, poll, poll.title, named: false),
@@ -104,6 +106,14 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
         onTap: () {
           ui.editingPoll = editing ? null : poll.id;
           ui.rerender();
+          // Opened at the bottom of the screen, the poll moves up into sight.
+          if (!editing) {
+            Timer(const Duration(milliseconds: 60), () {
+              web.document
+                  .querySelector('[data-poll="${poll.id}"]')
+                  ?.scrollIntoView(web.ScrollIntoViewOptions(block: 'nearest', behavior: 'smooth'));
+            });
+          }
         },
         children: [icon('brush', size: 20)],
       )..setAttribute('aria-pressed', '$editing'),

@@ -183,6 +183,8 @@ html.held, html.held body { overscroll-behavior: none; }
 .fill-page > .plan-cost-foot, .swipe-area > .plan-cost-foot { margin-top: auto; }
 .plan-cost { border-top: 1px solid var(--line); padding-top: 12px; }
 .stick-bottom .plan-cost-foot { padding-top: 0; }
+.stick-bottom > .row { border-bottom: 0; }
+.poll.card { scroll-margin-bottom: calc(var(--nav-height) + var(--bottom-safe) + 16px); }
 .plan-cost input, .plan-cost-measure { font-size: 15px; font-weight: 700; font-family: inherit; letter-spacing: normal; }
 .plan-cost input { flex: none; min-width: 0; min-height: 34px; margin: 0; padding: 4px 10px; text-align: right; }
 .plan-cost-measure { position: absolute; visibility: hidden; white-space: pre; pointer-events: none; }
@@ -626,7 +628,7 @@ details.adder .wide { width: 100%; }
 .attack-top { display: flex; gap: 8px; }
 .attack-card .title { font-size: 24px; }
 .attack-card .label { font-size: 14px; }
-.attack-days { display: grid; gap: 6px; margin-top: 6px; }
+.attack-days { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
 .attack-days .chip { width: 100%; min-width: 0; padding-left: 2px; padding-right: 2px; font-size: 13px; white-space: nowrap; }
 
 /* A debt that was paid stays in the list, green. */

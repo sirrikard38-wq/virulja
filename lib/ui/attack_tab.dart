@@ -67,20 +67,40 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
   final me = ui.meIn(trip);
   final votes = item.dayVotes;
   final days = remainingDays(trip, DateTime.now());
+  web.HTMLElement dayChip(int day) =>
+      chip(tr('{0} Dan · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
+        toggleDayVote(votes, day, me);
+        ui.saved();
+        _redrawTab(ui, trip);
+      }, on: votes[day]?.contains(me) ?? false)
+        ..classList.toggle('agreed', item.days.contains(day));
+
+  // A trip of more than 7 days shows its weeks; a tap on one opens its days.
+  final weekly = trip.dayCount > 7;
+  final weeks = [
+    for (final day in days)
+      if (day == days.first || day % 7 == 0) day ~/ 7,
+  ];
+  final open = ui.openWeek[item.id];
   return el('div', children: [
     el('div', cls: 'small', attrs: {'style': 'margin-top:8px'}, text: tr('Koji dan idemo?')),
-    // One row of equal buttons; a long trip goes on in the next row.
-    el('div', cls: 'attack-days', attrs: {
-      'style': 'grid-template-columns:repeat(${days.length.clamp(1, 5)},minmax(0,1fr))',
-    }, children: [
-      for (final day in days)
-        chip(tr('{0} Dan · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
-          toggleDayVote(votes, day, me);
-          ui.saved();
-          _redrawTab(ui, trip);
-        }, on: votes[day]?.contains(me) ?? false)
-          ..classList.toggle('agreed', item.days.contains(day)),
+    // Four buttons of one length a row; more go on in the next rows.
+    el('div', cls: 'attack-days', children: [
+      if (!weekly)
+        for (final day in days) dayChip(day)
+      else
+        for (final week in weeks)
+          chip(tr('{0}. tjedan', [week + 1]), () {
+            open == week ? ui.openWeek.remove(item.id) : ui.openWeek[item.id] = week;
+            _redrawTab(ui, trip);
+          }, on: open == week)
+            ..classList.toggle('agreed', item.days.any((day) => day ~/ 7 == week)),
     ]),
+    if (weekly && open != null)
+      el('div', cls: 'attack-days', children: [
+        for (final day in days)
+          if (day ~/ 7 == open) dayChip(day),
+      ]),
   ]);
 }
 

@@ -83,6 +83,9 @@ class Ui {
   /// before the next screen is drawn.
   void Function()? onLeave;
 
+  /// The week open on each thing of Plan napada, on a trip of more than 7 days.
+  final Map<String, int> openWeek = {};
+
   /// Which of Jezik, Izgled and Valuta in Postavke are folded open.
   final Set<String> openFolds = {};
 

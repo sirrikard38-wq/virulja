@@ -521,6 +521,7 @@ const Map<String, List<String>> _texts = {
   'Dodaj u troškove': ['Add to costs', 'Masraflara ekle'],
   'Putolovci': ['Fellow travellers', 'Yol arkadaşları'],
   'Razglednica': ['Postcard', 'Kartpostal'],
+  '{0}. tjedan': ['Week {0}', '{0}. hafta'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

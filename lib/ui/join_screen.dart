@@ -10,14 +10,16 @@ import 'context.dart';
 import 'dom.dart';
 import 'widgets.dart';
 
-/// Opens WhatsApp with the trip's code ready to send.
-void sendCodeOnWhatsApp(Trip trip) {
+/// A button that opens WhatsApp with the trip's code ready to send. A plain
+/// link: opening a window from code left the iPhone app white on its return.
+web.HTMLElement whatsAppLink(Trip trip) {
   final text = '${tr('Šifra putovanja "{0}": {1}', [trip.city, trip.code])}\n'
       '${web.window.location.href.split('#').first}';
-  web.window.open(
-    Uri.https('wa.me', '/', {'text': text}).toString(),
-    '_blank',
-  );
+  return el('a', cls: 'secondary', text: tr('Pošalji na WhatsApp'), attrs: {
+    'href': Uri.https('wa.me', '/', {'text': text}).toString(),
+    'target': '_blank',
+    'rel': 'noopener',
+  });
 }
 
 Future<void> copyCode(Ui ui, Trip trip) async {
