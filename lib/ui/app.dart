@@ -534,6 +534,7 @@ class ViruljaApp {
       final left = _leftAttack;
       if (!_onAttack && left != null && DateTime.now().difference(left) > _attackMemory) {
         _ui.attackDays.clear();
+        _ui.attackWeeks.clear();
       }
       _onAttack = true;
     }

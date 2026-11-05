@@ -147,6 +147,7 @@ Tree tripToTree(
           list.id: {
             'name': list.name,
             'expenseId': list.expenseId,
+            'boughtAt': list.boughtAt,
             'items': {for (final item in list.items) item.id: _withoutId(item.toJson())},
             'removed': list.removedJson,
           },
@@ -277,6 +278,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
                 id: json['id'] as String,
                 name: json['name'] as String,
                 expenseId: json['expenseId'] as String?,
+                boughtAt: (json['boughtAt'] as num?)?.toInt(),
                 items: _items(json, 'items', ShopItem.fromJson),
                 removed: ShopList.removedFrom(json['removed']),
               )),

@@ -73,6 +73,12 @@ class Ui {
   /// Trip id -> the day its Plan napada shows; without one, all of them.
   final Map<String, int> attackDays = {};
 
+  /// The week open in Plan napada on a trip of more than 7 days.
+  final Map<String, int> attackWeeks = {};
+
+  /// How far the row of days in Plan napada is turned, so that it stays there.
+  final Map<String, double> attackRowLeft = {};
+
   /// What the open day of Plan napada showed, which stays until the day is left.
   ({String trip, int day, Set<String> ids})? attackKept;
 
@@ -99,9 +105,7 @@ class Ui {
   /// can be typed.
   String? editingPoll;
 
-  /// Where the page stood before a poll's brush opened, to go back there when
-  /// it closes.
-  double? pollScrollBefore;
+
 
   /// The stay whose details are being changed.
   String? editingOffer;

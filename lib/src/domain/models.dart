@@ -815,12 +815,27 @@ class ShopItem {
 
 /// A shopping list of the trip, with its name. Once bought, what it cost is in
 /// Troškovi as [expenseId].
+/// The lists of Dućan as they show: those still to buy in the order they were
+/// made, then the bought ones, the last bought first.
+List<ShopList> listsInOrder(Trip trip) {
+  bool bought(ShopList list) => trip.expenses.any((cost) => cost.id == list.expenseId);
+  return [
+    for (final list in trip.shopLists)
+      if (!bought(list)) list,
+    ...[
+      for (final list in trip.shopLists)
+        if (bought(list)) list,
+    ]..sort((a, b) => (b.boughtAt ?? 0).compareTo(a.boughtAt ?? 0)),
+  ];
+}
+
 class ShopList {
   ShopList({
     required this.id,
     required this.name,
     List<ShopItem>? items,
     this.expenseId,
+    this.boughtAt,
     Map<String, ({String text, String? by})>? removed,
   })  : items = items ?? [],
         removed = removed ?? {};
@@ -830,6 +845,7 @@ class ShopList {
         name: json['name'] as String,
         items: _list(json['items'], ShopItem.fromJson),
         expenseId: json['expenseId'] as String?,
+        boughtAt: (json['boughtAt'] as num?)?.toInt(),
         removed: removedFrom(json['removed']),
       );
 
@@ -837,6 +853,10 @@ class ShopList {
   String name;
   List<ShopItem> items;
   String? expenseId;
+
+  /// When Kupljeno was tapped, in milliseconds; the last bought shows first of
+  /// the bought.
+  int? boughtAt;
 
   /// Item id -> what was taken off the list and by whom, for the news.
   Map<String, ({String text, String? by})> removed;
@@ -860,6 +880,7 @@ class ShopList {
         'name': name,
         'items': [for (final item in items) item.toJson()],
         'expenseId': expenseId,
+        'boughtAt': boughtAt,
         'removed': removedJson,
       };
 }

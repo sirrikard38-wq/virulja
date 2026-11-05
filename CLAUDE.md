@@ -140,8 +140,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
-- A poll's brush at the bottom of the screen brings the poll into sight, and closing it
-  puts the page back where it stood (`Ui.pollScrollBefore`).
+- A poll's brush opens and closes in place (`_setBrush`): the page stays where it is, the
+  card grows or shrinks smoothly and the polls under it follow; opened where it cannot all
+  be seen, the page glides just far enough to show it whole. A poll in Plan napada
+  ("Dodaj u plan napada" ticked) is green and keeps its votes: a tap on an answer says
+  so; untick it to vote again.
 - A yes or no poll takes one answer from each person (`onlyOneAnswer`). A tap on a poll's name
   opens it for typing; a poll about a place or a dish renames that too, as they are found
   by name (`renamePoll`). The brush at the right of the answers (`Ui.editingPoll`) puts an
@@ -182,7 +185,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   tick that greys and strikes it out. A list folds as "+ Naziv"; while wishes are typed
   it shows "Dodaj želju" with a Dodaj that closes it, then Dodaj and Kupljeno; its brush opens the names
   of the list and its things for changing, with an x each. No box lets the page behind
-  it scroll (`holdPage`). Kupljeno asks the amount, who paid and whom it is for
+  it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
+  bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`).
+  Kupljeno asks the amount, who paid and whom it is for
   (all ticked at first) and writes it in Troškovi under Dućan; a tap
   on it in Troškovi changes it (`ShopList.expenseId`). Adding to
   or taking off a list is news of the kind Notice.shop; what was taken off is kept in
@@ -244,7 +249,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).
 - In Plan napada the day chips sit under the card's buttons and fill its width
   (`attack-days`), four of one length a row; a trip of more than 7 days shows weeks
-  ("1. tjedan"), and a tap on one opens its days (`Ui.openWeek`). A day vote, the day chips, a poll's vote and its Plan
+  ("Tjedan 1"), and a tap on one opens its days (`Ui.openWeek`). The row on top is then
+  Sve, Tjedan 1, Tjedan 2… and the days of the open week after them (`Ui.attackWeeks`);
+  it stays turned where it was whatever is picked (`Ui.attackRowLeft`). A day vote, the day chips, a poll's vote and its Plan
   napada tick redraw only the open tab in place, with the counts on the tabs
   (`redrawTripTab`): a full redraw made an iPhone jump to the top (2026-11-05).
 - Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),

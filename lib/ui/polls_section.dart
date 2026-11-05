@@ -8,6 +8,7 @@ import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'swipes.dart';
 import 'trip_screen.dart';
 import 'widgets.dart';
 
@@ -28,20 +29,48 @@ void _vote(Ui ui, Trip trip, Poll poll, PollOption option, String me) {
   redrawTripTab(ui, trip);
 }
 
-/// Closes the brush of a poll and puts the page back where it stood before it
-/// opened, as if it had never moved.
-void _closeBrush(Ui ui) {
-  ui.editingPoll = null;
-  ui.rerender();
-  final before = ui.pollScrollBefore;
-  ui.pollScrollBefore = null;
-  if (before == null) return;
-  Timer(const Duration(milliseconds: 60), () {
-    web.window.scrollTo(web.ScrollToOptions(top: before, behavior: 'smooth'));
-    // Then the page is as tall as before too, with no room left under it.
-    Timer(const Duration(milliseconds: 600), () {
-      (web.document.querySelector('.frame') as web.HTMLElement?)?.style.minHeight = '';
-    });
+const Duration _foldTime = Duration(milliseconds: 260);
+
+/// Opens or closes the brush of [poll]. The page stays where it is: the card
+/// grows or shrinks smoothly and the polls under it follow. Opened where it
+/// cannot all be seen, the page glides just far enough to show it whole.
+void _setBrush(Ui ui, Trip trip, Poll poll, bool open) {
+  final selector = '[data-poll="${poll.id}"]';
+  final from = (web.document.querySelector(selector) as web.HTMLElement?)?.offsetHeight ?? 0;
+  // The page never gets shorter under the finger.
+  final frame = web.document.querySelector('.frame') as web.HTMLElement?;
+  if (frame != null) {
+    final need = web.window.scrollY + web.window.innerHeight;
+    final has = double.tryParse(frame.style.minHeight.replaceAll('px', '')) ?? 0;
+    if (need > has) frame.style.minHeight = '${need.round()}px';
+  }
+  ui.editingPoll = open ? poll.id : null;
+  redrawTripTab(ui, trip);
+  final card = web.document.querySelector(selector) as web.HTMLElement?;
+  if (card == null) return;
+  final to = card.offsetHeight;
+  if (open) {
+    // Just far enough down for the whole poll, above the bar at the bottom.
+    final nav = web.document.querySelector('.nav')?.getBoundingClientRect().top ?? web.window.innerHeight;
+    final bottom = card.getBoundingClientRect().top + to;
+    if (bottom > nav - 8) {
+      web.window.scrollBy(web.ScrollToOptions(top: bottom - nav + 16, behavior: 'smooth'));
+    }
+  }
+  if (wantsLessMotion || from == 0 || from == to) return;
+  card.style
+    ..transition = 'none'
+    ..overflow = 'hidden'
+    ..height = '${from}px';
+  card.getBoundingClientRect(); // so that the browser sees where it starts
+  card.style
+    ..transition = 'height ${_foldTime.inMilliseconds}ms ease'
+    ..height = '${to}px';
+  Timer(_foldTime + const Duration(milliseconds: 40), () {
+    card.style
+      ..transition = ''
+      ..overflow = ''
+      ..height = '';
   });
 }
 
@@ -49,7 +78,7 @@ void _closeBrush(Ui ui) {
 /// being changed. A yes or no stays one answer per person.
 web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
   final answer = input(placeholder: tr('Nova mogućnost'));
-  void close() => _closeBrush(ui);
+  void close() => _setBrush(ui, trip, poll, false);
 
   void add() {
     final text = answer.value.trim();
@@ -62,7 +91,8 @@ web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
     if (onlyOneAnswer(poll)) poll.single = true;
     // Kept in order by its id, after the ones before it.
     poll.options.add(PollOption(id: 'o${poll.options.length}${ui.store.newId()}', time: text));
-    ui.changed();
+    ui.saved();
+    redrawTripTab(ui, trip);
   }
 
   answer.onKeyDown.listen((event) {
@@ -76,10 +106,11 @@ web.HTMLElement _optionForm(Ui ui, Trip trip, Poll poll) {
 }
 
 /// Takes [option] out of [poll], votes and all, with a moment to change your mind.
-void _removeOption(Ui ui, Poll poll, PollOption option) {
+void _removeOption(Ui ui, Trip trip, Poll poll, PollOption option) {
   final at = poll.options.indexOf(option);
   poll.options.removeAt(at);
-  ui.changed();
+  ui.saved();
+  redrawTripTab(ui, trip);
   ui.offerUndo(tr('Uklonjeno: {0}', [tr(option.time)]), () {
     poll.options.insert(at.clamp(0, poll.options.length), option);
     ui.changed();
@@ -97,7 +128,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
   final inAttack = pollInAttack(trip, poll);
   final editing = ui.editingPoll == poll.id;
-  return el('div', cls: 'poll card', attrs: {'data-poll': poll.id}, children: [
+  return el('div', cls: inAttack ? 'poll card in-attack' : 'poll card', attrs: {'data-poll': poll.id}, children: [
     el('div', attrs: {'style': 'display:flex;align-items:center'}, children: [
       el('div', cls: 'grow', children: [_pollTitle(ui, trip, poll)]),
       removeWithUndo(ui, trip.polls, poll, poll.title, named: false),
@@ -105,42 +136,32 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
       for (final option in poll.options)
         el('span', cls: 'option', children: [
-          chip('${tr(option.time)} · ${option.votes.length}',
-              () => _vote(ui, trip, poll, option, me),
-              on: option.votes.contains(me)),
+          chip('${tr(option.time)} · ${option.votes.length}', () {
+            // A poll in Plan napada keeps its votes; untick it to vote again.
+            if (inAttack) {
+              ui.toast(tr('Anketa je u planu napada, izmjena glasova nije moguća.'));
+              return;
+            }
+            _vote(ui, trip, poll, option, me);
+          }, on: option.votes.contains(me)),
           if (editing && poll.options.length > 1)
             button(
               cls: 'option-x',
               ariaLabel: tr('Makni: {0}', [tr(option.time)]),
-              onTap: () => _removeOption(ui, poll, option),
+              onTap: () => _removeOption(ui, trip, poll, option),
               children: [icon('close', size: 12)],
             ),
         ]),
       button(
         cls: editing ? 'icon-button more-option on' : 'icon-button more-option',
         ariaLabel: tr('Uredi mogućnosti'),
-        onTap: () {
-          if (editing) {
-            _closeBrush(ui);
-            return;
-          }
-          // Opened at the bottom of the screen, the poll moves up into sight;
-          // closed, the page goes back to where it stood.
-          ui.pollScrollBefore ??= web.window.scrollY;
-          ui.editingPoll = poll.id;
-          ui.rerender();
-          Timer(const Duration(milliseconds: 60), () {
-            web.document
-                .querySelector('[data-poll="${poll.id}"]')
-                ?.scrollIntoView(web.ScrollIntoViewOptions(block: 'nearest', behavior: 'smooth'));
-          });
-        },
+        onTap: () => _setBrush(ui, trip, poll, !editing),
         children: [icon('brush', size: 20)],
       )..setAttribute('aria-pressed', '$editing'),
     ]),
     if (editing && poll.options.length < mostOptions) _optionForm(ui, trip, poll),
     el('div', attrs: {'style': 'margin-top:6px'}, children: [
-      tick(tr('Plan napada'), inAttack, () {
+      tick(tr('Dodaj u plan napada'), inAttack, () {
         setPollInAttack(trip, poll, !inAttack, me);
         ui.saved();
         redrawTripTab(ui, trip);

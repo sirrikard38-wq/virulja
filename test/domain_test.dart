@@ -359,6 +359,23 @@ void main() {
       expect(Trip.fromJson(jsonDecode(jsonEncode(visTrip().toJson()..remove('currencies'))) as Json).currencies, ['EUR']);
     });
 
+    test('bought lists of Dućan go last, the last bought first', () {
+      final trip = visTrip()
+        ..shopLists.addAll([
+          ShopList(id: 'a', name: 'A', expenseId: 'x', boughtAt: 100),
+          ShopList(id: 'b', name: 'B'),
+          ShopList(id: 'c', name: 'C', expenseId: 'y', boughtAt: 200),
+          ShopList(id: 'd', name: 'D'),
+        ])
+        ..expenses.addAll([
+          Expense(id: 'x', title: 'A', amount: 100, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.shop),
+          Expense(id: 'y', title: 'C', amount: 100, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.shop),
+        ]);
+      expect(listsInOrder(trip).map((list) => list.id), ['b', 'd', 'c', 'a']);
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
+      expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.shopLists.firstWhere((l) => l.id == 'c').boughtAt, 200);
+    });
+
     test('changing a trip\'s currency converts every amount in it', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'o', name: 'Vila', pricePerNight: 10000))

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/attack.dart';
@@ -80,7 +82,7 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
         for (final day in days) dayChip(day)
       else
         for (final week in weeks)
-          chip(tr('{0}. tjedan', [week + 1]), () {
+          chip(tr('Tjedan {0}', [week + 1]), () {
             open == week ? ui.openWeek.remove(item.id) : ui.openWeek[item.id] = week;
             _redrawTab(ui, trip);
           }, on: open == week)
@@ -145,33 +147,68 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
   final items = planOfAttack(trip, DateTime.now());
   final day = ui.attackDays[trip.id];
   final shown = day == null || day >= trip.dayCount ? null : day;
+  // A trip of more than 7 days: Sve, its weeks, then the days of the open week.
+  final weekly = trip.dayCount > 7;
+  final weekCount = (trip.dayCount + 6) ~/ 7;
+  final openWeek = weekly ? ui.attackWeeks[trip.id] : null;
   final kept = ui.attackKept;
   final stays = kept != null && kept.trip == trip.id && kept.day == shown
       ? kept.ids
       : const <String>{};
+  bool inWeek(NextUp item) => openWeek != null && item.days.any((day) => day ~/ 7 == openWeek);
   final chosen = [
     for (final item in items)
-      if (shown == null || item.days.contains(shown) || stays.contains(item.id)) item,
+      if (shown != null
+          ? item.days.contains(shown) || stays.contains(item.id)
+          : openWeek == null || inWeek(item))
+        item,
   ];
   ui.attackKept =
       shown == null ? null : (trip: trip.id, day: shown, ids: {for (final item in chosen) item.id});
   void pick(int? next) {
     next == null ? ui.attackDays.remove(trip.id) : ui.attackDays[trip.id] = next;
+    if (next == null) ui.attackWeeks.remove(trip.id);
     ui.attackKept = null;
     _redrawTab(ui, trip);
   }
 
+  void pickWeek(int week) {
+    // The open week again closes it; another opens with all its days shown.
+    openWeek == week ? ui.attackWeeks.remove(trip.id) : ui.attackWeeks[trip.id] = week;
+    ui.attackDays.remove(trip.id);
+    ui.attackKept = null;
+    _redrawTab(ui, trip);
+  }
+
+  web.HTMLElement dayChip(int i) =>
+      chip('${tr('{0} Dan', [i + 1])} (${items.where((item) => item.days.contains(i)).length})',
+          () => pick(i), on: i == shown);
+
+  // The row stays turned where it was, whatever is picked in it.
+  final row = el('div', cls: 'chips', children: [
+    chip('${tr('Sve')} (${items.length})', () => pick(null), on: shown == null && openWeek == null),
+    if (!weekly)
+      for (var i = 0; i < trip.dayCount; i++) dayChip(i)
+    else ...[
+      for (var week = 0; week < weekCount; week++)
+        chip('${tr('Tjedan {0}', [week + 1])} (${items.where((item) => item.days.any((day) => day ~/ 7 == week)).length})',
+            () => pickWeek(week), on: openWeek == week && shown == null)
+          ..classList.toggle('week-open', openWeek == week),
+      if (openWeek != null)
+        for (var i = openWeek * 7; i < trip.dayCount && i < openWeek * 7 + 7; i++) dayChip(i),
+    ],
+  ]);
+  row.onScroll.listen((_) => ui.attackRowLeft[trip.id] = row.scrollLeft.toDouble());
+  final left = ui.attackRowLeft[trip.id];
+  if (left != null) scheduleMicrotask(() => row.scrollLeft = left);
+
   return el('div', cls: 'attack-tab', children: [
-    el('div', cls: 'chips', children: [
-      chip('${tr('Sve')} (${items.length})', () => pick(null), on: shown == null),
-      for (var i = 0; i < trip.dayCount; i++)
-        chip('${tr('{0} Dan', [i + 1])} (${items.where((item) => item.days.contains(i)).length})',
-            () => pick(i), on: i == shown),
-    ]),
+    row,
     if (items.isEmpty)
       el('p', cls: 'soft pad gap-top', text: tr('Još nema ničega u planu.'))
     else if (chosen.isEmpty)
-      el('p', cls: 'soft pad gap-top', text: tr('Za ovaj dan još ništa nije dogovoreno.')),
+      el('p', cls: 'soft pad gap-top',
+          text: shown == null ? tr('Za ovaj tjedan još ništa nije dogovoreno.') : tr('Za ovaj dan još ništa nije dogovoreno.')),
     for (final item in chosen) _card(ui, trip, item),
   ]);
 }

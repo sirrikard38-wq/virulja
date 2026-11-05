@@ -176,6 +176,9 @@ html.held, html.held body { overscroll-behavior: none; }
 .shop-next { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
 .shop-fold { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 16px; font-weight: 700; text-align: left; }
 .shop-fold .icon { flex: none; color: var(--accent); }
+.shop-name { display: flex; flex-direction: column; }
+.shop-list.bought .shop-fold { color: var(--soft); opacity: .7; }
+.shop-list.bought .shop-fold .icon { color: var(--soft); }
 .shop-actions { display: flex; gap: 8px; margin-top: 10px; }
 .ticks .tick.tick-in { padding-left: 28px; }
 .plan-cost { display: flex; align-items: center; gap: 6px; margin: 16px 20px 12px; font-size: 16px; font-weight: 400; }
@@ -199,6 +202,7 @@ html.held, html.held body { overscroll-behavior: none; }
 .chip.sort-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 9px; font-size: 12px; }
 .chip.sort-chip .icon { stroke-width: 3; }
 .offer { position: relative; margin: 10px 20px 0; padding: 10px 12px; }
+.poll.in-attack { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .offer.reserved { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .offer .grow { padding-right: 4px; }
 .offer-x { position: absolute; top: 2px; right: 2px; width: 36px; height: 36px; }
@@ -628,6 +632,7 @@ details.adder .wide { width: 100%; }
 .attack-top { display: flex; gap: 8px; }
 .attack-card .title { font-size: 24px; }
 .attack-card .label { font-size: 14px; }
+.chip.week-open { border-color: var(--accent); }
 .attack-days { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
 .attack-days .chip { width: 100%; min-width: 0; padding-left: 2px; padding-right: 2px; font-size: 13px; white-space: nowrap; }
 

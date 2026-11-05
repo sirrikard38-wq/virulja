@@ -19,7 +19,11 @@ void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
       question: tr('Unesi iznos'),
       action: tr('Kupljeno'),
       category: CostCategory.shop,
-      done: (cost) => list.expenseId = cost.id,
+      done: (cost) {
+        list
+          ..expenseId = cost.id
+          ..boughtAt = DateTime.now().millisecondsSinceEpoch;
+      },
     );
 
 /// Takes the purchase of [list] back, with its cost in Troškovi.
@@ -27,10 +31,15 @@ void _unbuy(Ui ui, Trip trip, ShopList list) {
   final at = trip.expenses.indexWhere((cost) => cost.id == list.expenseId);
   final cost = at < 0 ? null : trip.expenses.removeAt(at);
   final id = list.expenseId;
-  list.expenseId = null;
+  final when = list.boughtAt;
+  list
+    ..expenseId = null
+    ..boughtAt = null;
   ui.changed();
   ui.offerUndo(tr('Više nije kupljeno'), () {
-    list.expenseId = id;
+    list
+      ..expenseId = id
+      ..boughtAt = when;
     if (cost != null) trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
     ui.changed();
   });
@@ -103,7 +112,8 @@ web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
           ),
       ]);
 
-  return el('div', cls: 'card shop-list', attrs: {'data-list': list.id}, children: [
+  // Bought, it greys as a ticked wish does, and says so under its name.
+  return el('div', cls: cost == null ? 'card shop-list' : 'card shop-list bought', attrs: {'data-list': list.id}, children: [
     el('div', cls: 'shop-head', children: [
       if (editing)
         el('div', cls: 'grow', children: [
@@ -122,7 +132,10 @@ web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
           },
           children: [
             icon(open ? 'minus' : 'plus', size: 20),
-            el('span', text: list.name),
+            el('span', cls: 'shop-name', children: [
+              el('span', text: list.name),
+              if (cost != null) el('span', cls: 'small', text: tr('Kupljeno')),
+            ]),
           ],
         )..setAttribute('aria-expanded', '$open'),
       if (editing) removeWithUndo(ui, trip.shopLists, list, list.name),
@@ -177,7 +190,7 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
     topBar(tr('Dućan')),
     if (trip.shopLists.isEmpty)
       el('p', cls: 'soft pad', text: tr('Napravite listu i dodajte što treba kupiti.')),
-    for (final list in trip.shopLists) _listCard(ui, trip, list),
+    for (final list in listsInOrder(trip)) _listCard(ui, trip, list),
     adder(tr('Nova lista'), [
       field(tr('Naziv liste'), name),
       primaryButton(tr('Napravi listu'), make),
