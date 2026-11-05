@@ -79,7 +79,7 @@ class Budget {
     }
     return Budget._([
       for (final category in CostCategory.values)
-        if (trip.budgets[category.name] case final whole?)
+        if (setBudget(trip, category) case final whole?)
           // The group set what it means to spend: what is not spent yet is ahead.
           BudgetLine(
             category,
@@ -136,6 +136,38 @@ class Budget {
 }
 
 String _same(String name) => name.trim().toLowerCase();
+
+/// The key of the dishes among the categories of Hrana i piće.
+const String dishesKind = 'dishes';
+
+/// Where Planirani trošak of one category of Hrana i piće is kept in
+/// `Trip.budgets`. A database key cannot have a slash.
+String foodBudgetKey(String kind) => 'food:$kind';
+
+/// The categories of Hrana i piće that can cost something: the dishes, the
+/// app's own kinds of place, the group's own, and any a place still names.
+Set<String> foodKinds(Trip trip) => {
+      dishesKind,
+      for (final kind in PlaceKind.values) kind.name,
+      for (final custom in trip.customKinds) custom.id,
+      for (final place in trip.places) place.customKindId ?? place.kind.name,
+    };
+
+/// The app's estimate for one category of Hrana i piće: its places in Plan
+/// napada for the whole group, or the dishes to try.
+int foodKindCost(Trip trip, String kind) => kind == dishesKind
+    ? dishesCost(trip)
+    : plannedPlacesCost(trip, trip.places.where((place) => (place.customKindId ?? place.kind.name) == kind));
+
+/// The whole the group set for [category] with Planirani trošak, or null. Food
+/// is set per category of Hrana i piće; one with nothing set counts its
+/// estimate.
+int? setBudget(Trip trip, CostCategory category) {
+  if (category != CostCategory.food) return trip.budgets[category.name];
+  if (!trip.budgets.keys.any((key) => key.startsWith('food:'))) return trip.budgets['food'];
+  return foodKinds(trip).fold<int>(
+      0, (sum, kind) => sum + (trip.budgets[foodBudgetKey(kind)] ?? foodKindCost(trip, kind)));
+}
 
 /// What those of [places] in Plan napada cost the whole group.
 int plannedPlacesCost(Trip trip, Iterable<Place> places) => places

@@ -319,7 +319,8 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
   for (final photo in photos) {
     days.putIfAbsent(trip.photoDay(photo), () => []).add(photo);
   }
-  final shownDays = days.keys.toList()..sort((a, b) => b.compareTo(a));
+  // Prije puta first, then the days in order, then Poslije puta.
+  final shownDays = days.keys.toList()..sort();
 
   return el('div', children: [
     topBar(tr('Prezentacija'))
@@ -354,7 +355,13 @@ web.HTMLElement showBuilder(Ui ui, Trip trip, String? showId) {
       ],
     ],
     el('div', cls: 'show-preview-wrap', children: [
-      el('div', cls: 'show-preview', children: [preview.element]),
+      // A tap stops it where it is, and another goes on.
+      button(
+        cls: 'show-preview',
+        ariaLabel: tr('Zaustavi ili pokreni'),
+        onTap: preview.togglePause,
+        children: [preview.element],
+      ),
     ]),
     if (current != null) ...[
       el('p', cls: 'label pad gap-top', text: tr('Prijelaz')),

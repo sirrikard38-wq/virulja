@@ -3,6 +3,7 @@ import 'package:web/web.dart' as web;
 import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import 'currency_wheel.dart';
 import 'context.dart';
 import 'dom.dart';
 import 'icons.dart';
@@ -113,6 +114,12 @@ web.HTMLElement groupScreen(Ui ui) {
         el('p', cls: 'small pad gap-top', text: tr('Putovanja se dijele s grupom.')),
     ],
     if (cloud?.pushKey != null) notificationsSection(ui),
+    sectionTitle(tr('Valuta')),
+    el('p', cls: 'small pad', text: tr('Za nova putovanja. Svako putovanje ima svoju u postavkama putovanja.')),
+    currencyWheel(ui, ui.data.currencies, (chosen) {
+      ui.data.currencies = chosen;
+      ui.store.save();
+    }),
     sectionTitle(tr('Izgled')),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:2px'}, children: [
       for (final theme in ThemeChoice.values)

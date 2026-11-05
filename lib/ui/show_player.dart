@@ -31,6 +31,25 @@ class ShowPlayer {
     _held = second;
   }
 
+  /// The second it stopped on, while it is stopped.
+  double? _pausedAt;
+
+  bool get paused => _pausedAt != null;
+
+  /// Stops where it is, or goes on from there.
+  void togglePause() {
+    final at = _pausedAt;
+    if (at == null) {
+      _pausedAt = seconds;
+      _stopVideos(_videos.values);
+      element.classList.add('paused');
+    } else {
+      _started = DateTime.now().subtract(Duration(milliseconds: (at * 1000).round()));
+      _pausedAt = null;
+      element.classList.remove('paused');
+    }
+  }
+
   /// What it plays, to know whether a redraw can keep it.
   final String key;
   final web.HTMLElement element = el('div', cls: 'show-player');
@@ -86,6 +105,11 @@ class ShowPlayer {
       return;
     }
     final target = clip.from + min(into - moving, clip.length);
+    if (paused) {
+      if (!picture.paused) picture.pause();
+      if ((picture.currentTime - target).abs() > .1) picture.currentTime = target;
+      return;
+    }
     if ((picture.currentTime - target).abs() > .4) picture.currentTime = target;
     if (picture.paused) {
       picture.play().toDart.then((_) {}, onError: (Object _) {});
@@ -116,7 +140,7 @@ class ShowPlayer {
   }
 
   /// How far it has played, in seconds.
-  double get seconds => DateTime.now().difference(_started).inMilliseconds / 1000;
+  double get seconds => _pausedAt ?? DateTime.now().difference(_started).inMilliseconds / 1000;
 
   void _draw() {
     if (_slides.isEmpty) return;

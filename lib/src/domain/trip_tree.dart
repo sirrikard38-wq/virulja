@@ -158,6 +158,8 @@ Tree tripToTree(
       'dayShowId': trip.dayShowId,
       'budgets': trip.budgets,
       'access': trip.access,
+      // One value, so that two phones choosing at once do not mix their choices.
+      'currencies': trip.currencies.join(','),
       // Read one at a time by whoever knows a member's name and number.
       'keys': {
         for (final id in trip.memberIds)
@@ -281,6 +283,7 @@ CloudTrip? tripFromTree(String id, Tree tree) {
       shows: _items(tree, 'shows', Show.fromJson),
       showPicks: _branch(tree, 'showPicks').cast<String, String>(),
       dayShowId: tree['dayShowId'] as String?,
+      currencies: (tree['currencies'] as String? ?? '').split(','),
       access: _branch(tree, 'access').map((uid, person) => MapEntry(uid, person as String)),
       budgets: _branch(tree, 'budgets').map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
     );

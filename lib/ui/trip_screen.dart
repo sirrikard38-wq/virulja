@@ -253,6 +253,8 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
           el('div', attrs: {'style': 'text-align:right;flex:none'}, children: [
             el('div', cls: 'small', text: tr('tvoj trošak')),
             el('div', cls: 'title', text: euros(Budget.shareOf(trip, ui.meIn(trip)))),
+            if (alsoIn(Budget.shareOf(trip, ui.meIn(trip))) case final also when also.isNotEmpty)
+              el('div', cls: 'small also', text: also),
           ]),
         ],
       ),

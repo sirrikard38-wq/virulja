@@ -2,6 +2,7 @@ import 'package:web/web.dart' as web;
 
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
+import 'currency_wheel.dart';
 import 'context.dart';
 import 'country_names.dart';
 import 'dom.dart';
@@ -49,6 +50,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
   final city = input(value: trip?.city ?? '');
   final dates = RangePicker(start: trip?.start, end: trip?.end);
   final error = errorLine();
+  var money = trip?.currencies ?? ui.data.currencies;
   final cover = el('input', cls: 'file', attrs: {
     'type': 'file',
     'accept': 'image/*',
@@ -79,6 +81,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
           start: from!,
           end: to!,
           memberIds: [ui.meId],
+          currencies: money,
         );
     saved
       ..country = country.value.trim()
@@ -130,6 +133,16 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
     field(tr('Država'), country),
     field(tr('Grad'), city),
     dates.element,
+    el('p', cls: 'label pad gap-top', text: tr('Valuta')),
+    if (trip != null)
+      el('p', cls: 'small pad', text: tr('Za cijelu grupu. Već upisani iznosi se ne preračunavaju.')),
+    currencyWheel(ui, money, (chosen) {
+      money = chosen;
+      if (trip != null) {
+        trip.currencies = chosen;
+        ui.saved();
+      }
+    }),
     el('p', cls: 'label pad gap-top', text: tr('Fotografija za razglednicu')),
     el('label', cls: 'secondary wide', attrs: {'style': 'margin-top:6px'}, children: [
       cover,

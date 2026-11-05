@@ -88,6 +88,13 @@ web.HTMLSelectElement select<T>(
   return node;
 }
 
+/// A field with its unit in dark letters at the right, inside the box.
+web.HTMLElement unitField(String label, web.HTMLInputElement control, String unit) =>
+    el('label', cls: 'field tight', children: [
+      web.document.createTextNode(label),
+      el('span', cls: 'unit-box', children: [control, el('span', cls: 'unit', text: unit)]),
+    ]);
+
 web.HTMLElement checkbox(String label, web.HTMLInputElement box) =>
     el('label', cls: 'check', children: [box, web.document.createTextNode(label)]);
 

@@ -3,6 +3,7 @@ library;
 
 import 'dart:math';
 
+import 'currency.dart';
 import 'i18n.dart';
 
 const _monthsHr = [
@@ -235,8 +236,36 @@ String tenths(double seconds) {
   return '${all ~/ 10}${language == Language.en ? '.' : ','}${all % 10}';
 }
 
-/// `2.420 €`, `12,50 €`, `−8 €`
-String euros(int cents) {
+/// The currency amounts are written in now: the open trip's first one, or this
+/// phone's away from a trip.
+String moneyCode = 'EUR';
+
+/// The currency shown beside amounts, converted, if there is one.
+String? alsoCode;
+
+/// Units of each currency for one euro, as last read.
+Map<String, double> ratesPerEuro = const {};
+
+/// `€`, `₺`: what follows an amount now.
+String moneySign() => currencyOf(moneyCode).sign;
+
+/// A label written with `€` in it, in the currency of now.
+String inMoney(String text) => text.replaceAll('€', moneySign());
+
+/// `2.420 €`, `12,50 €`, `−8 €`, in the currency of now.
+String euros(int cents) => '${plainAmount(cents)} ${moneySign()}';
+
+/// `≈ 5.520 ₺`: [cents] in the currency shown beside, or empty when there is
+/// none or its rate is not known yet.
+String alsoIn(int cents) {
+  final other = alsoCode;
+  if (other == null || cents == 0) return '';
+  final converted = convert(cents, moneyCode, other, ratesPerEuro);
+  return converted == null ? '' : '≈ ${plainAmount(converted)} ${currencyOf(other).sign}';
+}
+
+/// `2.420`, `12,50`: an amount without its sign.
+String plainAmount(int cents) {
   final sign = cents < 0 ? '−' : '';
   final whole = (cents.abs() ~/ 100).toString();
   final rest = cents.abs() % 100;
@@ -246,12 +275,11 @@ String euros(int cents) {
     grouped.write(whole[i]);
   }
   final fraction = rest == 0 ? '' : ',${rest.toString().padLeft(2, '0')}';
-  return '$sign$grouped$fraction €';
+  return '$sign$grouped$fraction';
 }
 
 /// `10–30 €`, `7,50–12 €`
-String eurosRange(int low, int high) =>
-    '${euros(low).replaceAll(' €', '')}–${euros(high)}';
+String eurosRange(int low, int high) => '${plainAmount(low)}–${euros(high)}';
 
 /// Reads a price per person: one amount or a range, such as `10-30`. A range counts
 /// as the amount in the middle of it and keeps its ends to show. Returns null when
@@ -273,7 +301,8 @@ String eurosRange(int low, int high) =>
 /// Reads an amount as people type it: `12`, `12,5`, `1.200`, `1.200,50`,
 /// `12.50 €`. Returns cents, or null when it is not an amount.
 int? parseEuros(String text) {
-  var value = text.replaceAll(RegExp(r'[\s€]'), '');
+  // Signs and letters of any currency go.
+  var value = text.replaceAll(RegExp(r'[^\d,.\-−]'), '');
   if (value.isEmpty) return null;
   if (value.contains(',')) {
     value = value.replaceAll('.', '').replaceAll(',', '.');

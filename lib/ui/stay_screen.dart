@@ -150,10 +150,34 @@ web.HTMLElement? _offerLink(Offer offer) {
   return null;
 }
 
+/// The fields of a stay: the name on half the width, the two links side by
+/// side, then price, beach and rating in a row, each with its unit.
+List<web.HTMLElement> _offerFields({
+  web.HTMLInputElement? name,
+  required web.HTMLInputElement link,
+  required web.HTMLInputElement location,
+  required web.HTMLInputElement price,
+  required web.HTMLInputElement beach,
+  required web.HTMLInputElement rating,
+}) =>
+    [
+      if (name != null)
+        el('div', cls: 'form-row', children: [field(tr('Naziv'), name, tight: true)..classList.add('half')]),
+      el('div', cls: 'form-row', children: [
+        field(tr('Link ponude'), link, tight: true),
+        field(tr('Lokacija'), location, tight: true),
+      ]),
+      el('div', cls: 'form-row thirds', children: [
+        unitField(tr('Cijena po noći'), price, moneySign()),
+        unitField(tr('Do plaže'), beach, 'm'),
+        unitField(tr('Ocjena'), rating, '/5'),
+      ]),
+    ];
+
 /// Changes what was written about a stay: its link, place, price and the rest.
 web.HTMLElement _offerEdit(Ui ui, Offer offer) {
   final link = input(type: 'url', value: offer.link ?? '');
-  final location = input(value: offer.location ?? '', placeholder: tr('Adresa ili link s Google Mapsa'));
+  final location = input(value: offer.location ?? '', placeholder: tr('Adresa ili Maps'));
   final price = numberInput()..value = (offer.pricePerNight / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
   final rating = numberInput()..value = offer.rating?.toString().replaceAll('.', ',') ?? '';
   final beach = numberInput()..value = offer.beachMeters?.toString() ?? '';
@@ -184,13 +208,7 @@ web.HTMLElement _offerEdit(Ui ui, Offer offer) {
   }
 
   return el('div', cls: 'offer-edit', children: [
-    field(tr('Link ponude'), link),
-    field(tr('Lokacija'), location),
-    field(tr('Do plaže (m)'), beach),
-    el('div', cls: 'fields', children: [
-      field(tr('Cijena po noći (€)'), price, tight: true),
-      field(tr('Ocjena (0 do 5)'), rating, tight: true),
-    ]),
+    ..._offerFields(link: link, location: location, price: price, beach: beach, rating: rating),
     error,
     el('div', attrs: {'style': 'display:flex;gap:12px;align-items:center;margin-top:10px'}, children: [
       primaryButton(tr('Spremi'), save, wide: false),
@@ -276,7 +294,7 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
   final rating = numberInput();
   final beach = numberInput();
   final link = input(type: 'url');
-  final location = input(placeholder: tr('Adresa ili link s Google Mapsa'));
+  final location = input(placeholder: tr('Adresa ili Maps'));
   final error = errorLine();
   link.onInput.listen((_) {
     final found = nameFromLink(link.value);
@@ -317,14 +335,7 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
   }
 
   return adder(tr('Dodaj ponudu'), [
-    field(tr('Naziv'), name),
-    field(tr('Link ponude'), link),
-    field(tr('Lokacija'), location),
-    field(tr('Do plaže (m)'), beach),
-    el('div', cls: 'fields', children: [
-      field(tr('Cijena po noći (€)'), price, tight: true),
-      field(tr('Ocjena (0 do 5)'), rating, tight: true),
-    ]),
+    ..._offerFields(name: name, link: link, location: location, price: price, beach: beach, rating: rating),
     error,
     primaryButton(tr('Dodaj ponudu'), add),
   ]);
@@ -333,7 +344,7 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
 web.HTMLElement stayScreen(Ui ui, Trip trip) {
   final offers = sortOffersBy(trip.offers, ui.offerSorts);
   final best = offers.isEmpty ? null : recommendedOffer(offers, trip.people);
-  return el('div', children: [
+  return el('div', cls: 'fill-page', children: [
     topBar(tr('Smještaj')),
     el('div', cls: 'two', attrs: {'style': 'padding-top:0'}, children: [
       outLink(tr('Traži na Bookingu'), bookingSearch(trip)),
@@ -377,6 +388,6 @@ web.HTMLElement stayScreen(Ui ui, Trip trip) {
         _offerCard(ui, trip, offer, best: identical(offer, best)),
     ],
     _addOffer(ui, trip),
-    planCost(ui, trip, CostCategory.stay),
+    planCost(ui, trip, CostCategory.stay.name),
   ]);
 }

@@ -66,7 +66,7 @@ void _buy(Ui ui, Trip trip, ShopList list) {
         children: [icon('close', size: 20)]),
     el('p', cls: 'label', text: tr('Unesi iznos')),
     el('p', cls: 'small', text: list.name),
-    field(tr('Iznos (€)'), amount),
+    field(inMoney(tr('Iznos (€)')), amount),
     el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Na koga se odnosi?')),
     people,
     primaryButton(tr('Kupljeno'), save),
@@ -231,7 +231,7 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
     ui.changed();
   }
 
-  return el('div', children: [
+  return el('div', cls: 'fill-page', children: [
     topBar(tr('Dućan')),
     if (trip.shopLists.isEmpty)
       el('p', cls: 'soft pad', text: tr('Napravite listu i dodajte što treba kupiti.')),
@@ -240,7 +240,7 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
       field(tr('Naziv liste'), name),
       primaryButton(tr('Napravi listu'), make),
     ]),
-    planCost(ui, trip, CostCategory.shop),
+    planCost(ui, trip, CostCategory.shop.name),
   ]);
 }
 

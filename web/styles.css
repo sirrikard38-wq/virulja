@@ -171,7 +171,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .shop-fold .icon { flex: none; color: var(--accent); }
 .shop-actions { display: flex; gap: 8px; margin-top: 10px; }
 .ticks .tick.tick-in { padding-left: 28px; }
-.plan-cost { display: flex; align-items: center; gap: 6px; margin: 16px 20px 12px; }
+.plan-cost { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 16px 20px 12px; }
+.stick-bottom .plan-cost { margin: 8px 0 0; }
+/* At the foot of the screen, even when there is little above it. */
+.fill-page { display: flex; flex-direction: column; min-height: calc(100dvh - var(--nav-height) - var(--bottom-safe) - 16px); }
+.fill-page > .plan-cost, .swipe-area > .plan-cost { margin-top: auto; padding-top: 16px; }
 .plan-cost input { flex: none; min-width: 0; padding: 5px 8px; font-size: 16px; text-align: right; }
 .shop-list .shop-item-row, .shop-list .shop-next, .shop-list .shop-actions { padding-left: 28px; }
 .time-picker select { flex: 1; min-width: 0; }
@@ -352,6 +356,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   -webkit-appearance: none;
 }
 .input::placeholder { color: var(--soft); }
+/* Fields side by side: a row of two, or of three narrower ones. */
+.form-row { display: flex; gap: 10px; margin: 12px 20px 0; }
+.form-row > .field { margin: 0; flex: 1 1 0; min-width: 0; }
+.form-row > .field.half { flex: 0 0 calc(50% - 5px); }
+.form-row.thirds > .field { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unit-box { position: relative; display: block; }
+.also { color: var(--soft); }
+/* A wheel of currencies: three rows in sight, the chosen ones in a green ring. */
+.currency-frame { margin: 8px 20px 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.currency-wheel { position: relative; height: 150px; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); padding: 50px 0; }
+.currency-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 50px;
+  scroll-snap-align: center; border: 0; background: none; color: var(--text); font: inherit; font-size: 18px; }
+.currency-code { display: inline-flex; align-items: center; justify-content: center; min-width: 64px; height: 38px;
+  border: 2px solid transparent; border-radius: 19px; font-weight: 700; letter-spacing: .5px; }
+.currency-sign { color: var(--soft); min-width: 36px; text-align: left; }
+.currency-row.on .currency-code { border-color: var(--accent); color: var(--accent); }
+.show-player.paused::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+  transform: translate(-35%, -50%); border-style: solid; border-width: 18px 0 18px 30px;
+  border-color: transparent transparent transparent rgba(255, 255, 255, .85);
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .5)); pointer-events: none; z-index: 5;
+}
+.unit-box .input { padding-right: 34px; }
+.unit { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--soft); font-weight: 600; font-size: 14px; pointer-events: none; }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 20px 0; }
 .checks { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 20px 0; }
 .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; background: var(--card); border: 1px solid var(--line); font-size: 15px; }
@@ -378,7 +408,7 @@ details.adder.on-top summary { justify-content: flex-end; }
 .option-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 /* Open: the plus loses its upright stroke and becomes a minus. */
 details.adder[open] summary .icon path:first-of-type { display: none; }
-details.adder .field, details.adder .fields, details.adder .checks, details.adder .wide, details.adder .error { margin-left: 0; margin-right: 0; }
+details.adder .field, details.adder .fields, details.adder .form-row, details.adder .checks, details.adder .wide, details.adder .error { margin-left: 0; margin-right: 0; }
 details.adder .wide { width: 100%; }
 
 /* Postcards */
@@ -580,7 +610,7 @@ details.adder .wide { width: 100%; }
 .hero-show { width: 100%; height: 196px; }
 .hero.tappable { display: block; width: 100%; }
 .hero-caption { position: absolute; left: 12px; bottom: 10px; z-index: 4; max-width: calc(100% - 24px); padding: 3px 8px; border-radius: 8px; background: rgba(0, 0, 0, .45); color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.show-preview { margin: 8px 20px 0; border-radius: 10px; overflow: hidden; }
+.show-preview { display: block; width: calc(100% - 40px); padding: 0; border: 0; background: none; margin: 8px 20px 0; border-radius: 10px; overflow: hidden; }
 .show-preview .show-player { height: 196px; }
 .show-strip { display: flex; gap: 8px; overflow-x: auto; padding: 6px 20px; scrollbar-width: none; }
 .show-strip::-webkit-scrollbar { display: none; }

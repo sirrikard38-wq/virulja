@@ -6,6 +6,7 @@ library;
 
 import 'dart:math';
 
+import 'currency.dart';
 import 'i18n.dart';
 
 typedef Json = Map<String, dynamic>;
@@ -1068,9 +1069,11 @@ class Trip {
     this.dayShowId,
     Map<String, int>? budgets,
     Map<String, String>? access,
+    List<String>? currencies,
   })  : uids = uids ?? {},
         budgets = budgets ?? {},
         access = access ?? {},
+        currencies = cleanCurrencies(currencies ?? const []),
         shows = shows ?? [],
         showPicks = showPicks ?? {},
         polls = polls ?? [],
@@ -1131,6 +1134,7 @@ class Trip {
             .cast<String, String>(),
         dayShowId: json['dayShowId'] as String?,
         access: (json['access'] as Json? ?? const <String, dynamic>{}).cast<String, String>(),
+        currencies: _strings(json['currencies']),
         budgets: (json['budgets'] as Json? ?? const <String, dynamic>{})
             .map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
       );
@@ -1201,6 +1205,10 @@ class Trip {
   /// The phones let into this trip: sign-in id -> the member it is. The
   /// database lets only these read and change it; a person may have several.
   Map<String, String> access;
+
+  /// The currency the group writes amounts in, and maybe one more shown beside
+  /// them, converted. Never empty; older trips are in euros.
+  List<String> currencies;
 
   int get nights => end.difference(start).inDays;
 
@@ -1294,6 +1302,7 @@ class Trip {
     dayShowId = other.dayShowId;
     budgets = other.budgets;
     access = other.access;
+    currencies = other.currencies;
   }
 
   Json toJson() => {
@@ -1333,6 +1342,7 @@ class Trip {
         'dayShowId': dayShowId,
         'budgets': budgets,
         'access': access,
+        'currencies': currencies,
       };
 }
 
@@ -1395,6 +1405,9 @@ class AppData {
     this.theme = ThemeChoice.system,
     this.anthemMuted = false,
     this.allTransitions = false,
+    List<String>? currencies,
+    Map<String, double>? rates,
+    this.ratesDay,
     Set<String>? hiddenCodes,
     Map<String, String>? identities,
     Map<String, String>? waiting,
@@ -1405,6 +1418,8 @@ class AppData {
     Set<String>? noticesOff,
     Map<String, Set<String>>? tripNoticesOff,
   })  : noticesOff = noticesOff ?? {},
+        currencies = cleanCurrencies(currencies ?? const []),
+        rates = rates ?? {},
         hiddenCodes = hiddenCodes ?? {},
         tripNoticesOff = tripNoticesOff ?? {},
         kindOrder = kindOrder ?? {},
@@ -1438,6 +1453,10 @@ class AppData {
             .byName(json['theme'] as String? ?? ThemeChoice.system.name),
         anthemMuted: json['anthemMuted'] as bool? ?? false,
         allTransitions: json['allTransitions'] as bool? ?? false,
+        currencies: _strings(json['currencies']),
+        rates: (json['rates'] as Json? ?? const <String, dynamic>{})
+            .map((code, rate) => MapEntry(code, (rate as num).toDouble())),
+        ratesDay: json['ratesDay'] as String?,
         hiddenCodes: _strings(json['hiddenCodes']).toSet(),
       );
 
@@ -1453,6 +1472,13 @@ class AppData {
 
   /// Every transition open at once on this phone, whatever the day (Riko only).
   bool allTransitions;
+
+  /// The currencies a new trip made on this phone starts with.
+  List<String> currencies;
+
+  /// Units of each currency for one euro, and the day they were read.
+  Map<String, double> rates;
+  String? ratesDay;
 
   /// Trips whose codes are hidden from the list in Postavke.
   Set<String> hiddenCodes;
@@ -1503,6 +1529,9 @@ class AppData {
         'theme': theme.name,
         'anthemMuted': anthemMuted,
         'allTransitions': allTransitions,
+        'currencies': currencies,
+        'rates': rates,
+        'ratesDay': ratesDay,
         'hiddenCodes': hiddenCodes.toList(),
         'identities': identities,
         'waiting': waiting,

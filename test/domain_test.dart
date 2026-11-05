@@ -6,6 +6,7 @@ import 'package:virulja/src/domain/trip_tree.dart';
 import 'package:virulja/src/domain/tree.dart';
 import 'package:virulja/src/domain/attack.dart';
 import 'package:virulja/src/domain/budget.dart';
+import 'package:virulja/src/domain/currency.dart';
 import 'package:virulja/src/domain/exif.dart';
 import 'package:virulja/src/domain/format.dart';
 import 'package:virulja/src/domain/links.dart';
@@ -309,6 +310,49 @@ void main() {
       final back = jsonDecode(jsonEncode(unflatten(flatten(tree))));
       expect(tripFromTree('t1', (back as Map).cast<String, dynamic>())!.trip.access, {'uid1': 'ana', 'uid2': 'ana'});
       expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).access, {'uid1': 'ana', 'uid2': 'ana'});
+    });
+
+    test('each category of Hrana i piće has its own planned cost, the rest its estimate', () {
+      final trip = visTrip();
+      final every = foodKinds(trip).fold<int>(0, (sum, kind) => sum + foodKindCost(trip, kind));
+      expect(every, plannedCost(trip, CostCategory.food));
+      expect(setBudget(trip, CostCategory.food), isNull);
+      trip.budgets[foodBudgetKey('restaurant')] = 50000;
+      expect(setBudget(trip, CostCategory.food), 50000 + every - foodKindCost(trip, 'restaurant'));
+      expect(Budget.of(trip).line(CostCategory.food).planned, setBudget(trip, CostCategory.food));
+    });
+
+    test('a trip has one or two currencies, the first the one amounts are in', () {
+      expect(cleanCurrencies([]), ['EUR']);
+      expect(cleanCurrencies(['TRY', 'TRY', 'EUR', 'USD']), ['TRY', 'EUR']);
+      expect(tapCurrency(['EUR'], 'EUR'), isNull);
+      expect(tapCurrency(['EUR'], 'TRY'), ['EUR', 'TRY']);
+      expect(tapCurrency(['EUR', 'TRY'], 'USD'), isNull);
+      expect(tapCurrency(['EUR', 'TRY'], 'EUR'), ['TRY']);
+      expect(convert(10000, 'EUR', 'TRY', {'TRY': 50}), 500000);
+      expect(convert(500000, 'TRY', 'USD', {'TRY': 50, 'USD': 1.1}), 11000);
+      expect(convert(100, 'EUR', 'XXX', {}), isNull);
+      final trip = visTrip()..currencies = ['TRY', 'EUR'];
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
+      expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.currencies, ['TRY', 'EUR']);
+      expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).currencies, ['TRY', 'EUR']);
+      expect(Trip.fromJson(jsonDecode(jsonEncode(visTrip().toJson()..remove('currencies'))) as Json).currencies, ['EUR']);
+    });
+
+    test('amounts are written in the currency of the open trip', () {
+      addTearDown(() {
+        moneyCode = 'EUR';
+        alsoCode = null;
+        ratesPerEuro = const {};
+      });
+      moneyCode = 'TRY';
+      expect(euros(30000), '300 ₺');
+      expect(inMoney('Iznos (€)'), 'Iznos (₺)');
+      expect(parseEuros('1.200,50 ₺'), 120050);
+      alsoCode = 'EUR';
+      expect(alsoIn(500000), '');
+      ratesPerEuro = {'TRY': 50};
+      expect(alsoIn(500000), '≈ 100 €');
     });
 
     test('a planned whole for a kind of cost is what is ahead of what was spent', () {

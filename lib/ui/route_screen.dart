@@ -42,7 +42,7 @@ web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
     field(tr('Što'), title),
     el('div', cls: 'fields', children: [
       field(tr('Vrijeme'), picker.view, tight: true),
-      field(tr('Trošak za grupu (€)'), cost, tight: true),
+      field(inMoney(tr('Trošak za grupu (€)')), cost, tight: true),
     ]),
     error,
     primaryButton(tr('Dodaj'), add),
@@ -69,7 +69,7 @@ web.HTMLElement _addLeg(Ui ui, Trip trip) {
 
   return adder(tr('Dodaj prijevoz'), [
     field(tr('Prijevoz i relacija'), title),
-    field(tr('Trošak za grupu (€)'), cost),
+    field(inMoney(tr('Trošak za grupu (€)')), cost),
     error,
     primaryButton(tr('Dodaj'), add),
   ]);
@@ -80,10 +80,10 @@ web.HTMLElement _driveForm(Ui ui, Trip trip) {
   final route = input(value: drive.route);
   final km = numberInput(value: drive.kilometres == 0 ? '' : _number(drive.kilometres));
   final litres = numberInput(value: _number(drive.litresPer100));
-  final fuel = numberInput(value: euros(drive.fuelPrice).replaceAll(' €', ''));
+  final fuel = numberInput(value: plainAmount(drive.fuelPrice));
   final cars = numberInput(value: '${drive.cars}');
-  final tolls = numberInput(value: drive.tolls == 0 ? '' : euros(drive.tolls).replaceAll(' €', ''));
-  final ferry = numberInput(value: drive.ferry == 0 ? '' : euros(drive.ferry).replaceAll(' €', ''));
+  final tolls = numberInput(value: drive.tolls == 0 ? '' : plainAmount(drive.tolls));
+  final ferry = numberInput(value: drive.ferry == 0 ? '' : plainAmount(drive.ferry));
   final both = checkInput(checked: drive.roundTrip);
 
   void update() {
@@ -107,11 +107,11 @@ web.HTMLElement _driveForm(Ui ui, Trip trip) {
     ]),
     el('div', cls: 'fields', children: [
       field(tr('Potrošnja (l/100 km)'), litres, tight: true),
-      field(tr('Cijena goriva (€/l)'), fuel, tight: true),
+      field(inMoney(tr('Cijena goriva (€/l)')), fuel, tight: true),
     ]),
     el('div', cls: 'fields', children: [
-      field(tr('Cestarine (€)'), tolls, tight: true),
-      field(tr('Trajekt (€)'), ferry, tight: true),
+      field(inMoney(tr('Cestarine (€)')), tolls, tight: true),
+      field(inMoney(tr('Trajekt (€)')), ferry, tight: true),
     ]),
     el('div', cls: 'checks', children: [checkbox(tr('Računaj oba smjera'), both)]),
     el('div', cls: 'row', attrs: {'style': 'margin-top:8px'}, children: [
@@ -154,7 +154,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     ui.rerender();
     slideIn(step);
   });
-  return el('div', children: [
+  return el('div', cls: 'fill-page', children: [
     topBar(tr('Prijevoz')),
     el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (var i = 0; i < trip.dayCount; i++)
@@ -185,6 +185,6 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       ]),
     _driveForm(ui, trip),
     _addLeg(ui, trip),
-    planCost(ui, trip, CostCategory.transport),
+    planCost(ui, trip, CostCategory.transport.name),
   ]);
 }

@@ -9,26 +9,27 @@ import 'context.dart';
 import 'dom.dart';
 import 'widgets.dart';
 
-/// "Planirani trošak:" at the bottom of a screen of Plan: the whole amount the
-/// group means to spend on [category], which is then its Planirano in
-/// Troškovi. It keeps itself as it is typed; an empty field goes back to the
-/// app's own estimate. The box grows with a longer number.
-web.HTMLElement planCost(Ui ui, Trip trip, CostCategory category) {
-  final set = trip.budgets[category.name];
+/// "Planirani trošak:" at the bottom of a screen of Plan, on the right: the
+/// whole amount the group means to spend on what [key] names in `Trip.budgets`
+/// (a kind of cost, or one category of Hrana i piće), which then counts as its
+/// Planirano in Troškovi. It keeps itself as it is typed; an empty field goes
+/// back to the app's own estimate. The box grows with a longer number.
+web.HTMLElement planCost(Ui ui, Trip trip, String key) {
+  final set = trip.budgets[key];
   final amount = numberInput(placeholder: '0')
     ..value = set == null ? '' : (set / 100).toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
 
-  void fit() => amount.style.width = '${max(4, amount.value.length) + 1}ch';
+  void fit() => amount.style.width = 'calc(${max(4, amount.value.length) + 1}ch + 18px)';
 
   amount.onInput.listen((_) {
     fit();
     final text = amount.value.trim();
     if (text.isEmpty) {
-      trip.budgets.remove(category.name);
+      trip.budgets.remove(key);
     } else {
       final cents = parseEuros(text);
       if (cents == null) return;
-      trip.budgets[category.name] = cents;
+      trip.budgets[key] = cents;
     }
     // No redraw: it would take the keyboard away.
     ui.saved();
@@ -40,6 +41,6 @@ web.HTMLElement planCost(Ui ui, Trip trip, CostCategory category) {
   return el('label', cls: 'plan-cost', children: [
     el('span', cls: 'small', text: tr('Planirani trošak:')),
     amount,
-    el('span', cls: 'small', text: '€'),
+    el('span', cls: 'small', text: moneySign()),
   ]);
 }

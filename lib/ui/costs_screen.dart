@@ -68,7 +68,7 @@ void _split(Ui ui, Trip trip, Place place) {
           children: [icon('close', size: 20)]),
       el('p', cls: 'label', text: tr('Koliko je zapravo bilo?')),
       el('p', cls: 'small', text: place.name),
-      field(tr('Iznos (€)'), amount..value = typed),
+      unitField(tr('Iznos'), amount..value = typed, moneySign())..classList.remove('tight'),
       el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Tko je platio?')),
       el('div', cls: 'checks', attrs: {'style': 'margin:0'}, children: [
         for (final id in trip.memberIds)
@@ -102,6 +102,7 @@ void _split(Ui ui, Trip trip, Place place) {
 web.HTMLElement _total(String label, int cents) => el('div', cls: 'tile card', children: [
       el('span', cls: 'small', text: label),
       el('span', cls: 'value', text: euros(cents)),
+      if (alsoIn(cents).isNotEmpty) el('span', cls: 'small also', text: alsoIn(cents)),
     ]);
 
 /// One kind of cost: what was spent and what is planned for it in all. The bar
@@ -178,12 +179,13 @@ List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
   }
 
   return [
-    field(tr('Što'), title),
-    el('div', cls: 'fields', children: [
-      field(tr('Iznos (€)'), amount, tight: true),
+    // As in Smještaj: the name on half the width, then a row of three.
+    el('div', cls: 'form-row', children: [field(tr('Što'), title, tight: true)..classList.add('half')]),
+    el('div', cls: 'form-row thirds', children: [
+      unitField(tr('Iznos'), amount, moneySign()),
       field(tr('Vrsta'), category, tight: true),
+      field(tr('Tko je platio'), payer, tight: true),
     ]),
-    field(tr('Tko je platio'), payer),
     el('p', cls: 'label', text: tr('Tko dijeli trošak'), attrs: {'style': 'margin-top:12px'}),
     el('div', cls: 'checks', children: [
       for (final id in trip.memberIds) checkbox(ui.nameOf(id), boxes[id]!),

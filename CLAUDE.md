@@ -101,9 +101,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the photos and videos picked for it (`Show.chosen`, in the order picked; older ones have
   all but `leftOut`) follow each other with one of 15 transitions, lengthened with a bar
   from 0 to 12 s (`secondsBar`). The builder has the name on top, then a row for each day,
-  the last day first, then "Odabrano za prezentaciju" (a finger held on a photo changes
+  Prije puta and the first day first, then "Odabrano za prezentaciju" (a finger held on a photo changes
   the order, `reorderable`) and the preview, which stays at the top of the screen
-  (sticky) while the transition, "Produljenje prijelaza" and "Duljina uspomene" are set.
+  (sticky; a tap on it stops and starts it, `ShowPlayer.togglePause`) while the transition, "Produljenje prijelaza" and "Duljina uspomene" are set.
   "Ništa" is a cut with no moving time and no bar (`movingTime`); it is always there and
   not one of the 15 (`effects`). "Lom stakla" (stored as `glass`; an old `black`, Kroz
   crno, reads as it) breaks the photo going out into 24 pieces that fly and fall
@@ -181,9 +181,25 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   time field offers every minute.
 - Troškovi shows Potrošeno, Planirano (the whole plan) and Preostalo (plan less spent;
   not "Ostalo", which is a kind of cost), and each kind as "Potrošeno X · Planirano Y".
-  "Planirani trošak:" at the bottom of Hrana i piće, Dućan, Prijevoz and Smještaj is a
-  small box, kept as it is typed with no button, that sets the whole the group means to
-  spend on that kind (`Trip.budgets`), which is then its plan; it widens for a long number. A place of Hrana i piće in Plan
+  "Planirani trošak:" is a small box on the right, kept as it is typed with no button,
+  that sets the whole the group means to spend (`Trip.budgets`), which is then the plan;
+  it widens for a long number. Dućan, Prijevoz and Smještaj have one at the foot of the
+  screen (`fill-page`). In Hrana i piće each category has its own under "Procjena za"
+  (`food:<category>`, `foodBudgetKey`); food's plan is their sum, each category with
+  none counting its estimate (`setBudget`).
+- Currencies (2026-11-05): a trip has one or two (`Trip.currencies`, shared, stored as
+  "TRY,EUR"). Amounts are written and kept in the first; the second shows small beside
+  the sums in Troškovi, the header and the food estimate (`alsoIn`), converted at the
+  day's ECB rates from the free `api.frankfurter.dev/v2/rates` (`loadRates`, once a
+  day, kept in `AppData.rates`). Changing a trip's currency converts nothing already
+  written. Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
+  wheel (`currencyWheel`): a tap circles one in green, another lets it go, two at most,
+  one always. `euros()` writes the open trip's sign (`moneyCode`), labels with € go
+  through `inMoney`.
+- Forms of Smještaj and of Dodaj trošak: the name on half the width, then rows of two or
+  three fields (`form-row`, `thirds`), units in dark letters inside the box (`unitField`).
+- Taking something out of a list leaves what is above where it was: a redraw of the
+  same screen keeps the page tall enough for its scroll (`_drawnHash` in `app.dart`). A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what
   it really cost, who paid and whom it is for (`Place.expenseId`).
 - Entering a code with the name (any capitals) and phone number of someone already in

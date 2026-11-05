@@ -3,6 +3,7 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
+import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/links.dart';
 import '../src/domain/models.dart';
@@ -12,6 +13,7 @@ import 'shop_screen.dart';
 import 'show_player.dart';
 import 'shows_section.dart';
 import 'cloud.dart';
+import 'currency_wheel.dart';
 import 'context.dart';
 import 'costs_screen.dart';
 import 'dom.dart';
@@ -275,6 +277,9 @@ class ViruljaApp {
   /// Whether Plan napada was the screen last drawn, and when it was left: back
   /// within [_attackMemory] it keeps its day.
   bool _onAttack = false;
+
+  /// The address last drawn: a redraw of the same screen keeps what is above.
+  String? _drawnHash;
   DateTime? _leftAttack;
   static const Duration _attackMemory = Duration(seconds: 20);
 
@@ -509,6 +514,12 @@ class ViruljaApp {
     }
     _cloud?.watch(trip?.id);
     _ring = null;
+    // Amounts in the trip's currency, and the one beside them converted.
+    final money = trip?.currencies ?? _data.currencies;
+    moneyCode = money.first;
+    alsoCode = money.length > 1 ? money.last : null;
+    ratesPerEuro = _data.rates;
+    if (alsoCode != null) loadRates(_ui, done: _groupChanged);
 
     final web.HTMLElement page;
     if (trip != null) {
@@ -534,9 +545,13 @@ class ViruljaApp {
         : hasMenu
             ? 'frame'
             : 'frame no-nav';
-    show(
-      _root,
-      el('div', cls: frameClass, children: [
+    // Something taken out of a list on the same screen: the page keeps enough
+    // height to stay where it was scrolled, so what is above stands still and
+    // what is below moves up. A new screen starts with no such height.
+    final hash = web.window.location.hash;
+    final keep = hash == _drawnHash ? web.window.scrollY + web.window.innerHeight : 0;
+    _drawnHash = hash;
+    final frame = el('div', cls: frameClass, children: [
         page,
         if (hasBack) _backButton(),
         if (trip == null && place.page != 'uspomene' && place.page != 'novo')
@@ -558,8 +573,9 @@ class ViruljaApp {
             // screen app white when it comes back from Google Maps.
             _walkLink(trip, stay),
         if (hasMenu) _menu(place.page),
-      ]),
-    );
+      ]);
+    if (keep > 0) frame.style.minHeight = '${keep.round()}px';
+    show(_root, frame);
   }
 
   void _offerUndo(String message, void Function() undo) {

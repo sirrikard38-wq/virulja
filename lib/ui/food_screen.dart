@@ -127,7 +127,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
     field(tr('Naziv'), name),
     el('div', cls: 'fields', children: [
       field(tr('Ocjena'), rating, tight: true),
-      field(tr('Cijena po osobi (€)'), price, tight: true),
+      field(inMoney(tr('Cijena po osobi (€)')), price, tight: true),
     ]),
     field(tr('Bilješka'), note),
     error,
@@ -179,7 +179,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   return adder(tr('Dodaj jelo'), [
     field(tr('Jelo'), name),
     el('div', cls: 'fields', children: [
-      field(tr('Cijena (€)'), price, tight: true),
+      field(inMoney(tr('Cijena (€)')), price, tight: true),
       field(tr('Porcija'), servings, tight: true),
     ]),
     field(tr('Gdje'), place),
@@ -257,7 +257,7 @@ void _glideToChosenChip(_ChipPlace from) {
 }
 
 /// What this person's order of the categories calls the dishes.
-const String _dishesKey = 'dishes';
+const String _dishesKey = dishesKind;
 
 /// One category of the screen: a fixed kind, one the group made, or the dishes,
 /// which are neither.
@@ -606,11 +606,17 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     chipRow,
     if (ui.addingKind) _newKind(ui, addKind),
     el('div', cls: 'slide-clip', children: [sliding]),
-    planCost(ui, trip, CostCategory.food),
-    el('div', cls: 'row stick-bottom', children: [
-      el('div', cls: 'grow', text: tab.estimateTitle),
-      el('div', cls: 'price',
-          text: euros(tab.isDishes ? dishesCost(trip) : plannedPlacesCost(trip, places))),
+    // The estimate and, under it, what the group plans for this category.
+    el('div', cls: 'stick-bottom', children: [
+      el('div', cls: 'row', attrs: {'style': 'padding:0'}, children: [
+        el('div', cls: 'grow', text: tab.estimateTitle),
+        el('div', cls: 'price',
+            text: euros(tab.isDishes ? dishesCost(trip) : plannedPlacesCost(trip, places))),
+      ]),
+      if (alsoIn(tab.isDishes ? dishesCost(trip) : plannedPlacesCost(trip, places)) case final also
+          when also.isNotEmpty)
+        el('div', cls: 'small also', attrs: {'style': 'text-align:right'}, text: also),
+      planCost(ui, trip, foodBudgetKey(tab.key)),
     ]),
   ]);
   // Past the last category a swipe opens the new one's field, as the + does,
