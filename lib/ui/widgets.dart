@@ -45,13 +45,62 @@ web.HTMLInputElement input({
 web.HTMLInputElement numberInput({String value = '', String placeholder = ''}) =>
     input(value: value, placeholder: placeholder, inputMode: 'decimal');
 
-/// A box for an amount: once typed it is written as all amounts are, 1.250,50.
-web.HTMLInputElement amountInput({String value = ''}) {
+/// Writes an amount in [box] as amounts are written while it is being typed:
+/// 1.250,50, the cursor kept after the same digits.
+void typeAmount(web.HTMLInputElement box, web.Event event) {
+  final typed = (event as web.InputEvent).data;
+  final caret = box.selectionStart ?? box.value.length;
+  final next = typedAmount(box.value, caret, dotTyped: typed == '.');
+  if (next.text == box.value) return;
+  box.value = next.text;
+  box.setSelectionRange(next.caret, next.caret);
+}
+
+/// Rows that scroll sideways fade on the side where more is hidden, so that it
+/// is plain there is more to see. Each row is watched once; [markEdges] runs
+/// after every drawing.
+void markEdges() {
+  final rows = web.document.querySelectorAll('.chips, .show-strip');
+  for (var i = 0; i < rows.length; i++) {
+    final row = rows.item(i) as web.HTMLElement;
+    void mark() {
+      final most = row.scrollWidth - row.clientWidth;
+      row.classList.toggle('more-left', row.scrollLeft > 2);
+      row.classList.toggle('more-right', most - row.scrollLeft > 2);
+    }
+
+    if (!row.hasAttribute('data-edges')) {
+      row.setAttribute('data-edges', '');
+      row.addEventListener('scroll', ((web.Event _) => mark()).toJS);
+    }
+    mark();
+    web.window.requestAnimationFrame(((double _) => mark()).toJS);
+  }
+}
+
+/// A box for an amount, written as all amounts are while it is typed: 1.250,50.
+/// With [fit] it is as wide as the number, three digits at least.
+web.HTMLInputElement amountInput({String value = '', bool fit = false}) {
   final box = numberInput(value: value);
+  void size() {
+    if (!fit) return;
+    final ruler = _ruler ??= (web.document.createElement('canvas') as web.HTMLCanvasElement)
+        .getContext('2d') as web.CanvasRenderingContext2D;
+    ruler.font = web.window.getComputedStyle(box).font;
+    final text = box.value.length < 3 ? '000' : box.value;
+    box.style.width = '${ruler.measureText(text).width + 52}px';
+  }
+
+  box.onInput.listen((event) {
+    typeAmount(box, event);
+    size();
+  });
   box.onChange.listen((_) {
     final cents = parseEuros(box.value);
     if (cents != null) box.value = plainAmount(cents);
+    size();
   });
+  scheduleMicrotask(size);
   return box;
 }
 

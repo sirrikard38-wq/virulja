@@ -54,7 +54,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - The screen of the day plan and the journey (`route_screen.dart`, called Plan puta in
   these notes) is named "Prijevoz" in the app.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
-  trip's tabs and the days of Plan puta. A swipe is off while a form is open, as a redraw would wipe it.
+  trip's tabs and the days of Plan puta. The next page comes along beside the one
+  that goes, as far as the finger has gone (`peek`), and the green mark (the line under
+  a tab, the fill of a chip) moves with it (`SwipeMark`); let go past the length, the
+  page glides the rest and is drawn in place with no slide of its own (`justSwiped`). A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
 
@@ -143,11 +146,14 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
-- A poll's card has its name on top (`titleField`: half the row at first, growing with
-  the text, then more lines, at most 400 letters counted at the end of the line), then
-  the brush, then the x in the corner. A new poll is made on such a card (`PollDraft`),
-  with no brush and no Plan napada but Napravi anketu; its x throws it away with the
-  usual undo. Leaving Ankete closes a brush. In Plan napada a card has the cost tick in
+- A poll's card has its name on top, then the brush, then the x in the corner. The name
+  is typed only with the brush open (`titleField`: half the row at first, growing with
+  the text, then more lines, at most 400 letters counted at the end of the line). A new
+  poll is made on a card like one with its brush open (`PollDraft`): the name ready for
+  typing with the keyboard up, Da, Ne and Možda each with an x, a field for more, no
+  times, and Izradi anketu; it needs a letter in its name (`hasLetter`) and two answers.
+  Its x throws it away with the usual undo. New polls stand on top, those in Plan
+  napada at the bottom. Leaving Ankete closes a brush. In Plan napada a card has the cost tick in
   the top right corner and the x in the bottom right.
 - A poll's brush opens and closes in place (`_setBrush`): the page stays where it is, the
   card grows or shrinks smoothly and the polls under it follow; opened where it cannot all
@@ -233,7 +239,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   up to the whole row (`growWithText`), then rows of two or three fields (`form-row`,
   `thirds`), units in dark letters inside the box (`unitField`). Vrsta and Tko je platio
   are as wide as their words; with no room the payer goes to the next row. Amount boxes
-  write 1.250,50 once typed (`amountInput`). A trip's settings fold Šifra putovanja too,
+  write 1.250,50 while it is typed, the cursor kept after the same digits, and a typed
+  dot is the decimal comma (`typedAmount`, `amountInput`); the cost box is as wide as
+  its number. A trip's settings fold Šifra putovanja too,
   above Obavijesti.
 - A box over the page holds it by stopping the finger's scroll (`holdPage`), never by
   pinning the body in place: that moved the page, and at its bottom an iPhone jolted
@@ -241,6 +249,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - A picture already opened on this phone gets its address at once on a redraw
   (`AppStore.knownAddress`); waiting for it flashed every picture blank, which looked
   like the screen jumping. Prezentacija dana folds in place, nothing else redrawn.
+- Rows that scroll sideways (`.chips`, `.show-strip`) fade on the side where more is
+  hidden (`markEdges`, after every drawing).
 - A redraw of the same screen puts the page back exactly where it was (`_stayAt` in
   `app.dart`): an iPhone moved it while the screen was swapped (2026-11-05).
 - Taking something out of a list leaves what is above where it was: a redraw of the

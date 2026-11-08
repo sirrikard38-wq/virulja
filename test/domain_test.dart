@@ -369,10 +369,13 @@ void main() {
         ]);
       setPollInAttack(trip, trip.polls[0], true, 'ana', DateTime(2027, 1, 1, 10));
       setPollInAttack(trip, trip.polls[2], true, 'ana', DateTime(2027, 1, 1, 11));
-      expect(pollsInOrder(trip).map((poll) => poll.id), ['B', 'D', 'C', 'A']);
+      expect(pollsInOrder(trip).map((poll) => poll.id), ['D', 'B', 'C', 'A']);
       setPollInAttack(trip, trip.polls[2], false, 'ana');
       expect(trip.polls[2].activeAt, isNull);
-      expect(pollsInOrder(trip).map((poll) => poll.id), ['B', 'C', 'D', 'A']);
+      expect(pollsInOrder(trip).map((poll) => poll.id), ['D', 'C', 'B', 'A']);
+      expect(hasLetter('123 !?'), isFalse);
+      expect(hasLetter('3 dana na Visu'), isTrue);
+      expect(hasLetter('Šđ'), isTrue);
       trip.polls[0].activeAt = 123;
       final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
       expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.polls.first.activeAt, 123);
@@ -1364,6 +1367,18 @@ void main() {
       expect(euros(20000), '200 €');
       expect(euros(125050), '1.250,50 €');
       expect(plainAmount(125000), '1.250');
+    });
+
+    test('an amount is written as it is typed: 1.250,50', () {
+      expect(typedAmount('1250', 4), (text: '1.250', caret: 5));
+      expect(typedAmount('1.2500', 6), (text: '12.500', caret: 6));
+      expect(typedAmount('12500,5', 7), (text: '12.500,5', caret: 8));
+      expect(typedAmount('1.250,555', 9), (text: '1.250,55', caret: 8));
+      expect(typedAmount('12.', 3, dotTyped: true), (text: '12,', caret: 3));
+      expect(typedAmount('007', 3), (text: '7', caret: 1));
+      expect(typedAmount(',5', 2), (text: '0,5', caret: 3));
+      expect(typedAmount('1.250', 2), (text: '1.250', caret: 1));
+      expect(typedAmount('', 0), (text: '', caret: 0));
     });
 
     test('amounts as people type them', () {

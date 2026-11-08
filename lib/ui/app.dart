@@ -30,6 +30,7 @@ import 'stay_screen.dart';
 import 'store.dart';
 import 'trip_form.dart';
 import 'trip_screen.dart';
+import 'widgets.dart';
 
 /// Where the app is, read from the address (`#/p/<trip>/<section>/<photo>`), so
 /// the phone's back button works like in any app.
@@ -515,6 +516,15 @@ class ViruljaApp {
       final leave = _ui.onLeave;
       _ui.onLeave = null;
       leave?.call();
+      _ui.openFolds.clear();
+      _ui.noticesOpen = false;
+      _ui.hiddenCodesOpen = false;
+      final arriving = _Place(web.window.location.hash);
+      final going = arriving.tripId == null ? null : _data.tripById(arriving.tripId!);
+      if (going != null && arriving.section == 'put' && _Place(_drawnHash ?? '').section != 'put') {
+        final day = today().difference(going.start).inDays;
+        _ui.routeDay = day >= 0 && day < going.dayCount ? day : 0;
+      }
     }
     language = _data.chosenLanguage;
     web.document.documentElement?.setAttribute('lang', language.name);
@@ -612,6 +622,7 @@ class ViruljaApp {
     // iPhone may move it while the old screen is swapped for the new one,
     // which looked like a jump to the top.
     if (sameScreen) _stayAt(scrolled);
+    scheduleMicrotask(markEdges);
   }
 
   void _stayAt(double y) {

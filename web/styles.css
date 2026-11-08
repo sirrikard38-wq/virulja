@@ -161,6 +161,8 @@ html.held, html.held body { overscroll-behavior: none; }
 .sheet-card { max-height: calc(100dvh - var(--bottom-safe) - 48px); overflow-y: auto; overscroll-behavior: contain; }
 .sheet-card .ticks { padding: 0; }
 .sheet-card .field { margin-left: 0; margin-right: 0; }
+.fit-amount .unit-box { display: inline-block; }
+.fit-amount .unit-box .input { width: auto; min-width: 0; }
 .sheet-card .label, .sheet-card .small { margin: 0; }
 .offer-edit { margin-top: 10px; }
 .cost-edit { margin: 0 20px 12px; }
@@ -224,6 +226,7 @@ html.held, html.held body { overscroll-behavior: none; }
 .title-count { flex: none; padding-bottom: 4px; color: var(--soft); font-size: 11px; }
 .title-field.quiet .title-count { display: none; }
 .title-field.quiet:focus-within .title-count { display: inline; }
+.poll-name { flex: 0 1 auto; min-width: 0; padding: 4px 0; font-size: 15px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 .new-poll-row { display: flex; justify-content: flex-end; margin: 8px 20px 0; }
 .new-poll { color: var(--accent); font-weight: 700; }
 .poll-draft .primary { margin-top: 12px; }
@@ -292,6 +295,14 @@ html.held, html.held body { overscroll-behavior: none; }
 
 .chips { display: flex; gap: 8px; padding: 8px 20px 0; overflow-x: auto; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
+/* More to see on a side: that side fades away. */
+.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent); }
+.more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent); }
+.more-left.more-right {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
 .chip {
   display: inline-flex;
   align-items: center;
@@ -408,6 +419,7 @@ html.held, html.held body { overscroll-behavior: none; }
 .form-row { display: flex; gap: 10px; margin: 12px 20px 0; }
 .form-row > .field { margin: 0; flex: 1 1 0; min-width: 0; }
 .form-row > .field.half { flex: 0 0 calc(50% - 5px); }
+.form-row > .field.two-thirds { flex: 2 1 0; }
 .form-row.thirds { flex-wrap: wrap; }
 .form-row.thirds > .field { flex: 1 1 100px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 100px; }
 /* A choice as wide as its words, so that they are all seen. */

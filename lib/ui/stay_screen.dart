@@ -390,6 +390,6 @@ web.HTMLElement stayScreen(Ui ui, Trip trip) {
         _offerCard(ui, trip, offer, best: identical(offer, best)),
     ],
     _addOffer(ui, trip),
-    planCost(ui, trip, CostCategory.stay.name),
+    planCost(ui, trip, CostCategory.stay.name, label: tr('Planirani trošak noćenja po osobi:')),
   ]);
 }

@@ -187,16 +187,9 @@ class Ui {
   }
 }
 
-/// A new poll before Napravi anketu: its name and its answers as typed.
+/// A new poll before Izradi anketu: its name as typed and its answers, Da, Ne
+/// and Možda at first.
 class PollDraft {
   String title = '';
-  final List<PollChoice> choices = [];
-}
-
-/// One answer of a new poll: plain text, or a time picked on the wheels.
-class PollChoice {
-  PollChoice({required this.time});
-
-  final bool time;
-  String value = '';
+  final List<String> options = ['Da', 'Ne', 'Možda'];
 }

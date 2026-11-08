@@ -131,6 +131,8 @@ void _showTabChange(_TabChange change, int index) {
   final row = web.document.querySelector('.tabs') as web.HTMLElement?;
   final chosen = row?.querySelector('.tab.on') as web.HTMLElement?;
   if (row == null || chosen == null) return;
+  // A swipe brought the tab and its line in already.
+  if (justSwiped) return;
   row.scrollIntoView(web.ScrollIntoViewOptions(block: 'nearest'));
   slideIn(index > change.from ? 1 : -1);
   if (wantsLessMotion) return;
@@ -200,6 +202,7 @@ void redrawTripTab(Ui ui, Trip trip) {
     button.setAttribute('data-label', label.replaceFirst(RegExp(r' \(\d+\)$'), ' ($count)'));
   }
   if ((web.window.scrollY - at).abs() > 1) web.window.scrollTo(0.toJS, at);
+  scheduleMicrotask(markEdges);
 }
 
 web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
@@ -321,6 +324,16 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     return next >= 0 && next < keys.length;
   }
 
-  followSwipes(page, sliding, canMove, (step) => show(keys[index + step]));
+  final tabsRow = page.querySelector('.tabs') as web.HTMLElement?;
+  final mark = tabsRow == null ? null : SwipeMark(tabsRow, line: true);
+  followSwipes(
+    page,
+    sliding,
+    canMove,
+    (step) => show(keys[index + step]),
+    peek: (step) => el('div', children: [_tabContent(ui, trip, keys[index + step])]),
+    follow: (step, fraction) =>
+        mark?.follow(tabsRow?.querySelectorAll('.tab').item(index + step) as web.HTMLElement?, fraction),
+  );
   return page;
 }

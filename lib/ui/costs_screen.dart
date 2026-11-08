@@ -62,8 +62,12 @@ web.HTMLElement _line(BudgetLine line) {
 List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
   final title = input(value: editing?.title ?? '');
   final amount = amountInput(value: editing == null ? '' : plainAmount(editing.amount));
-  final category = select(CostCategory.values, (c) => c.label,
-      selected: editing?.category ?? CostCategory.food);
+  // Izleti i vino is not offered any more; a cost of that kind keeps it.
+  final kinds = [
+    for (final kind in CostCategory.values)
+      if (kind != CostCategory.activities || editing?.category == kind) kind,
+  ];
+  final category = select(kinds, (c) => c.label, selected: editing?.category ?? CostCategory.food);
   final payer = select(trip.memberIds, ui.nameOf,
       selected: editing != null && trip.memberIds.contains(editing.payerId)
           ? editing.payerId
@@ -94,7 +98,7 @@ List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
         ..amount = cents
         ..payerId = trip.memberIds[payer.selectedIndex]
         ..sharedBy = sharers
-        ..category = CostCategory.values[category.selectedIndex];
+        ..category = kinds[category.selectedIndex];
       ui.editingExpense = null;
     } else {
       trip.expenses.add(Expense(
@@ -103,7 +107,7 @@ List<web.HTMLElement> _expenseFields(Ui ui, Trip trip, {Expense? editing}) {
         amount: cents,
         payerId: trip.memberIds[payer.selectedIndex],
         sharedBy: sharers,
-        category: CostCategory.values[category.selectedIndex],
+        category: kinds[category.selectedIndex],
       ));
     }
     ui.changed();

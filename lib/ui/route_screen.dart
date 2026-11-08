@@ -128,21 +128,35 @@ web.HTMLElement _driveForm(Ui ui, Trip trip) {
 
 web.HTMLElement routeScreen(Ui ui, Trip trip) {
   final day = ui.routeDay.clamp(0, trip.dayCount - 1);
-  final stops = trip.stops.where((stop) => stop.dayIndex == day).toList()
-    ..sort((a, b) => a.time.compareTo(b.time));
+
+  /// What one day shows; the next one is drawn beside it during a swipe.
+  web.HTMLElement dayPage(int shown) {
+    final stops = trip.stops.where((stop) => stop.dayIndex == shown).toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+    return el('div', children: [
+      sectionTitle(weekdayAndDate(trip.dayAt(shown))),
+      if (stops.isEmpty) el('p', cls: 'soft pad', text: tr('Za ovaj dan još nema plana.')),
+      for (final stop in stops)
+        el('div', cls: 'row', children: [
+          if (stop.time.isNotEmpty) el('div', cls: 'label', text: stop.time),
+          el('div', cls: 'grow', text: stop.title),
+          if (stop.cost > 0) el('div', cls: 'price', text: euros(stop.cost)),
+          removeWithUndo(ui, trip.stops, stop, stop.title),
+        ]),
+      _addStop(ui, trip, shown),
+    ]);
+  }
+
   // A swipe sideways goes to the day before or after, as the chips do.
-  final sliding = el('div', cls: 'slide-page', children: [
-    sectionTitle(weekdayAndDate(trip.dayAt(day))),
-    if (stops.isEmpty) el('p', cls: 'soft pad', text: tr('Za ovaj dan još nema plana.')),
-    for (final stop in stops)
-      el('div', cls: 'row', children: [
-        if (stop.time.isNotEmpty) el('div', cls: 'label', text: stop.time),
-        el('div', cls: 'grow', text: stop.title),
-        if (stop.cost > 0) el('div', cls: 'price', text: euros(stop.cost)),
-        removeWithUndo(ui, trip.stops, stop, stop.title),
-      ]),
-    _addStop(ui, trip, day),
+  final sliding = el('div', cls: 'slide-page', children: [dayPage(day)]);
+  final dayRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
+    for (var i = 0; i < trip.dayCount; i++)
+      chip(tr('{0} Dan', [i + 1]), () {
+        ui.routeDay = i;
+        ui.rerender();
+      }, on: i == day),
   ]);
+  final mark = SwipeMark(dayRow);
   final days = el('div', cls: 'swipe-area', children: [
     el('div', cls: 'slide-clip', children: [sliding]),
   ]);
@@ -153,16 +167,12 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     ui.routeDay = day + step;
     ui.rerender();
     slideIn(step);
-  });
+  },
+      peek: (step) => dayPage(day + step),
+      follow: (step, fraction) => mark.follow(dayRow.children.item(day + step) as web.HTMLElement?, fraction));
   return el('div', cls: 'fill-page', children: [
     topBar(tr('Prijevoz')),
-    el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
-      for (var i = 0; i < trip.dayCount; i++)
-        chip(tr('{0} Dan', [i + 1]), () {
-          ui.routeDay = i;
-          ui.rerender();
-        }, on: i == day),
-    ]),
+    dayRow,
     days,
     sectionTitle(tr('Prijevoz')),
     // A reserved part of the journey goes into Plan napada, where the group

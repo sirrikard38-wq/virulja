@@ -123,8 +123,10 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
   }
 
   return adder(tr('Dodaj mjesto'), [
-    field(tr('Link'), link),
-    field(tr('Naziv'), name),
+    el('div', cls: 'form-row', children: [
+      field(tr('Naziv'), name, tight: true)..classList.add('two-thirds'),
+      field(tr('Link'), link, tight: true),
+    ]),
     el('div', cls: 'fields', children: [
       field(tr('Ocjena'), rating, tight: true),
       field(inMoney(tr('Cijena po osobi (€)')), price, tight: true),
@@ -502,7 +504,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     final from = _chipPlace();
     choose(item);
     ui.rerender();
-    if (from != null) _glideToChosenChip(from);
+    if (from != null && !justSwiped) _glideToChosenChip(from);
     slideIn(tabs.indexOf(item) > index ? 1 : -1);
   }
 
@@ -558,24 +560,29 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
 
 
 
-  final custom = tab.custom;
-  final sliding = el('div', cls: 'slide-page', children: [
-    if (tab.isDishes) ...[
-      sectionTitle(tr('Jela koja želimo probati')),
-      if (trip.dishes.isEmpty)
-        el('p', cls: 'soft pad', text: tr('Dodajte jela s cijenom s jelovnika.')),
-      for (final dish in trip.dishes) _dishRow(ui, trip, dish),
-      _addDish(ui, trip),
-    ] else ...[
-      el('div', cls: 'pad gap-top', children: [
-        outLink(tr('Traži: {0} u mjestu {1}', [tab.label, trip.city]), mapsSearchFor(tab.searchWord, trip)),
-      ]),
-      if (places.isEmpty)
-        el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
-      for (final place in places) _placeRow(ui, trip, place),
-      _addPlace(ui, trip, custom),
-    ],
-  ]);
+  /// What one category shows; the next one is drawn beside it during a swipe.
+  web.HTMLElement tabPage(_Tab shown) {
+    final its = trip.places.where(shown.holds).toList();
+    return el('div', children: [
+      if (shown.isDishes) ...[
+        sectionTitle(tr('Jela koja želimo probati')),
+        if (trip.dishes.isEmpty)
+          el('p', cls: 'soft pad', text: tr('Dodajte jela s cijenom s jelovnika.')),
+        for (final dish in trip.dishes) _dishRow(ui, trip, dish),
+        _addDish(ui, trip),
+      ] else ...[
+        el('div', cls: 'pad gap-top', children: [
+          outLink(tr('Traži: {0} u mjestu {1}', [shown.label, trip.city]), mapsSearchFor(shown.searchWord, trip)),
+        ]),
+        if (its.isEmpty)
+          el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
+        for (final place in its) _placeRow(ui, trip, place),
+        _addPlace(ui, trip, shown.custom),
+      ],
+    ]);
+  }
+
+  final sliding = el('div', cls: 'slide-page', children: [tabPage(tab)]);
   final chipRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (final item in tabs)
         chip(item.label, () => show(item), on: identical(item, tab) && !ui.addingKind)
@@ -628,6 +635,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     return next >= 0 && next <= tabs.length;
   }
 
+  final mark = SwipeMark(chipRow);
   followSwipes(page, sliding, canMove, (step) {
     if (ui.addingKind || index + step == tabs.length) {
       ui.addingKind = !ui.addingKind;
@@ -635,7 +643,10 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
       return;
     }
     show(tabs[index + step]);
-  });
+  },
+      peek: (step) => !ui.addingKind && index + step < tabs.length ? tabPage(tabs[index + step]) : null,
+      follow: (step, fraction) => mark.follow(
+          chipRow.children.item(ui.addingKind ? index : index + step) as web.HTMLElement?, fraction));
   // A redraw starts the row of categories from the left again.
   scheduleMicrotask(() {
     final row = _chipRow, chosen = _chosenChip;

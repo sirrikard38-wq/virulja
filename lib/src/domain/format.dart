@@ -281,6 +281,45 @@ String decimal(num value, {int digits = 2}) {
   return '$sign$grouped${rest.isEmpty ? '' : ',$rest'}';
 }
 
+/// An amount as it is being typed, written as amounts are: a dot between
+/// thousands, a comma before at most two decimals. [caret] is where the cursor
+/// stands in [text]; the answer says where it stands in the new text, after
+/// the same digits. A dot typed just before [caret] means the decimal comma.
+({String text, int caret}) typedAmount(String text, int caret, {bool dotTyped = false}) {
+  var raw = text;
+  if (dotTyped && caret > 0 && caret <= raw.length && raw[caret - 1] == '.') {
+    raw = '${raw.substring(0, caret - 1)},${raw.substring(caret)}';
+  }
+  bool counts(String char) => RegExp(r'[\d,]').hasMatch(char);
+  final comma = raw.indexOf(',');
+  final whole = (comma < 0 ? raw : raw.substring(0, comma)).replaceAll(RegExp(r'\D'), '');
+  final fraction = comma < 0 ? null : raw.substring(comma + 1).replaceAll(RegExp(r'\D'), '');
+  final trimmed = whole.replaceFirst(RegExp(r'^0+(?=\d)'), '');
+  // Zeros dropped from the front, and a 0 put before a lone comma, move the
+  // cursor by as much.
+  final head = raw.substring(0, caret.clamp(0, raw.length));
+  final wholeBefore = (comma < 0 || comma >= head.length ? head : head.substring(0, comma))
+      .replaceAll(RegExp(r'\D'), '')
+      .length;
+  var before = head.split('').where(counts).length - min(whole.length - trimmed.length, wholeBefore);
+  if (trimmed.isEmpty && fraction != null && comma < head.length) before++;
+  final grouped = StringBuffer();
+  for (var i = 0; i < trimmed.length; i++) {
+    if (i > 0 && (trimmed.length - i) % 3 == 0) grouped.write('.');
+    grouped.write(trimmed[i]);
+  }
+  final shown = fraction == null
+      ? '$grouped'
+      : '${grouped.isEmpty ? '0' : grouped},${fraction.length > 2 ? fraction.substring(0, 2) : fraction}';
+  // The cursor goes after as many digits and commas as stood before it.
+  var seen = 0, at = 0;
+  while (at < shown.length && seen < before) {
+    if (counts(shown[at])) seen++;
+    at++;
+  }
+  return (text: shown, caret: at);
+}
+
 /// `2.420`, `12,50`: an amount without its sign.
 String plainAmount(int cents) {
   final sign = cents < 0 ? '−' : '';

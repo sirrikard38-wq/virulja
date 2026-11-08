@@ -180,19 +180,26 @@ void setPlaceInAttack(Trip trip, Place place, bool on, String person) {
   }
 }
 
-/// The polls of Ankete as they show: those not in Plan napada in the order
-/// made, then those in it, the last one in first, as bought lists in Dućan.
+/// The polls of Ankete as they show: those not in Plan napada, the newest
+/// first, then those in it, the last one in first, as bought lists in Dućan.
 List<Poll> pollsInOrder(Trip trip) {
   final planned = [
     for (final poll in trip.polls)
       if (pollInAttack(trip, poll)) poll,
   ]..sort((a, b) => (b.activeAt ?? 0).compareTo(a.activeAt ?? 0));
+  // Ids begin with the time they were made, so the newest has the largest.
   return [
-    for (final poll in trip.polls)
-      if (!pollInAttack(trip, poll)) poll,
+    ...[
+      for (final poll in trip.polls)
+        if (!pollInAttack(trip, poll)) poll,
+    ]..sort((a, b) => b.id.compareTo(a.id)),
     ...planned,
   ];
 }
+
+/// Whether [text] has at least one letter, of any alphabet: a poll's name of
+/// only numbers and signs says nothing.
+bool hasLetter(String text) => RegExp(r'\p{L}', unicode: true).hasMatch(text);
 
 /// Whether the result of [poll] is in Plan napada.
 bool pollInAttack(Trip trip, Poll poll) {

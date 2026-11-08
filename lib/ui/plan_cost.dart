@@ -16,7 +16,7 @@ import 'widgets.dart';
 /// For everyone together it is Planirano in Troškovi. It keeps itself as it is
 /// typed; an empty field plans nothing. The box has room for three digits and
 /// grows with a longer number.
-web.HTMLElement planCost(Ui ui, Trip trip, String key) {
+web.HTMLElement planCost(Ui ui, Trip trip, String key, {String? label}) {
   final set = trip.budgets[key];
   final amount = numberInput(placeholder: '0')..value = set == null ? '' : plainAmount(set);
   // The same letters as the box, out of sight, to measure what is typed.
@@ -31,7 +31,8 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key) {
         : 'calc(${max(3, text.length)}ch + 22px)';
   }
 
-  amount.onInput.listen((_) {
+  amount.onInput.listen((event) {
+    typeAmount(amount, event);
     fit();
     final text = amount.value.trim();
     if (text.isEmpty) {
@@ -57,7 +58,7 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key) {
   scheduleMicrotask(fit); // measured once it is on the screen
   return el('div', cls: 'plan-cost-foot', children: [
     el('label', cls: 'plan-cost', children: [
-      el('span', cls: 'grow', text: tr('Planirani trošak po osobi:')),
+      el('span', cls: 'grow', text: label ?? tr('Planirani trošak po osobi:')),
       amount,
       el('span', cls: 'price', text: moneySign()),
       measure,
