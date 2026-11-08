@@ -42,7 +42,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   3 s and starts on the trips (`showSplash`, a `sessionStorage` mark); a reload for a
   newer version keeps the screen and shows no splash.
 - The bottom bar has two places: Putovanja and Postavke (a screwdriver, `tool`). Past
-  trips stand at the very bottom of Putovanja as "Prošla putovanja"; there is no
+  trips stand at the very bottom of Putovanja as "Prošla putovanja", always there, with a
+  note while there are none; there is no
   Uspomene page any more (an old `#/uspomene` opens Putovanja).
 - A new version loads at the next change of screen or return to the app, on any
   screen but a form, a box or typing (`isIdle`); it used to wait for the home

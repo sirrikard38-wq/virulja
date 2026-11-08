@@ -138,14 +138,16 @@ web.HTMLElement homeScreen(Ui ui) {
       codeField(ui),
       ...waitingNotes(ui),
     ],
-    // At the very bottom, the trips gone by, to go back and see what was done.
-    if (past.isNotEmpty) ...[
-      el('hr', cls: 'divider'),
-      sectionTitle(tr('Prošla putovanja')),
+    // At the very bottom, the trips gone by, to go back and see what was done;
+    // with none yet, a word that they will be here.
+    el('hr', cls: 'divider'),
+    sectionTitle(tr('Prošla putovanja')),
+    if (past.isEmpty)
+      el('p', cls: 'soft pad', text: tr('Još nema uspomena. Ovdje će čekati tvoja prošla putovanja.'))
+    else
       el('div', cls: 'cards two-up', children: [
         for (final trip in past) _miniPostcard(ui, trip, photosCount(trip.photos.length)),
       ]),
-    ],
   ]);
 }
 
