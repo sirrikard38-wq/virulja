@@ -388,6 +388,9 @@ html.held, html.held body { overscroll-behavior: none; }
   min-height: calc(100dvh - var(--nav-height) - var(--bottom-safe) - 16px);
 }
 .slide-clip { overflow-x: clip; margin-bottom: 12px; }
+/* Its own block, so the space over its first line is the same whether the page
+   is in place or comes in beside another during a swipe. */
+.slide-page { display: flow-root; }
 .swipe-area .stick-bottom { margin-top: auto; }
 
 /* The foot of a page: at the bottom of the screen, or after all there is. */

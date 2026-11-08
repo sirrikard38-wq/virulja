@@ -57,7 +57,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   trip's tabs and the days of Plan puta. The next page comes along beside the one
   that goes, as far as the finger has gone (`peek`), and the green mark (the line under
   a tab, the fill of a chip) moves with it (`SwipeMark`); let go past the length, the
-  page glides the rest and is drawn in place with no slide of its own (`justSwiped`). A swipe is off while a form is open, as a redraw would wipe it.
+  page glides the rest and is drawn in place with no slide of its own (`justSwiped`).
+  `.slide-page` is its own block (`flow-root`), so the space over its first line is the
+  same beside and in place; otherwise the page jumped 10 px up as it landed. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
 
