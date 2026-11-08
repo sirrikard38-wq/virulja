@@ -209,7 +209,7 @@ html.held, html.held body { overscroll-behavior: none; }
   background: var(--bg); transition: opacity .6s ease; }
 .splash.leaving { opacity: 0; pointer-events: none; }
 .splash-word { font-family: var(--display); font-size: 54px; font-weight: 700; letter-spacing: 8px; color: var(--accent); }
-.splash-word span { display: inline-block; opacity: 0; transform: translateY(16px); animation: splash-in .9s ease forwards; }
+.splash-word span { display: inline-block; opacity: 0; transform: translateY(16px); animation: splash-in .72s ease forwards; }
 @keyframes splash-in { to { opacity: 1; transform: none; } }
 /* A poll's top: its name, a gap, then the brush and the x in the corner. */
 .poll-top { display: flex; align-items: flex-start; gap: 6px; }
@@ -296,13 +296,15 @@ html.held, html.held body { overscroll-behavior: none; }
 .chips { display: flex; gap: 8px; padding: 8px 20px 0; overflow-x: auto; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 /* More to see on a side: that side fades away. */
-.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent); }
-.more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
-  mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent); }
+.more-right {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 90px), rgba(0, 0, 0, .35) calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 90px), rgba(0, 0, 0, .35) calc(100% - 40px), transparent); }
+.more-left {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 90px), rgba(0, 0, 0, .35) calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 90px), rgba(0, 0, 0, .35) calc(100% - 40px), transparent); }
 .more-left.more-right {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
+  -webkit-mask-image: linear-gradient(to right, transparent, rgba(0, 0, 0, .35) 40px, #000 90px, #000 calc(100% - 90px), rgba(0, 0, 0, .35) calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, transparent, rgba(0, 0, 0, .35) 40px, #000 90px, #000 calc(100% - 90px), rgba(0, 0, 0, .35) calc(100% - 40px), transparent); }
 .chip {
   display: inline-flex;
   align-items: center;
@@ -320,7 +322,7 @@ html.held, html.held body { overscroll-behavior: none; }
 .chips { position: relative; }
 .chips .chip { position: relative; z-index: 1; transition: color 160ms ease, border-color 160ms ease; }
 .swipe-area > .chips .chip { font-weight: 600; }
-.chips.gliding .chip.on, .chips.gliding .chip.leaving { background: transparent; border-color: transparent; }
+.chips.gliding .chip.on, .chips.gliding .chip.leaving { background: transparent; border-color: var(--line); }
 .chips.glide-start .chip.on { color: var(--ink); }
 .chips.glide-start .chip.leaving { color: var(--on-accent); }
 .chip-marker { position: absolute; z-index: 0; background: var(--accent); }
