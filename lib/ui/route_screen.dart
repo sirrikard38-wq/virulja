@@ -5,6 +5,7 @@ import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 import 'plan_cost.dart';
 import 'swipes.dart';
 import 'widgets.dart';
@@ -15,37 +16,35 @@ String _number(double value) =>
 double? _parseNumber(String text) =>
     double.tryParse(text.trim().replaceAll(',', '.'));
 
-web.HTMLElement _addStop(Ui ui, Trip trip, int day) {
-  final picker = timePicker();
-  final time = picker.value;
-  final title = input();
-  final cost = amountInput();
+/// Changes what was written of a part of the journey: what and what it costs.
+web.HTMLElement _legEdit(Ui ui, Leg leg) {
+  final title = input(value: leg.title);
+  final cost = amountInput(value: leg.cost == 0 ? '' : plainAmount(leg.cost));
   final error = errorLine();
 
-  void add() {
+  void save() {
     if (title.value.trim().isEmpty) {
-      error.textContent = tr('Upiši što je u planu.');
+      error.textContent = tr('Upiši kojim prijevozom i kamo.');
       return;
     }
-    trip.stops.add(Stop(
-      id: ui.store.newId(),
-      dayIndex: day,
-      time: time.value,
-      addedBy: ui.meIn(trip),
-      title: title.value.trim(),
-      cost: parseEuros(cost.value) ?? 0,
-    ));
+    leg
+      ..title = title.value.trim()
+      ..cost = parseEuros(cost.value) ?? 0;
+    ui.editingLeg = null;
     ui.changed();
   }
 
-  return adder(tr('Dodaj prijevoz'), [
-    field(tr('Što'), title),
-    el('div', cls: 'fields', children: [
-      field(tr('Vrijeme'), picker.view, tight: true),
-      field(inMoney(tr('Trošak za grupu (€)')), cost, tight: true),
-    ]),
+  return el('div', cls: 'leg-edit', children: [
+    field(tr('Prijevoz i relacija'), title),
+    field(inMoney(tr('Trošak za grupu (€)')), cost),
     error,
-    primaryButton(tr('Dodaj'), add),
+    el('div', attrs: {'style': 'display:flex;gap:12px;align-items:center;margin:10px 20px 0'}, children: [
+      primaryButton(tr('Spremi'), save, wide: false),
+      button(cls: 'text-button', text: tr('Odustani'), onTap: () {
+        ui.editingLeg = null;
+        ui.rerender();
+      }),
+    ]),
   ]);
 }
 
@@ -143,7 +142,6 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
           if (stop.cost > 0) el('div', cls: 'price', text: euros(stop.cost)),
           removeWithUndo(ui, trip.stops, stop, stop.title),
         ]),
-      _addStop(ui, trip, shown),
     ]);
   }
 
@@ -175,10 +173,9 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     topBar(tr('Prijevoz')),
     dayRow,
     days,
-    sectionTitle(tr('Prijevoz')),
     // A reserved part of the journey goes into Plan napada, where the group
     // picks its day.
-    for (final leg in trip.legs)
+    for (final leg in trip.legs) ...[
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', text: leg.title),
         if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
@@ -187,8 +184,20 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
           ui.changed();
           if (leg.reserved) ui.toast(tr('Dodano u Plan napada.'));
         }, on: leg.reserved),
+        // The brush opens what was written of it for changing.
+        button(
+          cls: ui.editingLeg == leg.id ? 'icon-button brush-small on' : 'icon-button brush-small',
+          ariaLabel: tr('Uredi: {0}', [leg.title]),
+          onTap: () {
+            ui.editingLeg = ui.editingLeg == leg.id ? null : leg.id;
+            ui.rerender();
+          },
+          children: [icon('brush', size: 20)],
+        ),
         removeWithUndo(ui, trip.legs, leg, leg.title),
       ]),
+      if (ui.editingLeg == leg.id) _legEdit(ui, leg),
+    ],
     if (trip.drive.totalCost > 0)
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', text: trip.drive.route.isEmpty ? tr('Auto') : tr('Auto: {0}', [trip.drive.route])),

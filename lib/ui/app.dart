@@ -76,7 +76,10 @@ class ViruljaApp {
     web.document.addEventListener('gesturestart', ((web.Event event) => event.preventDefault()).toJS);
     final known = _stepOf();
     known == null ? _markStep() : _step = known;
-    _firstStep = _step;
+    // Opened anew, Putovanja stands on a step of its own over the first one,
+    // so that going back to it wipes the way forward as on any other screen.
+    final state = web.window.history.state.dartify();
+    _firstStep = state is Map && state['afterStart'] == true ? _step - 1 : _step;
     // Every change of screen comes through the address, as phones expect.
     web.window.addEventListener(
       'hashchange',
@@ -181,7 +184,7 @@ class ViruljaApp {
   bool get isIdle {
     final place = _Place(web.window.location.hash);
     final form = place.page == 'novo' || place.section == 'uredi' || place.section == 'foto';
-    return !form && !_busy && web.document.querySelector('.sheet') == null;
+    return !form && !_busy && !_settling && web.document.querySelector('.sheet') == null;
   }
 
   void _go(String route) {
@@ -264,6 +267,15 @@ class ViruljaApp {
   String? _rewinding;
   String? _returning;
 
+  /// When the last step back began to settle: a newer version waits until it
+  /// is done, or the way forward would stay.
+  DateTime _settlingSince = DateTime(2000);
+
+  bool get _settling =>
+      _rewinding != null ||
+      _returning != null ||
+      DateTime.now().difference(_settlingSince) < const Duration(milliseconds: 1200);
+
   /// After a step back (the arrow, the phone's back button, a swipe from the
   /// left edge), the screen left behind stays as a step forward, which an
   /// iPhone reaches with a swipe from the right edge. A moment later, once the
@@ -274,6 +286,7 @@ class ViruljaApp {
   void _settleAfterBack(String landed) {
     final step = _stepOf();
     if (step == null || step <= _firstStep) return;
+    _settlingSince = DateTime.now();
     Timer(const Duration(milliseconds: 400), () {
       if (web.window.location.hash != landed || _rewinding != null) return;
       _rewinding = landed;

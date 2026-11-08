@@ -73,6 +73,9 @@ class Ui {
   /// Trip id -> the day its Plan napada shows; without one, all of them.
   final Map<String, int> attackDays = {};
 
+  /// The part of the journey whose brush is open in Prijevoz.
+  String? editingLeg;
+
   /// A new poll being made in Ankete, kept across redraws.
   PollDraft? pollDraft;
 

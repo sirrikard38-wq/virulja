@@ -18,7 +18,10 @@ Future<void> main() async {
     // No storage: count it as a fresh start.
   }
   if (fresh) {
-    web.window.location.replace('#/');
+    // Through history, which fires no change of address before the app
+    // listens: a first step under Putovanja, then Putovanja.
+    web.window.history.replaceState({'step': 0}.jsify(), '', '#/start');
+    web.window.history.pushState({'step': 1, 'afterStart': true}.jsify(), '', '#/');
     showSplash();
   }
   final store = await AppStore.open();

@@ -39,7 +39,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - Opened anew, the app shows VIRULJA rising letter by letter in the middle for about
-  3 s and starts on the trips (`showSplash`, a `sessionStorage` mark); a reload for a
+  3 s and starts on the trips (`showSplash`, a `sessionStorage` mark), over a step of its
+  own (`#/start`, which shows the trips too), so that Putovanja is not the first step
+  and going back to it wipes the way forward as everywhere; on the very first step it
+  could not, and a swipe from the right edge went on to Postavke (2026-11-08). A newer
+  version never loads while a step back settles (`_settling`); a reload for a
   newer version keeps the screen and shows no splash.
 - The bottom bar has two places: Putovanja and Postavke (a screwdriver, `tool`). Past
   trips stand at the very bottom of Putovanja as "Prošla putovanja", always there, with a
@@ -56,7 +60,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Copies of screens (`/~`) made a swipe back show the same trip again; pushing history
   steps while the phone steps back froze an iPhone and left it white (2026-11-04).
 - The screen of the day plan and the journey (`route_screen.dart`, called Plan puta in
-  these notes) is named "Prijevoz" in the app.
+  these notes) is named "Prijevoz" in the app. Its days show what is on them with no
+  adder; under them come the parts of the journey with no heading, each with a brush
+  that opens what or what it costs for changing (`Ui.editingLeg`).
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
   trip's tabs and the days of Plan puta. The next page comes along beside the one
   that goes, as far as the finger has gone (`peek`), and the green mark (the line under
