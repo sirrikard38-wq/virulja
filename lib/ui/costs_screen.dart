@@ -274,7 +274,8 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
           el('div', cls: 'grow', text: entry.value < 0
               ? _between(ui, ui.meIn(trip), entry.key)
               : _between(ui, entry.key, ui.meIn(trip))),
-          el('div', cls: 'price', text: euros(entry.value.abs())),
+          // What you owe has a minus, what you are owed none.
+          el('div', cls: 'price', text: euros(entry.value)),
         ]),
       el('hr', cls: 'split'),
     ],

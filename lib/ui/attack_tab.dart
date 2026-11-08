@@ -131,7 +131,6 @@ void _tick(Ui ui, Trip trip, NextUp item, int? day) {
     title: item.title,
     action: tr('Dodaj u troškove'),
     category: item.category,
-    guess: item.cost,
     days: day == null ? all : const [],
     daysDone: {for (final each in all) if (tickedOn(trip, item, each)) each},
     done: (cost, chosen) {
