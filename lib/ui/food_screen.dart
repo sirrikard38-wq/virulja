@@ -582,7 +582,8 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     ]);
   }
 
-  final sliding = el('div', cls: 'slide-page', children: [tabPage(tab)]);
+  // While a new category is typed, nothing of the one before it shows.
+  final sliding = el('div', cls: 'slide-page', children: [if (!ui.addingKind) tabPage(tab)]);
   final chipRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
       for (final item in tabs)
         chip(item.label, () => show(item), on: identical(item, tab) && !ui.addingKind)
@@ -615,7 +616,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     if (ui.addingKind) _newKind(ui, addKind),
     el('div', cls: 'slide-clip', children: [sliding]),
     // The estimate and, under it, what the group plans for this category.
-    el('div', cls: 'stick-bottom', children: [
+    if (!ui.addingKind) el('div', cls: 'stick-bottom', children: [
       el('div', cls: 'row', attrs: {'style': 'padding:0'}, children: [
         el('div', cls: 'grow', text: tab.estimateTitle),
         el('div', cls: 'price',
@@ -644,7 +645,9 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     }
     show(tabs[index + step]);
   },
-      peek: (step) => !ui.addingKind && index + step < tabs.length ? tabPage(tabs[index + step]) : null,
+      peek: (step) => ui.addingKind
+          ? (step < 0 ? tabPage(tabs[index]) : null)
+          : (index + step < tabs.length ? tabPage(tabs[index + step]) : null),
       follow: (step, fraction) => mark.follow(
           chipRow.children.item(ui.addingKind ? index : index + step) as web.HTMLElement?, fraction));
   // A redraw starts the row of categories from the left again.
