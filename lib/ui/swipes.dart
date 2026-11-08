@@ -158,12 +158,47 @@ void followSwipes(
     follow?.call(step, 1);
     Timer(_finishTime, () {
       _landedAt = DateTime.now();
+      final clip = sliding.parentElement as web.HTMLElement?;
+      final from = clip?.offsetHeight ?? 0;
       move(step);
+      _easeHeight(clip, from);
     });
   });
   page.onTouchCancel.listen((_) {
     startX = null;
     goBack(besideStep == 0 ? 1 : besideStep);
+  });
+}
+
+/// After a swipe the new page may be taller or shorter than the one that went:
+/// its frame grows or shrinks smoothly from [from], so what stands under it
+/// glides instead of jumping. [old] is the frame that held the page that went;
+/// the frame drawn in its place is found by the same class.
+void _easeHeight(web.HTMLElement? old, int from) {
+  if (old == null || from == 0 || wantsLessMotion) return;
+  final frames = web.document.querySelectorAll('.slide-clip');
+  web.HTMLElement? fresh;
+  for (var i = 0; i < frames.length; i++) {
+    final frame = frames.item(i) as web.HTMLElement;
+    if (!identical(frame, old) && frame.isConnected) fresh = frame;
+  }
+  if (fresh == null) return;
+  final to = fresh.offsetHeight;
+  if ((to - from).abs() < 2) return;
+  final frame = fresh;
+  frame.style
+    ..transition = 'none'
+    ..overflow = 'hidden'
+    ..height = '${from}px';
+  frame.getBoundingClientRect(); // so that the browser sees where it starts
+  frame.style
+    ..transition = 'height 220ms ease'
+    ..height = '${to}px';
+  Timer(const Duration(milliseconds: 260), () {
+    frame.style
+      ..transition = ''
+      ..overflow = ''
+      ..height = '';
   });
 }
 

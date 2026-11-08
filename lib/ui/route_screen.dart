@@ -157,7 +157,8 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       }, on: i == day),
   ]);
   final mark = SwipeMark(dayRow);
-  final days = el('div', cls: 'swipe-area', children: [
+  // Only the day swipes; the rest of Prijevoz follows right under it.
+  final days = el('div', cls: 'swipe-area day-swipe', children: [
     el('div', cls: 'slide-clip', children: [sliding]),
   ]);
   followSwipes(days, sliding, (step) {

@@ -65,7 +65,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   The page coming in has its faded edges from the start; the green over chips carries
   their words in dark, so each letter turns as the green passes (`marker-words`).
   `.slide-page` is its own block (`flow-root`), so the space over its first line is the
-  same beside and in place; otherwise the page jumped 10 px up as it landed. A swipe is off while a form is open, as a redraw would wipe it.
+  same beside and in place; otherwise the page jumped 10 px up as it landed. A page of
+  another height grows or shrinks smoothly as it lands (`_easeHeight`), so what stands
+  under it, as in Prijevoz, glides. The days of Prijevoz swipe in a part only as tall as
+  the day (`day-swipe`), with the rest of Prijevoz right under it. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
 
