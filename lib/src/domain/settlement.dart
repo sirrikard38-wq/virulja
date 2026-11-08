@@ -22,6 +22,20 @@ Map<String, int> splitEqually(int amount, List<String> sharers) {
 
 /// Everything anyone owes anyone, each pair once: what their expenses and payments
 /// leave between the two of them. Debts in both directions cancel out.
+/// What stands between [me] and each other person, all debts added up: more
+/// than nothing when they owe me, less when I owe them. Those even are left out.
+Map<String, int> balanceOf(List<Transfer> transfers, String me) {
+  final balance = <String, int>{};
+  for (final transfer in transfers) {
+    if (transfer.toId == me) {
+      balance.update(transfer.fromId, (sum) => sum + transfer.amount, ifAbsent: () => transfer.amount);
+    } else if (transfer.fromId == me) {
+      balance.update(transfer.toId, (sum) => sum - transfer.amount, ifAbsent: () => -transfer.amount);
+    }
+  }
+  return balance..removeWhere((_, cents) => cents == 0);
+}
+
 List<Transfer> debts(Trip trip) {
   final owes = <String, Map<String, int>>{};
   void add(String from, String to, int amount) {

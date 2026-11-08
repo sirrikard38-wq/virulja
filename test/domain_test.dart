@@ -1369,6 +1369,18 @@ void main() {
       expect(plainAmount(125000), '1.250');
     });
 
+    test('what stands between you and each person is all debts added up', () {
+      const transfers = [
+        Transfer(fromId: 'riko', toId: 'ramo', amount: 550),
+        Transfer(fromId: 'riko', toId: 'ramo', amount: 450),
+        Transfer(fromId: 'frajta', toId: 'riko', amount: 9000),
+        Transfer(fromId: 'ivo', toId: 'ana', amount: 100),
+        Transfer(fromId: 'ana', toId: 'riko', amount: 300),
+        Transfer(fromId: 'riko', toId: 'ana', amount: 300),
+      ];
+      expect(balanceOf(transfers, 'riko'), {'ramo': -1000, 'frajta': 9000});
+    });
+
     test('an amount is written as it is typed: 1.250,50', () {
       expect(typedAmount('1250', 4), (text: '1.250', caret: 5));
       expect(typedAmount('1.2500', 6), (text: '12.500', caret: 6));

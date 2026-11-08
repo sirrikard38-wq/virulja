@@ -270,6 +270,10 @@ html.held, html.held body { overscroll-behavior: none; }
 .three .tile { padding: 8px 10px; }
 .three .value { font-size: 15px; white-space: nowrap; }
 .totals .tile { text-align: center; }
+.my-debt { font-weight: 700; }
+.my-debt:has(+ .split) { border-bottom: 0; }
+.my-debt.owe, .my-debt.owe .price { color: var(--danger); }
+.my-debt.owed, .my-debt.owed .price { color: var(--accent); }
 /* A trip's settings: every heading alike, with room between them. */
 .trip-settings .section { padding-top: 34px; }
 .trip-settings .fold { padding-top: 34px; }

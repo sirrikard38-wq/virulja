@@ -262,6 +262,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Entering a code with the name (any capitals) and phone number of someone already in
   that trip brings this phone in as that person, at once (`_sameMember`, `rejoin`).
 - A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).
+- Under "Tko kome duguje" comes first "Ukupno za tebe": all you owe each person added
+  up, in red, and what each owes you, in green (`balanceOf`).
 - The trip's header shows "tvoj trošak": your part of each written cost you share, and an
   equal part of what is planned and not yet written (`Budget.shareOf`).
 - Each presentation shows how long ago it was changed (`Show.changedAt`, `sinceCount`).

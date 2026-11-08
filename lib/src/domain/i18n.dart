@@ -530,6 +530,7 @@ const Map<String, List<String>> _texts = {
   'Anketa treba barem dvije mogućnosti.': ['A poll needs at least two answers.', 'Ankette en az iki seçenek olmalı.'],
   'Upiši što odlučujete, barem jednim slovom.': ['Write what you are deciding, with at least one letter.', 'Neye karar verdiğinizi en az bir harfle yazın.'],
   'Izradi anketu': ['Make the poll', 'Anketi oluştur'],
+  'Ukupno za tebe': ['All told, for you', 'Senin için toplam'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

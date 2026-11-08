@@ -265,6 +265,19 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
     sectionTitle(tr('Tko kome duguje')),
     if (transfers.isEmpty)
       el('p', cls: 'soft pad', text: tr('Svi su računi podmireni.')),
+    // You first: all you owe each person added up in red, what each owes you
+    // in green.
+    if (balanceOf(transfers, ui.meIn(trip)) case final mine when mine.isNotEmpty) ...[
+      el('p', cls: 'small pad', text: tr('Ukupno za tebe')),
+      for (final entry in mine.entries)
+        el('div', cls: entry.value < 0 ? 'row my-debt owe' : 'row my-debt owed', children: [
+          el('div', cls: 'grow', text: entry.value < 0
+              ? _between(ui, ui.meIn(trip), entry.key)
+              : _between(ui, entry.key, ui.meIn(trip))),
+          el('div', cls: 'price', text: euros(entry.value.abs())),
+        ]),
+      el('hr', cls: 'split'),
+    ],
     for (final row in _byPair(trip, [
       for (final transfer in transfers)
         (from: transfer.fromId, to: transfer.toId, row: _transferRow(ui, trip, transfer)),
