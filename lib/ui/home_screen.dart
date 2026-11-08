@@ -124,13 +124,6 @@ web.HTMLElement homeScreen(Ui ui) {
           _miniPostcard(ui, trip, dateRange(trip.start, trip.end)),
       ]),
     ],
-    if (past.isNotEmpty) ...[
-      sectionTitle(tr('Uspomene')),
-      el('div', cls: 'cards', children: [
-        for (final trip in past.take(3))
-          _miniPostcard(ui, trip, photosCount(trip.photos.length)),
-      ]),
-    ],
     button(
       cls: 'primary wide',
       onTap: () => ui.go('#/novo'),
@@ -145,21 +138,14 @@ web.HTMLElement homeScreen(Ui ui) {
       codeField(ui),
       ...waitingNotes(ui),
     ],
+    // At the very bottom, the trips gone by, to go back and see what was done.
+    if (past.isNotEmpty) ...[
+      el('hr', cls: 'divider'),
+      sectionTitle(tr('Prošla putovanja')),
+      el('div', cls: 'cards two-up', children: [
+        for (final trip in past) _miniPostcard(ui, trip, photosCount(trip.photos.length)),
+      ]),
+    ],
   ]);
 }
 
-/// Every trip with its photos, newest first.
-web.HTMLElement memoriesListScreen(Ui ui) {
-  final trips = ui.data.trips.toList()
-    ..sort((a, b) => b.start.compareTo(a.start));
-  return el('div', children: [
-    topBar(tr('Uspomene'), plain: true),
-    if (trips.isEmpty)
-      el('p', cls: 'soft pad', text: tr('Ovdje će biti vaša putovanja i fotografije.'))
-    else
-      el('div', cls: 'cards two-up', children: [
-        for (final trip in trips)
-          _miniPostcard(ui, trip, photosCount(trip.photos.length)),
-      ]),
-  ]);
-}

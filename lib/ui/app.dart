@@ -461,9 +461,8 @@ class ViruljaApp {
           children: [icon(name), web.document.createTextNode(label)],
         );
     return el('nav', cls: 'nav', children: [
-      item('#/', 'compass', tr('Putovanja'), page != 'uspomene' && page != 'grupa'),
-      item('#/uspomene', 'photo', tr('Uspomene'), page == 'uspomene'),
-      item('#/grupa', 'group', tr('Postavke'), page == 'grupa'),
+      item('#/', 'compass', tr('Putovanja'), page != 'grupa'),
+      item('#/grupa', 'tool', tr('Postavke'), page == 'grupa'),
     ]);
   }
 
@@ -568,8 +567,6 @@ class ViruljaApp {
       page = tripForm(_ui);
     } else if (place.page == 'grupa' && _data.meId != null) {
       page = groupScreen(_ui);
-    } else if (place.page == 'uspomene' && _data.meId != null) {
-      page = memoriesListScreen(_ui);
     } else {
       page = homeScreen(_ui);
     }

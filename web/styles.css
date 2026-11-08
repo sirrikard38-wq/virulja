@@ -382,7 +382,7 @@ html.held, html.held body { overscroll-behavior: none; }
   height: calc(var(--nav-height) + var(--bottom-safe));
   padding-bottom: var(--bottom-safe);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   border-top: 1px solid var(--line);
   background: var(--bg);
 }

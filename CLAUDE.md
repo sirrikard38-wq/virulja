@@ -41,6 +41,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Opened anew, the app shows VIRULJA rising letter by letter in the middle for about
   3 s and starts on the trips (`showSplash`, a `sessionStorage` mark); a reload for a
   newer version keeps the screen and shows no splash.
+- The bottom bar has two places: Putovanja and Postavke (a screwdriver, `tool`). Past
+  trips stand at the very bottom of Putovanja as "Prošla putovanja"; there is no
+  Uspomene page any more (an old `#/uspomene` opens Putovanja).
 - A new version loads at the next change of screen or return to the app, on any
   screen but a form, a box or typing (`isIdle`); it used to wait for the home
   screen, so someone staying in a trip kept the old one. Postavke shows "Verzija".
@@ -387,6 +390,12 @@ needs a new `newsVersion` mark, or the first run would send the whole past of ev
 
 ## Not done yet
 
+0. NEXT (asked 2026-11-08 for "tomorrow"): instant notifications through a free
+   Cloudflare Worker (no card). The phone that changes something calls the Worker; it
+   checks the caller is a member (Firebase ID token), reads `/push`, and sends web push
+   at once, for every Notice kind. `VAPID_PRIVATE` and `ROBOT_TOKEN` become Worker
+   secrets the user pastes; the user makes the Cloudflare account. The GitHub robot stays
+   for reminders and as a fallback.
 1. Automatic lists of places from Google Places: needs a billing account with a card, and
    the key kept behind a server function, which also needs Blaze.
 2. Automatic hotel prices (SerpApi account, server function).
