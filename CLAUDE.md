@@ -58,6 +58,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   that goes, as far as the finger has gone (`peek`), and the green mark (the line under
   a tab, the fill of a chip) moves with it (`SwipeMark`); let go past the length, the
   page glides the rest and is drawn in place with no slide of its own (`justSwiped`).
+  The page coming in has its faded edges from the start; the green over chips carries
+  their words in dark, so each letter turns as the green passes (`marker-words`).
   `.slide-page` is its own block (`flow-root`), so the space over its first line is the
   same beside and in place; otherwise the page jumped 10 px up as it landed. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
@@ -163,7 +165,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   ("Dodaj u plan napada" ticked) is green and goes last, the last one in first, as bought
   lists do (`pollsInOrder`, `Poll.activeAt`); while Ankete is open nothing moves, it sorts
   once Ankete is left (`Ui.pollsKept`). It keeps its votes: a tap on an answer says
-  so; untick it to vote again.
+  so; untick it to vote again. A poll taken out and brought back with undo stands where
+  it stood (the order kept in `Ui.pollsKept` keeps its place).
 - A yes or no poll takes one answer from each person (`onlyOneAnswer`). A tap on a poll's name
   opens it for typing; a poll about a place or a dish renames that too, as they are found
   by name (`renamePoll`). The brush at the right of the answers (`Ui.editingPoll`) puts an

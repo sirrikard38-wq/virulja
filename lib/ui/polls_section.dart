@@ -188,18 +188,24 @@ web.HTMLElement pollsTab(Ui ui, Trip trip) {
   // nothing moves, and a new poll comes in under the others.
   final kept = ui.pollsKept;
   final List<Poll> shown;
+  final List<String> order;
   if (kept != null && kept.trip == trip.id) {
-    final byId = {for (final poll in trip.polls) poll.id: poll};
-    shown = [
-      for (final id in kept.ids)
-        if (byId[id] case final poll?) poll,
+    // A poll taken out keeps its place in the order, so that undo puts it
+    // back where it stood.
+    order = [
+      ...kept.ids,
       for (final poll in trip.polls)
-        if (!kept.ids.contains(poll.id)) poll,
+        if (!kept.ids.contains(poll.id)) poll.id,
     ];
   } else {
-    shown = pollsInOrder(trip);
+    order = [for (final poll in pollsInOrder(trip)) poll.id];
   }
-  ui.pollsKept = (trip: trip.id, ids: [for (final poll in shown) poll.id]);
+  final byId = {for (final poll in trip.polls) poll.id: poll};
+  shown = [
+    for (final id in order)
+      if (byId[id] case final poll?) poll,
+  ];
+  ui.pollsKept = (trip: trip.id, ids: order);
   final draft = ui.pollDraft;
   return el('div', children: [
     if (draft == null)

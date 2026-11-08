@@ -330,6 +330,11 @@ html.held, html.held body { overscroll-behavior: none; }
 .chips.glide-start .chip.on { color: var(--ink); }
 .chips.glide-start .chip.leaving { color: var(--on-accent); }
 .chip-marker { position: absolute; z-index: 0; background: var(--accent); }
+/* During a swipe the green goes over the chips, with their words in dark. */
+.chip-marker.carrying { z-index: 2; overflow: hidden; pointer-events: none; }
+.marker-words { position: absolute; margin: 0; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+.marker-words .chip { background: transparent !important; border-color: transparent !important; color: var(--on-accent) !important; }
+.chips.gliding .chip { color: var(--ink); }
 .chips .chip { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .kind-bin { position: fixed; left: 50%; top: calc(var(--top-safe) + 14px); z-index: 40; width: 56px; height: 56px; margin-left: -28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--card); color: var(--soft); box-shadow: 0 4px 14px rgba(0, 0, 0, .35); transition: transform 120ms ease, background 120ms ease, color 120ms ease; animation: bin-in 160ms ease-out; }
 .kind-bin.over { transform: scale(1.18); background: var(--danger); color: #fff; }
@@ -652,6 +657,7 @@ details.adder .wide { width: 100%; }
   gap: 12px;
   padding: 2px 4px 2px 14px;
   border-radius: 10px;
+  border: 1.5px solid color-mix(in srgb, var(--bar-action) 65%, transparent);
   background: var(--bar);
   color: var(--on-bar);
   box-shadow: 0 6px 18px rgba(0, 0, 0, .28);

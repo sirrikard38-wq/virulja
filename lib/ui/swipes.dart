@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:web/web.dart' as web;
 
 import 'dom.dart';
+import 'widgets.dart';
 
 /// A swipe must be this long, in pixels, to change the page.
 const double _swipeLength = 60;
@@ -73,6 +74,7 @@ void followSwipes(
     sliding.style.position = 'relative';
     sliding.append(next);
     beside = next;
+    markEdges();
   }
 
   void clearBeside() {
@@ -174,6 +176,7 @@ class SwipeMark {
   final web.HTMLElement row;
   final bool line;
   web.HTMLElement? _mark;
+  web.HTMLElement? _words;
   double _scroll = 0;
 
   web.HTMLElement? get _chosen =>
@@ -188,12 +191,20 @@ class SwipeMark {
     }
     var mark = _mark;
     if (mark == null) {
-      mark = el('span', cls: line ? 'tab-line' : 'chip-marker');
+      mark = el('span', cls: line ? 'tab-line' : 'chip-marker carrying');
       if (!line) {
+        // The same chips again inside the green, dark, laid exactly over the
+        // row's own: only what the green covers of them shows.
+        final words = (row.cloneNode(true) as web.HTMLElement)
+          ..className = 'chips marker-words'
+          ..removeAttribute('data-edges')
+          ..style.width = '${row.scrollWidth}px';
         mark.style
           ..top = '${from.offsetTop}px'
           ..height = '${from.offsetHeight}px'
           ..borderRadius = web.window.getComputedStyle(from).borderRadius;
+        mark.append(words);
+        _words = words;
         row.classList.add('glide-start');
       }
       row
@@ -202,9 +213,13 @@ class SwipeMark {
       _scroll = row.scrollLeft.toDouble();
       _mark = mark;
     }
+    final left = from.offsetLeft + (to.offsetLeft - from.offsetLeft) * fraction;
     mark.style
-      ..left = '${from.offsetLeft + (to.offsetLeft - from.offsetLeft) * fraction}px'
+      ..left = '${left}px'
       ..width = '${from.offsetWidth + (to.offsetWidth - from.offsetWidth) * fraction}px';
+    _words?.style
+      ?..left = '${-left}px'
+      ..top = '${-from.offsetTop}px';
     if (!line) {
       final most = max(row.scrollWidth - row.clientWidth, 0).toDouble();
       final centred = (to.offsetLeft - (row.clientWidth - to.offsetWidth) / 2).clamp(0.0, most);
@@ -218,6 +233,7 @@ class SwipeMark {
     if (mark == null) return;
     mark.remove();
     _mark = null;
+    _words = null;
     row.classList
       ..remove('gliding')
       ..remove('glide-start');
