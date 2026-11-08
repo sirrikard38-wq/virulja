@@ -38,6 +38,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/anthem.dart`: the trip's anthem.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
+- Opened anew, the app shows VIRULJA rising letter by letter in the middle for about
+  3.5 s and starts on the trips (`showSplash`, a `sessionStorage` mark); a reload for a
+  newer version keeps the screen and shows no splash.
 - A new version loads at the next change of screen or return to the app, on any
   screen but a form, a box or typing (`isIdle`); it used to wait for the home
   screen, so someone staying in a trip kept the old one. Postavke shows "Verzija".
@@ -140,6 +143,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`keptPlayer`).
 - package:web types `MouseEvent.clientX` as a whole number, and a phone gives decimals, so
   pointer positions are read straight from the event (`seconds_bar.dart`).
+- A poll's card has its name on top (`titleField`: half the row at first, growing with
+  the text, then more lines, at most 400 letters counted at the end of the line), then
+  the brush, then the x in the corner. A new poll is made on such a card (`PollDraft`),
+  with no brush and no Plan napada but Napravi anketu; its x throws it away with the
+  usual undo. Leaving Ankete closes a brush. In Plan napada a card has the cost tick in
+  the top right corner and the x in the bottom right.
 - A poll's brush opens and closes in place (`_setBrush`): the page stays where it is, the
   card grows or shrinks smoothly and the polls under it follow; opened where it cannot all
   be seen, the page glides just far enough to show it whole. A poll in Plan napada

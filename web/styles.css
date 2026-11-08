@@ -202,6 +202,32 @@ html.held, html.held body { overscroll-behavior: none; }
 .chip.sort-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 9px; font-size: 12px; }
 .chip.sort-chip .icon { stroke-width: 3; }
 .offer { position: relative; margin: 10px 20px 0; padding: 10px 12px; }
+/* VIRULJA on opening: the letters rise one by one, then all fades away. */
+.splash { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); transition: opacity .6s ease; }
+.splash.leaving { opacity: 0; pointer-events: none; }
+.splash-word { font-family: var(--display); font-size: 54px; font-weight: 700; letter-spacing: 8px; color: var(--accent); }
+.splash-word span { display: inline-block; opacity: 0; transform: translateY(16px); animation: splash-in .9s ease forwards; }
+@keyframes splash-in { to { opacity: 1; transform: none; } }
+/* A poll's top: its name, a gap, then the brush and the x in the corner. */
+.poll-top { display: flex; align-items: flex-start; gap: 6px; }
+.poll-gap { flex: 1 1 0; }
+.title-field { display: flex; align-items: flex-end; gap: 6px; flex: 0 1 auto; min-width: 50%; max-width: 100%;
+  border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+.title-field:focus-within { border-bottom-color: var(--accent); }
+.title-field.quiet { border-bottom-color: transparent; }
+.title-field.quiet:focus-within { border-bottom-color: var(--accent); }
+.title-area { flex: 1; min-width: 0; resize: none; overflow: hidden; border: 0; padding: 2px 0; background: transparent;
+  color: inherit; font: inherit; font-size: 15px; font-weight: 700; line-height: 1.35; caret-color: var(--accent); }
+.title-area:focus { outline: none; }
+.title-area::placeholder { color: var(--soft); font-weight: 400; }
+.title-count { flex: none; padding-bottom: 4px; color: var(--soft); font-size: 11px; }
+.title-field.quiet .title-count { display: none; }
+.title-field.quiet:focus-within .title-count { display: inline; }
+.new-poll-row { display: flex; justify-content: flex-end; margin: 8px 20px 0; }
+.new-poll { color: var(--accent); font-weight: 700; }
+.poll-draft .primary { margin-top: 12px; }
+.attack-bottom { display: flex; justify-content: flex-end; margin-top: 4px; margin-right: -6px; margin-bottom: -6px; }
 .poll.in-attack { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .offer.reserved { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .offer .grow { padding-right: 4px; }

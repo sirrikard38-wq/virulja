@@ -525,6 +525,7 @@ const Map<String, List<String>> _texts = {
   'Dodaj u plan napada': ['Add to the plan of attack', 'Saldırı planına ekle'],
   'Za ovaj tjedan još ništa nije dogovoreno.': ['Nothing is agreed for this week yet.', 'Bu hafta için henüz bir şey kararlaştırılmadı.'],
   'Tjedan {0}': ['Week {0}', '{0}. hafta'],
+  'Što odlučujemo?': ['What are we deciding?', 'Neye karar veriyoruz?'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

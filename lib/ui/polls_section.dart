@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
@@ -118,19 +119,35 @@ void _removeOption(Ui ui, Trip trip, Poll poll, PollOption option) {
 }
 
 /// The poll's name, which a tap opens for typing like any text.
-web.HTMLElement _pollTitle(Ui ui, Trip trip, Poll poll) =>
-    editableName(poll.title, tr('Naziv ankete'), (name) {
-      renamePoll(trip, poll, name);
-      ui.changed();
-    });
+web.HTMLElement _pollTitle(Ui ui, Trip trip, Poll poll) => titleField(
+      poll.title,
+      label: tr('Naziv ankete'),
+      quiet: true,
+      onDone: (name) {
+        if (name.isEmpty || name == poll.title) {
+          redrawTripTab(ui, trip);
+          return;
+        }
+        renamePoll(trip, poll, name);
+        ui.saved();
+        redrawTripTab(ui, trip);
+      },
+    );
 
 web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
   final me = ui.meIn(trip);
   final inAttack = pollInAttack(trip, poll);
   final editing = ui.editingPoll == poll.id;
   return el('div', cls: inAttack ? 'poll card in-attack' : 'poll card', attrs: {'data-poll': poll.id}, children: [
-    el('div', attrs: {'style': 'display:flex;align-items:center'}, children: [
-      el('div', cls: 'grow', children: [_pollTitle(ui, trip, poll)]),
+    el('div', cls: 'poll-top', children: [
+      _pollTitle(ui, trip, poll),
+      el('span', cls: 'poll-gap'),
+      button(
+        cls: editing ? 'icon-button more-option on' : 'icon-button more-option',
+        ariaLabel: tr('Uredi mogućnosti'),
+        onTap: () => _setBrush(ui, trip, poll, !editing),
+        children: [icon('brush', size: 20)],
+      )..setAttribute('aria-pressed', '$editing'),
       removeWithUndo(ui, trip.polls, poll, poll.title, named: false),
     ]),
     el('div', cls: 'checks', attrs: {'style': 'margin:6px 0 0'}, children: [
@@ -152,12 +169,6 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
               children: [icon('close', size: 12)],
             ),
         ]),
-      button(
-        cls: editing ? 'icon-button more-option on' : 'icon-button more-option',
-        ariaLabel: tr('Uredi mogućnosti'),
-        onTap: () => _setBrush(ui, trip, poll, !editing),
-        children: [icon('brush', size: 20)],
-      )..setAttribute('aria-pressed', '$editing'),
     ]),
     if (editing && poll.options.length < mostOptions) _optionForm(ui, trip, poll),
     el('div', attrs: {'style': 'margin-top:6px'}, children: [
@@ -189,8 +200,22 @@ web.HTMLElement pollsTab(Ui ui, Trip trip) {
     shown = pollsInOrder(trip);
   }
   ui.pollsKept = (trip: trip.id, ids: [for (final poll in shown) poll.id]);
+  final draft = ui.pollDraft;
   return el('div', children: [
-    _newPoll(ui, trip)..classList.add('on-top'),
+    if (draft == null)
+      el('div', cls: 'new-poll-row', children: [
+        button(
+          cls: 'text-button new-poll',
+          text: '+ ${tr('Nova anketa')}',
+          onTap: () {
+            ui.pollDraft = PollDraft();
+            redrawTripTab(ui, trip);
+            (web.document.querySelector('.poll-draft textarea') as web.HTMLElement?)?.focus();
+          },
+        ),
+      ])
+    else
+      _draftCard(ui, trip, draft),
     if (trip.polls.isEmpty) el('p', cls: 'soft pad gap-top', text: tr('Još nema anketa.')),
     for (final poll in shown) _pollCard(ui, trip, poll),
   ]);
@@ -213,55 +238,80 @@ void addYesNoPoll(Ui ui, Trip trip, String title) {
   ui.toast(tr('Dodano u Ankete.'));
 }
 
-/// A new poll: the choices are answers of any kind or times, as many as wanted;
-/// with none it is a plain yes or no.
-web.HTMLElement _newPoll(Ui ui, Trip trip) {
-  final title = input();
-  final choices = <web.HTMLInputElement>[];
-  final rows = el('div');
+/// A new poll on a card as polls are: its name on top with the x that throws
+/// it away (with the usual undo), answers of any kind or times under it, as
+/// many as wanted, and Napravi anketu. With no answers it is a yes or no.
+web.HTMLElement _draftCard(Ui ui, Trip trip, PollDraft draft) {
   final error = errorLine();
+  final rows = el('div');
 
-  web.HTMLElement more(String label, {String? action, String type = 'text'}) => button(
+  void drawChoice(PollChoice choice) {
+    final web.HTMLElement control;
+    if (choice.time) {
+      final picker = timePicker();
+      final wheels = picker.view.querySelectorAll('select');
+      if (choice.value.contains(':') && wheels.length == 2) {
+        (wheels.item(0) as web.HTMLSelectElement).value = choice.value.split(':').first;
+        (wheels.item(1) as web.HTMLSelectElement).value = choice.value.split(':').last;
+        picker.value.value = choice.value;
+      }
+      picker.view.addEventListener('change', ((web.Event _) {
+        choice.value = picker.value.value;
+      }).toJS);
+      control = picker.view;
+    } else {
+      final box = input(value: choice.value);
+      box.onInput.listen((_) => choice.value = box.value);
+      control = box;
+    }
+    late final web.HTMLElement row;
+    row = el('div', cls: 'field', children: [
+      el('div', attrs: {'style': 'display:flex;align-items:center;gap:6px'}, children: [
+        button(
+          cls: 'icon-button',
+          ariaLabel: tr('Makni: {0}', [choice.time ? tr('Vrijeme') : tr('Opcija')]),
+          onTap: () {
+            draft.choices.remove(choice);
+            row.remove();
+          },
+          children: [icon('minus', size: 20)],
+        ),
+        el('span', text: choice.time ? tr('Vrijeme') : tr('Opcija')),
+      ]),
+      control,
+    ]);
+    rows.append(row);
+  }
+
+  for (final choice in draft.choices) {
+    drawChoice(choice);
+  }
+
+  web.HTMLElement more(String label, {required bool time, String? action}) => button(
         cls: 'text-button',
         text: '+ ${action ?? label}',
         onTap: () {
-          final picker = type == 'time' ? timePicker() : null;
-          final choice = picker?.value ?? input(type: type);
-          choices.add(choice);
-          late final web.HTMLElement row;
-          row = el('div', cls: 'field', children: [
-            el('div', attrs: {'style': 'display:flex;align-items:center;gap:6px'}, children: [
-              button(
-                cls: 'icon-button',
-                ariaLabel: tr('Makni: {0}', [label]),
-                onTap: () {
-                  choices.remove(choice);
-                  row.remove();
-                },
-                children: [icon('minus', size: 20)],
-              ),
-              el('span', text: label),
-            ]),
-            picker?.view ?? choice,
-          ]);
-          rows.append(row);
-          (picker?.view.querySelector('select') as web.HTMLElement? ?? choice).focus();
+          final choice = PollChoice(time: time);
+          draft.choices.add(choice);
+          drawChoice(choice);
+          (rows.lastElementChild?.querySelector('input, select') as web.HTMLElement?)?.focus();
         },
       );
 
-  void add() {
-    if (title.value.trim().isEmpty) {
+  void create() {
+    final title = draft.title.trim();
+    if (title.isEmpty) {
       error.textContent = tr('Upiši što odlučujete.');
       return;
     }
     final filled = {
-      for (final choice in choices)
+      for (final choice in draft.choices)
         if (choice.value.trim().isNotEmpty) choice.value.trim(),
     }.toList();
     final chosen = filled.isEmpty ? ['Da', 'Ne'] : filled;
     trip.polls.add(Poll(
       id: ui.store.newId(),
-      title: title.value.trim(),
+      title: title,
       dayIndex: -1,
       addedBy: ui.meIn(trip),
       options: [
@@ -269,17 +319,43 @@ web.HTMLElement _newPoll(Ui ui, Trip trip) {
           PollOption(id: 'o$i', time: chosen[i]),
       ],
     ));
-    ui.changed();
+    ui.pollDraft = null;
+    ui.pollsKept = null;
+    ui.saved();
+    redrawTripTab(ui, trip);
   }
 
-  return adder(tr('Nova anketa'), [
-    field(tr('Što odlučujemo'), title),
+  void throwAway() {
+    ui.pollDraft = null;
+    redrawTripTab(ui, trip);
+    ui.offerUndo(tr('Uklonjeno: {0}', [tr('Nova anketa')]), () {
+      ui.pollDraft = draft;
+      redrawTripTab(ui, trip);
+    });
+  }
+
+  return el('div', cls: 'poll card poll-draft', children: [
+    el('div', cls: 'poll-top', children: [
+      titleField(
+        draft.title,
+        label: tr('Što odlučujemo'),
+        placeholder: tr('Što odlučujemo?'),
+        onInput: (text) => draft.title = text,
+      ),
+      el('span', cls: 'poll-gap'),
+      button(
+        cls: 'icon-button',
+        ariaLabel: tr('Makni: {0}', [tr('Nova anketa')]),
+        onTap: throwAway,
+        children: [icon('close', size: 20)],
+      ),
+    ]),
     rows,
-    el('div', attrs: {'style': 'display:flex;flex-wrap:wrap;gap:16px;margin-top:12px'}, children: [
-      more(tr('Opcija'), action: tr('Dodaj opciju')),
-      more(tr('Vrijeme'), type: 'time'),
+    el('div', attrs: {'style': 'display:flex;flex-wrap:wrap;gap:16px;margin-top:10px'}, children: [
+      more(tr('Opcija'), time: false, action: tr('Dodaj opciju')),
+      more(tr('Vrijeme'), time: true),
     ]),
     error,
-    primaryButton(tr('Napravi anketu'), add),
+    primaryButton(tr('Napravi anketu'), create),
   ]);
 }

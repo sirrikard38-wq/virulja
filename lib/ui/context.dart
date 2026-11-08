@@ -73,6 +73,9 @@ class Ui {
   /// Trip id -> the day its Plan napada shows; without one, all of them.
   final Map<String, int> attackDays = {};
 
+  /// A new poll being made in Ankete, kept across redraws.
+  PollDraft? pollDraft;
+
   /// The order of Ankete while it is open: a poll put in Plan napada moves to
   /// the bottom only once Ankete is left.
   ({String trip, List<String> ids})? pollsKept;
@@ -182,4 +185,18 @@ class Ui {
     final page = web.window.location.href.split('#').first;
     return '$page#/pridruzi/${trip.id}';
   }
+}
+
+/// A new poll before Napravi anketu: its name and its answers as typed.
+class PollDraft {
+  String title = '';
+  final List<PollChoice> choices = [];
+}
+
+/// One answer of a new poll: plain text, or a time picked on the wheels.
+class PollChoice {
+  PollChoice({required this.time});
+
+  final bool time;
+  String value = '';
 }

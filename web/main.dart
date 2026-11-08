@@ -3,10 +3,24 @@ import 'dart:js_interop';
 import 'package:virulja/ui/app.dart';
 import 'package:virulja/ui/cloud.dart';
 import 'package:virulja/ui/install.dart';
+import 'package:virulja/ui/splash.dart';
 import 'package:virulja/ui/store.dart';
 import 'package:web/web.dart' as web;
 
 Future<void> main() async {
+  // Opened anew (not a reload for a newer version): VIRULJA comes up in the
+  // middle, and the app starts on the trips.
+  var fresh = true;
+  try {
+    fresh = web.window.sessionStorage.getItem('opened') == null;
+    web.window.sessionStorage.setItem('opened', '1');
+  } on Object {
+    // No storage: count it as a fresh start.
+  }
+  if (fresh) {
+    web.window.location.replace('#/');
+    showSplash();
+  }
   final store = await AppStore.open();
   final config = await loadOnlineConfig(); // null: everything stays on this phone
   final cloud = config == null ? null : CloudSync(config, store);

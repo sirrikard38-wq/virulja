@@ -77,6 +77,61 @@ web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box) {
   return field;
 }
 
+/// The most letters a poll's name may have.
+const int longestTitle = 400;
+
+/// A name typed on a line under it: it starts on half its row and grows with
+/// the text up to the whole row, then goes on to more lines. At the end of the
+/// line it counts the letters, up to [longestTitle]; [quiet] shows the count
+/// and the line only while typing. [onInput] hears every letter, [onDone] the
+/// name once the keyboard closes.
+web.HTMLElement titleField(
+  String value, {
+  required String label,
+  String placeholder = '',
+  bool quiet = false,
+  void Function(String text)? onInput,
+  void Function(String text)? onDone,
+}) {
+  final area = (el('textarea', cls: 'title-area', attrs: {
+    'rows': '1',
+    'maxlength': '$longestTitle',
+    'aria-label': label,
+    'placeholder': placeholder,
+    'enterkeyhint': 'done',
+  }) as web.HTMLTextAreaElement)
+    ..value = value;
+  final count = el('span', cls: 'title-count');
+  final field = el('div', cls: quiet ? 'title-field quiet' : 'title-field', children: [area, count]);
+
+  void fit() {
+    count.textContent = '${area.value.length}/$longestTitle';
+    final ruler = _ruler ??= (web.document.createElement('canvas') as web.HTMLCanvasElement)
+        .getContext('2d') as web.CanvasRenderingContext2D;
+    ruler.font = web.window.getComputedStyle(area).font;
+    final text = area.value.isEmpty ? area.placeholder : area.value;
+    field.style.width = '${ruler.measureText(text).width + count.offsetWidth + 30}px';
+    area.style.height = 'auto';
+    area.style.height = '${area.scrollHeight}px';
+  }
+
+  area.onInput.listen((_) {
+    // One name, no new lines: the text breaks onto them by itself.
+    if (area.value.contains('\n')) area.value = area.value.replaceAll('\n', ' ');
+    fit();
+    onInput?.call(area.value);
+  });
+  area.onKeyDown.listen((event) {
+    if (event.key == 'Enter') {
+      event.preventDefault();
+      area.blur();
+    }
+  });
+  area.onChange.listen((_) => onDone?.call(area.value.trim()));
+  scheduleMicrotask(fit);
+  return field;
+}
+
 web.HTMLElement field(String label, web.Node control, {bool tight = false}) =>
     el(
       'label',
