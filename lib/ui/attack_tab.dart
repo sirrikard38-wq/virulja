@@ -165,17 +165,16 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item, int? day) {
       onTap: () => _tick(ui, trip, item, day),
       children: [icon('check', size: 20)],
     ),
+    // The x right of the tick, in the top right corner.
+    button(
+      cls: 'icon-button attack-x',
+      ariaLabel: tr('Makni: {0}', [item.title]),
+      onTap: () => _remove(ui, trip, item),
+      children: [icon('close', size: 20)],
+    ),
     ]),
     // The days under it all, filling the whole width of the card.
     if (!item.past) _dayVotes(ui, trip, item),
-    el('div', cls: 'attack-bottom', children: [
-      button(
-        cls: 'icon-button',
-        ariaLabel: tr('Makni: {0}', [item.title]),
-        onTap: () => _remove(ui, trip, item),
-        children: [icon('close', size: 20)],
-      ),
-    ]),
   ]);
 }
 

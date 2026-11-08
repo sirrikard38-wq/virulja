@@ -230,7 +230,6 @@ html.held, html.held body { overscroll-behavior: none; }
 .new-poll-row { display: flex; justify-content: flex-end; margin: 8px 20px 0; }
 .new-poll { color: var(--accent); font-weight: 700; }
 .poll-draft .primary { margin-top: 12px; }
-.attack-bottom { display: flex; justify-content: flex-end; margin-top: 4px; margin-right: -6px; margin-bottom: -6px; }
 .attack-card.done { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .attack-card.partly { border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); }
 .poll.in-attack { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
@@ -685,7 +684,8 @@ details.adder .wide { width: 100%; }
 /* A day enough of the group can go. */
 .chip.agreed:not(.on) { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 .attack-card { display: block; }
-.attack-top { display: flex; gap: 8px; }
+.attack-top { display: flex; gap: 4px; align-items: flex-start; }
+.attack-x { margin-right: -6px; }
 .attack-card .title { font-size: 24px; }
 .attack-card .label { font-size: 14px; }
 .chip.week-open { border-color: var(--accent); }

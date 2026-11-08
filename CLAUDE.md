@@ -178,7 +178,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   times, and Izradi anketu; it needs a letter in its name (`hasLetter`) and two answers.
   Its x throws it away with the usual undo. New polls stand on top, those in Plan
   napada at the bottom. Leaving Ankete closes a brush. In Plan napada a card has the cost tick in
-  the top right corner and the x in the bottom right.
+  the top right corner and the x right of it (2026-11-09; for a while it was at the
+  bottom).
 - A poll's brush opens and closes in place (`_setBrush`): the page stays where it is, the
   card grows or shrinks smoothly and the polls under it follow; opened where it cannot all
   be seen, the page glides just far enough to show it whole. A poll in Plan napada
