@@ -822,6 +822,37 @@ class ShopItem {
 
 /// A shopping list of the trip, with its name. Once bought, what it cost is in
 /// Troškovi as [expenseId].
+/// One day of a thing in Plan napada ticked off: when, in milliseconds, and the
+/// cost it wrote in Troškovi.
+class Ticked {
+  const Ticked({required this.at, this.costId});
+
+  factory Ticked.fromJson(Json json) =>
+      Ticked(at: (json['at'] as num).toInt(), costId: json['cost'] as String?);
+
+  final int at;
+  final String? costId;
+
+  Json toJson() => {'at': at, 'cost': costId};
+}
+
+/// [Trip.ticked] as stored, its days as `d0`, `d-1`: a key of the database
+/// cannot be a bare number.
+Json tickedJson(Map<String, Map<int, Ticked>> ticked) => {
+      for (final thing in ticked.entries)
+        if (thing.value.isNotEmpty)
+          thing.key: {for (final day in thing.value.entries) 'd${day.key}': day.value.toJson()},
+    };
+
+Map<String, Map<int, Ticked>> tickedFrom(Object? raw) => {
+      for (final thing in ((raw as Map?) ?? const {}).entries)
+        '${thing.key}': {
+          for (final day in ((thing.value as Map?) ?? const {}).entries)
+            if (int.tryParse('${day.key}'.replaceFirst('d', '')) case final index?)
+              index: Ticked.fromJson((day.value as Map).cast<String, dynamic>()),
+        },
+    };
+
 /// The lists of Dućan as they show: those still to buy in the order they were
 /// made, then the bought ones, the last bought first.
 List<ShopList> listsInOrder(Trip trip) {
@@ -1096,10 +1127,12 @@ class Trip {
     Map<String, String>? showPicks,
     this.dayShowId,
     Map<String, int>? budgets,
+    Map<String, Map<int, Ticked>>? ticked,
     Map<String, String>? access,
     List<String>? currencies,
   })  : uids = uids ?? {},
         budgets = budgets ?? {},
+        ticked = ticked ?? {},
         access = access ?? {},
         currencies = cleanCurrencies(currencies ?? const []),
         shows = shows ?? [],
@@ -1163,6 +1196,7 @@ class Trip {
         dayShowId: json['dayShowId'] as String?,
         access: Map<String, String>.of((json['access'] as Json? ?? const <String, dynamic>{}).cast<String, String>()),
         currencies: _strings(json['currencies']),
+        ticked: tickedFrom(json['ticked']),
         budgets: (json['budgets'] as Json? ?? const <String, dynamic>{})
             .map((kind, cents) => MapEntry(kind, (cents as num).toInt())),
       );
@@ -1229,6 +1263,10 @@ class Trip {
   /// Kind of cost -> the whole amount the group means to spend on it, set with
   /// Planiraj trošak.
   Map<String, int> budgets;
+
+  /// What of Plan napada was ticked off, day by day: thing -> day (-1 for one
+  /// with no day) -> when, and the cost it wrote in Troškovi.
+  Map<String, Map<int, Ticked>> ticked;
 
   /// The phones let into this trip: sign-in id -> the member it is. The
   /// database lets only these read and change it; a person may have several.
@@ -1329,6 +1367,7 @@ class Trip {
     showPicks = other.showPicks;
     dayShowId = other.dayShowId;
     budgets = other.budgets;
+    ticked = other.ticked;
     access = other.access;
     currencies = other.currencies;
   }
@@ -1369,6 +1408,7 @@ class Trip {
         'showPicks': showPicks,
         'dayShowId': dayShowId,
         'budgets': budgets,
+        'ticked': tickedJson(ticked),
         'access': access,
         'currencies': currencies,
       };

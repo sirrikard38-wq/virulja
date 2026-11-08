@@ -107,8 +107,15 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   poll was made for, nor a stop's day in Plan puta. Days are written "1 Dan", not "Dan 1". While a day is
   open, what was on it stays even when a vote moves it; it moves once the day is left
   (`Ui.attackKept`). Back in Plan napada within 20 s it opens on the same day, later on
-  Sve. "Dogovoreno" news still needs half the group (`agreedDays`). Nothing
-  in Plan napada is sorted: votes, days and time never move a thing in the list. The tabs
+  Sve. "Dogovoreno" news still needs half the group (`agreedDays`). Votes,
+  days and time never move a thing in Plan napada. Its tick writes a cost and ticks the
+  thing off for that day (`Trip.ticked`, day -1 for one with no day): green there, and
+  last on that day, the last ticked first, once the day is left (`tickedLast`,
+  `Ui.attackOrder`); on Sve the box asks "Koji dan?", offering every day someone voted for
+  (`tickDays`; one ticked already shows ✓), and that day is ticked as if it were open;
+  on Sve a thing is green and last once every one of those days is ticked, with a green
+  edge while only some are. A tap on a green tick takes it back with the
+  cost, with the usual undo. The tabs
   show how many presentations, polls and plans there are, and each day chip its plans; the
   cards show no date, only a past one does.
 - Spent (Potrošeno, the tiles of Plan, "tvoj trošak") is only what is written in Troškovi

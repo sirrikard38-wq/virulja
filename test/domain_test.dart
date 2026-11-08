@@ -1369,6 +1369,27 @@ void main() {
       expect(plainAmount(125000), '1.250');
     });
 
+    test('ticked things of Plan napada go last, on Sve once every day is ticked', () {
+      final trip = visTrip();
+      NextUp thing(String id, List<int> days) =>
+          NextUp(id, days: days, dayVotes: const {}, poll: Poll(id: id, title: id, options: const []));
+      final a = thing('a', [0]), b = thing('b', [0, 1]), c = thing('c', [1]), d = thing('d', []);
+      trip.ticked['a'] = {0: const Ticked(at: 10)};
+      trip.ticked['b'] = {0: const Ticked(at: 30)};
+      trip.ticked['d'] = {-1: const Ticked(at: 20)};
+      expect(tickedLast(trip, [a, b, c, d], 0).map((e) => e.title), ['c', 'd', 'b', 'a']);
+      expect(tickedShare(trip, b), 0.5);
+      expect(tickDays(NextUp('v', days: const [1], dayVotes: const {0: {'ana'}, 2: {'ivo'}, 3: {}}, poll: Poll(id: 'v', title: 'v', options: const []))), [0, 2]);
+      expect(tickedLast(trip, [a, b, c, d], null).map((e) => e.title), ['b', 'c', 'd', 'a']);
+      trip.ticked['b']![1] = const Ticked(at: 40, costId: 'x');
+      expect(tickedLast(trip, [a, b, c, d], null).map((e) => e.title), ['c', 'b', 'd', 'a']);
+      final tree = jsonDecode(jsonEncode(unflatten(flatten(tripToTree(trip, (id) => id)))));
+      final back = tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip;
+      expect(back.ticked['b']![1]!.costId, 'x');
+      expect(back.ticked['d']!.keys, [-1]);
+      expect(Trip.fromJson(jsonDecode(jsonEncode(trip.toJson())) as Json).ticked['a']![0]!.at, 10);
+    });
+
     test('what stands between you and each person is all debts added up', () {
       const transfers = [
         Transfer(fromId: 'riko', toId: 'ramo', amount: 550),

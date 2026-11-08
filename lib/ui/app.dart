@@ -541,6 +541,7 @@ class ViruljaApp {
     }
     if (place.section != 'napad') {
       _ui.attackKept = null;
+      _ui.attackOrder = null;
       if (_onAttack) _leftAttack = DateTime.now();
       _onAttack = false;
     } else {

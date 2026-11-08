@@ -30,7 +30,7 @@ void _split(Ui ui, Trip trip, Place place) => costSheet(
       action: tr('Razdijeli'),
       category: CostCategory.food,
       guess: (place.pricePerPerson ?? 0) * trip.people,
-      done: (cost) => place.expenseId = cost.id,
+      done: (cost, _) => place.expenseId = cost.id,
     );
 
 web.HTMLElement _total(String label, int cents) => el('div', cls: 'tile card', children: [

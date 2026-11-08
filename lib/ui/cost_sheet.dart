@@ -20,8 +20,18 @@ void costSheet(
   required String action,
   required CostCategory category,
   int guess = 0,
-  void Function(Expense cost)? done,
+  List<int> days = const [],
+  Set<int> daysDone = const {},
+  void Function(Expense cost, int? day)? done,
 }) {
+  // Koji dan? on top when there are days to choose: the first still open.
+  int? day;
+  for (final each in days) {
+    if (!daysDone.contains(each)) {
+      day = each;
+      break;
+    }
+  }
   final amount = amountInput(fit: true);
   if (guess > 0) amount.value = plainAmount(guess);
   var payer = ui.meIn(trip);
@@ -54,7 +64,7 @@ void costSheet(
       category: category,
     );
     trip.expenses.add(cost);
-    done?.call(cost);
+    done?.call(cost, day);
     close();
     ui.changed();
   }
@@ -71,6 +81,20 @@ void costSheet(
           children: [icon('close', size: 20)]),
       if (question != null) el('p', cls: 'label', text: question),
       el('p', cls: question == null ? 'label' : 'small', text: title),
+      if (days.length > 1 || (days.length == 1 && days.first >= 0)) ...[
+        el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Koji dan?')),
+        el('div', cls: 'checks', attrs: {'style': 'margin:0'}, children: [
+          for (final each in days)
+            if (daysDone.contains(each))
+              // Already ticked off that day.
+              button(cls: 'chip locked', text: '${tr('{0} Dan', [each + 1])} ✓', onTap: () {})
+            else
+              chip(tr('{0} Dan', [each + 1]), () {
+                day = each;
+                draw();
+              }, on: day == each),
+        ]),
+      ],
       unitField(tr('Iznos'), amount..value = typed, moneySign())
         ..classList.remove('tight')
         ..classList.add('fit-amount'),

@@ -1,4 +1,6 @@
 import 'i18n.dart';
+import 'dart:math';
+
 import 'models.dart';
 
 /// One thing in the plan of attack: a stop of the plan, a place from Hrana i piće
@@ -194,6 +196,48 @@ List<Poll> pollsInOrder(Trip trip) {
         if (!pollInAttack(trip, poll)) poll,
     ]..sort((a, b) => b.id.compareTo(a.id)),
     ...planned,
+  ];
+}
+
+/// The days of [item] to tick off: every day at least one person voted for,
+/// else its own days, else -1 for one with no day at all.
+List<int> tickDays(NextUp item) {
+  final voted = [
+    for (final entry in item.dayVotes.entries)
+      if (entry.value.isNotEmpty) entry.key,
+  ]..sort();
+  if (voted.isNotEmpty) return voted;
+  return item.days.isEmpty ? const [-1] : item.days;
+}
+
+/// Whether [item] is ticked off on [day].
+bool tickedOn(Trip trip, NextUp item, int day) => trip.ticked[item.id]?.containsKey(day) ?? false;
+
+/// How much of [item] is ticked off: 0 nothing, 1 every one of its days.
+double tickedShare(Trip trip, NextUp item) {
+  final days = tickDays(item);
+  return days.where((day) => tickedOn(trip, item, day)).length / days.length;
+}
+
+/// [items] as Plan napada orders them on [day], or on Sve with null: those
+/// still to tick off as they come, then the ticked ones, the last ticked
+/// first, as polls in Plan napada go last in Ankete. On Sve a thing counts as
+/// ticked once every one of its days is.
+List<NextUp> tickedLast(Trip trip, List<NextUp> items, int? day) {
+  bool done(NextUp item) => day == null ? tickedShare(trip, item) == 1 : tickedOn(trip, item, day);
+  int when(NextUp item) {
+    final days = trip.ticked[item.id] ?? const <int, Ticked>{};
+    if (day != null) return days[day]?.at ?? 0;
+    return days.values.fold(0, (last, ticked) => max(last, ticked.at));
+  }
+
+  return [
+    for (final item in items)
+      if (!done(item)) item,
+    ...[
+      for (final item in items)
+        if (done(item)) item,
+    ]..sort((a, b) => when(b).compareTo(when(a))),
   ];
 }
 

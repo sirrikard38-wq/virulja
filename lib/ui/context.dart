@@ -80,6 +80,10 @@ class Ui {
   /// the bottom only once Ankete is left.
   ({String trip, List<String> ids})? pollsKept;
 
+  /// The order of Plan napada while one day (or Sve, or a week) is open: what
+  /// is ticked off goes last only once it is left.
+  ({String trip, String view, List<String> ids})? attackOrder;
+
   /// The week open in Plan napada on a trip of more than 7 days.
   final Map<String, int> attackWeeks = {};
 

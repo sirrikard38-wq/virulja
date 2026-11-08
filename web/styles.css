@@ -231,6 +231,8 @@ html.held, html.held body { overscroll-behavior: none; }
 .new-poll { color: var(--accent); font-weight: 700; }
 .poll-draft .primary { margin-top: 12px; }
 .attack-bottom { display: flex; justify-content: flex-end; margin-top: 4px; margin-right: -6px; margin-bottom: -6px; }
+.attack-card.done { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+.attack-card.partly { border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); }
 .poll.in-attack { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .offer.reserved { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 .offer .grow { padding-right: 4px; }

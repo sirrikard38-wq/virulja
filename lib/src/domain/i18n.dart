@@ -533,6 +533,8 @@ const Map<String, List<String>> _texts = {
   'Ukupno za tebe': ['All told, for you', 'Senin için toplam'],
   'Prošla putovanja': ['Past trips', 'Geçmiş geziler'],
   'Još nema uspomena. Ovdje će čekati tvoja prošla putovanja.': ['No memories yet. Your past trips will wait here.', 'Henüz anı yok. Geçmiş gezilerin burada seni bekleyecek.'],
+  'Više nije plaćeno: {0}': ['No longer paid: {0}', 'Artık ödenmedi: {0}'],
+  'Koji dan?': ['Which day?', 'Hangi gün?'],
   'Vrati natrag': ['Undo', 'Geri al'],
   'Nova mogućnost': ['New answer', 'Yeni seçenek'],
   'Ta mogućnost već postoji.': ['That answer is already there.', 'Bu seçenek zaten var.'],

@@ -19,7 +19,7 @@ void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
       question: tr('Unesi iznos'),
       action: tr('Kupljeno'),
       category: CostCategory.shop,
-      done: (cost) {
+      done: (cost, _) {
         list
           ..expenseId = cost.id
           ..boughtAt = DateTime.now().millisecondsSinceEpoch;

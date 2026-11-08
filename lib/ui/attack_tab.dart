@@ -97,15 +97,62 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
 }
 
 /// Whether [item] is already written in Troškovi: its own cost, or one of its name.
-bool _written(Trip trip, NextUp item) => trip.expenses.any((cost) =>
-    cost.id == item.place?.expenseId ||
-    cost.title.trim().toLowerCase() == item.title.trim().toLowerCase());
+/// The tick of [item]: on a day it writes that day's cost in Troškovi and turns
+/// the thing green there; a tap on a green one takes it back, cost and all,
+/// with the usual undo. On Sve or a week the box asks Koji dan?, offering every
+/// day someone voted for, and that day is ticked as if it were open; once every
+/// day is ticked a tap takes them all back.
+void _tick(Ui ui, Trip trip, NextUp item, int? day) {
+  final open = day != null
+      ? (tickedOn(trip, item, day) ? const <int>[] : [day])
+      : [for (final each in tickDays(item)) if (!tickedOn(trip, item, each)) each];
+  if (open.isEmpty) {
+    final days = trip.ticked[item.id] ?? const <int, Ticked>{};
+    final back = day != null ? {day: days[day]!} : Map.of(days);
+    final costs = [
+      for (final ticked in back.values)
+        for (final cost in trip.expenses)
+          if (cost.id == ticked.costId) cost,
+    ];
+    back.keys.forEach(trip.ticked[item.id]!.remove);
+    trip.expenses.removeWhere(costs.contains);
+    ui.changed();
+    ui.offerUndo(tr('Više nije plaćeno: {0}', [item.title]), () {
+      (trip.ticked[item.id] ??= {}).addAll(back);
+      trip.expenses.addAll(costs);
+      ui.changed();
+    });
+    return;
+  }
+  final all = tickDays(item);
+  costSheet(
+    ui,
+    trip,
+    title: item.title,
+    action: tr('Dodaj u troškove'),
+    category: item.category,
+    guess: item.cost,
+    days: day == null ? all : const [],
+    daysDone: {for (final each in all) if (tickedOn(trip, item, each)) each},
+    done: (cost, chosen) {
+      item.place?.expenseId = cost.id;
+      (trip.ticked[item.id] ??= {})[day ?? chosen ?? open.first] =
+          Ticked(at: DateTime.now().millisecondsSinceEpoch, costId: cost.id);
+    },
+  );
+}
 
-web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
+web.HTMLElement _card(Ui ui, Trip trip, NextUp item, int? day) {
   final detail = item.detail;
-  final written = _written(trip, item);
-  return el('div', cls: item.past ? 'poll card attack-card past' : 'poll card attack-card',
-      children: [
+  // Green when ticked off on this day, or on Sve once every day is; on Sve a
+  // thing ticked on some of its days has a green edge.
+  final share = day == null ? tickedShare(trip, item) : (tickedOn(trip, item, day) ? 1.0 : 0.0);
+  final done = share == 1;
+  return el('div', cls: [
+    'poll card attack-card',
+    if (item.past) 'past',
+    if (done) 'done' else if (share > 0) 'partly',
+  ].join(' '), children: [
     el('div', cls: 'attack-top', children: [
     el('div', cls: 'grow', children: [
       if (_when(trip, item).isNotEmpty) el('div', cls: 'small', text: _when(trip, item)),
@@ -114,17 +161,9 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item) {
     ]),
     // Writes it in Troškovi, as a new cost: what it cost, who paid, for whom.
     button(
-      cls: written ? 'icon-button cost-tick on' : 'icon-button cost-tick',
+      cls: done ? 'icon-button cost-tick on' : 'icon-button cost-tick',
       ariaLabel: tr('Dodaj u troškove: {0}', [item.title]),
-      onTap: () => costSheet(
-        ui,
-        trip,
-        title: item.title,
-        action: tr('Dodaj u troškove'),
-        category: item.category,
-        guess: item.cost,
-        done: (cost) => item.place?.expenseId = cost.id,
-      ),
+      onTap: () => _tick(ui, trip, item, day),
       children: [icon('check', size: 20)],
     ),
     ]),
@@ -167,6 +206,21 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
   ];
   ui.attackKept =
       shown == null ? null : (trip: trip.id, day: shown, ids: {for (final item in chosen) item.id});
+  final view = shown != null ? 'd$shown' : openWeek != null ? 'w$openWeek' : 'all';
+  final order = ui.attackOrder;
+  final List<NextUp> ordered;
+  if (order != null && order.trip == trip.id && order.view == view) {
+    final byId = {for (final item in chosen) item.id: item};
+    ordered = [
+      for (final id in order.ids)
+        if (byId[id] case final item?) item,
+      for (final item in chosen)
+        if (!order.ids.contains(item.id)) item,
+    ];
+  } else {
+    ordered = tickedLast(trip, chosen, shown);
+  }
+  ui.attackOrder = (trip: trip.id, view: view, ids: [for (final item in ordered) item.id]);
   void pick(int? next) {
     next == null ? ui.attackDays.remove(trip.id) : ui.attackDays[trip.id] = next;
     if (next == null) ui.attackWeeks.remove(trip.id);
@@ -211,6 +265,6 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
     else if (chosen.isEmpty)
       el('p', cls: 'soft pad gap-top',
           text: shown == null ? tr('Za ovaj tjedan još ništa nije dogovoreno.') : tr('Za ovaj dan još ništa nije dogovoreno.')),
-    for (final item in chosen) _card(ui, trip, item),
+    for (final item in ordered) _card(ui, trip, item, shown),
   ]);
 }
