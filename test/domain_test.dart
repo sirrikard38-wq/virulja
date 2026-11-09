@@ -573,6 +573,29 @@ void main() {
     });
   });
 
+  test('a category of Hrana i piće thrown away takes its costs along, undo brings them back', () {
+    final bar = Place(id: 'p', kind: PlaceKind.club, name: 'Bar', customKindId: 'k', expenseId: 'r');
+    final trip = visTrip()
+      ..places.add(bar)
+      ..polls.add(Poll(id: 'q', title: 'Bar', single: true, options: []))
+      ..budgets['food:k'] = 5000
+      ..budgets['food:restaurant'] = 1000
+      ..ticked['q'] = {0: const Ticked(at: 1, costId: 't')}
+      ..expenses.addAll([
+        Expense(id: 'r', title: 'Bar', amount: 900, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food),
+        Expense(id: 'x', title: 'Ručak', amount: 300, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food),
+        Expense(id: 't', title: 'Bar', amount: 700, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food),
+      ]);
+    final back = dropFoodKindCosts(trip, 'k', [bar]);
+    expect(trip.expenses.map((cost) => cost.id), ['x']);
+    expect(trip.budgets, {'food:restaurant': 1000});
+    expect(trip.ticked, isEmpty);
+    back();
+    expect(trip.expenses.map((cost) => cost.id), ['r', 'x', 't']);
+    expect(trip.budgets['food:k'], 5000);
+    expect(trip.ticked['q']![0]!.costId, 't');
+  });
+
   group('drive', () {
     test('fuel counts both ways and every car', () {
       final drive = Drive(

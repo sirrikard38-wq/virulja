@@ -95,6 +95,43 @@ const String dishesKind = 'dishes';
 /// `Trip.budgets`. A database key cannot have a slash.
 String foodBudgetKey(String kind) => 'food:$kind';
 
+/// Takes out of [trip] all that a category of Hrana i piće thrown away cost:
+/// its Planirani trošak po osobi ([kind]), and of its [places] the costs
+/// Razdijeli and the ticks of Plan napada wrote, with the ticks. Returns what
+/// brings it all back, for undo.
+void Function() dropFoodKindCosts(Trip trip, String kind, List<Place> places) {
+  final things = {
+    for (final place in places) place.id,
+    for (final poll in trip.polls)
+      if (places.any((place) => isAboutPlace(poll, place))) poll.id,
+  };
+  final ticks = {
+    for (final id in things)
+      if (trip.ticked.remove(id) case final days?) id: days,
+  };
+  final costIds = {
+    for (final place in places)
+      if (place.expenseId case final id?) id,
+    for (final days in ticks.values)
+      for (final tick in days.values)
+        if (tick.costId case final id?) id,
+  };
+  final costs = [
+    for (final (at, cost) in trip.expenses.indexed)
+      if (costIds.contains(cost.id)) (at, cost),
+  ];
+  trip.expenses.removeWhere((cost) => costIds.contains(cost.id));
+  final key = foodBudgetKey(kind);
+  final planned = trip.budgets.remove(key);
+  return () {
+    for (final (at, cost) in costs) {
+      trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
+    }
+    trip.ticked.addAll(ticks);
+    if (planned != null) trip.budgets[key] = planned;
+  };
+}
+
 /// The categories of Hrana i piće that can cost something: the dishes, the
 /// app's own kinds of place, the group's own, and any a place still names.
 Set<String> foodKinds(Trip trip) => {

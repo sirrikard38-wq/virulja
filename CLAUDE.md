@@ -247,7 +247,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the category before it, and nothing of that category shows under the field.
 - Hrana i piće: while a category is held, a bin stands at the top in the middle; let go
   over it and it goes with a puff of sparks and the usual undo. One the group made goes
-  with its places; one of the app's own is hidden on this phone (`AppData.hiddenKinds`)
+  with its places, its Planirani trošak po osobi and the costs its places wrote
+  (Razdijeli, ticks of Plan napada), all back with undo (`dropFoodKindCosts`,
+  2026-11-09); one of the app's own is hidden on this phone (`AppData.hiddenKinds`)
   and comes back when one of that name is added.
 - Bars move only by dragging their round knob (or a video's piece); a tap elsewhere on a
   bar changes nothing.

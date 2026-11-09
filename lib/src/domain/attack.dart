@@ -158,6 +158,9 @@ void renamePoll(Trip trip, Poll poll, String title) {
 
 bool _isAbout(Poll poll, Place place) => poll.single && poll.title == place.name;
 
+/// Whether [poll] is the yes or no poll about [place].
+bool isAboutPlace(Poll poll, Place place) => _isAbout(poll, place);
+
 /// Whether [place] is in Plan napada: put there from Hrana i piće or, in older
 /// versions, through its poll.
 bool placeInAttack(Trip trip, Place place) =>

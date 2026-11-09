@@ -569,11 +569,14 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
     if (custom != null) {
       final at = trip.customKinds.indexOf(custom);
       final places = [for (final place in trip.places) if (item.holds(place)) place];
+      // What it cost goes with it: its plan and the costs of its places.
+      final costsBack = dropFoodKindCosts(trip, key, places);
       trip.places.removeWhere(item.holds);
       trip.customKinds.remove(custom);
       restore = () {
         trip.customKinds.insert(at.clamp(0, trip.customKinds.length), custom);
         trip.places.addAll(places);
+        costsBack();
       };
     } else {
       ui.data.hiddenKinds.putIfAbsent(trip.id, () => {}).add(key);
