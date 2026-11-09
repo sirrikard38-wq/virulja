@@ -239,7 +239,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
 - Hrana i piće: a new dish has its name on half the row, growing with the text,
   then Cijena, Porcija and Gdje in one row (Smještaj: Cijena po noći in "€ po osobi",
-  Do plaže and Ocjena in one row too); Gdje says "Link" in grey, and a dish
+  Do plaže and Ocjena in one row too, `stay-facts`; a unit of words stands on two small
+  lines and a unit box keeps only the room its unit takes, measured, so the number shows
+  on a 320 px phone); Gdje says "Link" in grey, and a dish
   with one has the link icon to Google Maps (a name typed there is looked up in the
   trip's city). The field for a new category stands lower, Dodaj kategoriju in the
   middle of the screen (`_toMiddle`).

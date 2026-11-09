@@ -467,6 +467,13 @@ html.held, html.held body { overscroll-behavior: none; }
 .form-row > .field.two-thirds { flex: 2 1 0; }
 .form-row.thirds { flex-wrap: wrap; }
 /* Price, portions and where of a dish: always one row, the portions narrow. */
+/* Boxes side by side in one row keep their room for what is typed. */
+.form-row.one-line .input { padding-left: 8px; }
+.form-row.one-line .unit { right: 6px; font-size: 12px; }
+/* A unit of words, as € po osobi, stands on two small lines. */
+.form-row.one-line .unit { white-space: normal; line-height: 1.05; text-align: right; max-width: 42px; }
+.form-row.one-line.stay-facts > .field.wide { flex: 1.25 1 0; }
+.form-row.one-line.stay-facts > .field.narrow { flex: .875 1 0; }
 .form-row.one-line > .field { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .form-row.one-line > .field.narrow { flex: .65 1 0; }
 .form-row.one-line > .field.wide { flex: 1.35 1 0; }

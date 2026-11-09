@@ -273,14 +273,24 @@ List<web.HTMLElement> foldSection(Ui ui, String key, String title, List<web.HTML
 
 /// A field with its unit in dark letters at the right, inside the box.
 web.HTMLElement unitField(String label, web.HTMLInputElement control, String unit,
-        {bool tight = true}) =>
-    el('label', cls: tight ? 'field tight' : 'field', children: [
-      web.document.createTextNode(label),
-      el('span', cls: 'unit-box', children: [
-        control..style.paddingRight = 'calc(${unit.length}ch + 18px)',
-        el('span', cls: 'unit', text: unit),
-      ]),
-    ]);
+        {bool tight = true}) {
+  final mark = el('span', cls: 'unit', text: unit);
+  control.style.paddingRight = 'calc(${unit.length}ch + 18px)';
+  // Once drawn, the box keeps only the room its unit really takes, so a
+  // narrow box still shows what is typed.
+  void fit() {
+    final width = mark.getBoundingClientRect().width;
+    if (width > 0) control.style.paddingRight = '${(width + 12).ceil()}px';
+  }
+
+  // A box in a folded adder is measured when it is first touched.
+  scheduleMicrotask(fit);
+  control.onFocus.listen((_) => fit());
+  return el('label', cls: tight ? 'field tight' : 'field', children: [
+    web.document.createTextNode(label),
+    el('span', cls: 'unit-box', children: [control, mark]),
+  ]);
+}
 
 web.HTMLElement checkbox(String label, web.HTMLInputElement box) =>
     el('label', cls: 'check', children: [box, web.document.createTextNode(label)]);
