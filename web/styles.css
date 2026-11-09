@@ -340,6 +340,8 @@ html.held, html.held body { overscroll-behavior: none; }
   font-size: 14px;
 }
 .chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
+/* In a row (Anketa, Plan napada) a chip keeps its width when on: the words thicken with a shadow, not a bolder face. */
+.row .chip.on { font-weight: inherit; text-shadow: 0.4px 0 0 currentColor, -0.4px 0 0 currentColor; }
 /* While the chosen colour glides from one chip to the next. The words stay the
    same weight there, so the chips keep their width and nothing shifts. */
 .chips { position: relative; }
