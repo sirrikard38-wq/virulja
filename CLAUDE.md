@@ -39,11 +39,13 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - Opened anew, the app shows VIRULJA rising letter by letter in the middle for about
-  3 s and starts on the trips (`showSplash`, a `sessionStorage` mark), over a step of its
-  own (`#/start`, which shows the trips too), so that Putovanja is not the first step
-  and going back to it wipes the way forward as everywhere; on the very first step it
-  could not, and a swipe from the right edge went on to Postavke (2026-11-08). A newer
-  version never loads while a step back settles (`_settling`); a reload for a
+  3 s and starts on the trips (`showSplash`, a `sessionStorage` mark). Putovanja is the
+  very first step, so a swipe back there only stretches the page; a step of its own
+  under it (`#/start`, 2026-11-08) gave a white screen on that swipe (2026-11-09).
+  Back on the first step, the way forward is wiped by a copy of the screen put after
+  it and a step back onto it (`copy` in the history state); a swipe forward reaches
+  only that copy and steps back again. Without it a swipe from the right edge went on
+  to Postavke. A newer version never loads while a step back settles (`_settling`); a reload for a
   newer version keeps the screen and shows no splash.
 - The bottom bar has two places: Putovanja and Postavke (a screwdriver, `tool`). Past
   trips stand at the very bottom of Putovanja as "Prošla putovanja", always there, with a

@@ -76,10 +76,22 @@ class ViruljaApp {
     web.document.addEventListener('gesturestart', ((web.Event event) => event.preventDefault()).toJS);
     final known = _stepOf();
     known == null ? _markStep() : _step = known;
-    // Opened anew, Putovanja stands on a step of its own over the first one,
-    // so that going back to it wipes the way forward as on any other screen.
-    final state = web.window.history.state.dartify();
-    _firstStep = state is Map && state['afterStart'] == true ? _step - 1 : _step;
+    _firstStep = _step;
+    // A swipe forward from the first step reaches only its copy (`_settleAfterBack`):
+    // the app steps back to the first one out of sight, so there is still
+    // nothing before it.
+    web.window.addEventListener(
+      'popstate',
+      ((web.Event event) {
+        final state = web.window.history.state.dartify();
+        if (state is! Map || state['copy'] != true) return;
+        _settlingSince = DateTime.now();
+        Timer(const Duration(milliseconds: 400), () {
+          final now = web.window.history.state.dartify();
+          if (now is Map && now['copy'] == true) web.window.history.back();
+        });
+      }).toJS,
+    );
     // Every change of screen comes through the address, as phones expect.
     web.window.addEventListener(
       'hashchange',
@@ -282,11 +294,23 @@ class ViruljaApp {
   /// phone is done, the app goes one more step back out of sight and puts the
   /// screen shown back as a fresh step, through the address. That wipes the way
   /// forward out and leaves no copy of a screen to swipe back to. On the first
-  /// step of all there is nothing before, so the way forward stays.
+  /// step of all there is nothing before, and there must stay nothing, or a
+  /// swipe back would lead to a white screen: there the app puts a copy of the
+  /// screen as the step forward, which wipes out the rest, and steps back onto
+  /// the first one. A swipe forward then reaches only the same screen.
   void _settleAfterBack(String landed) {
     final step = _stepOf();
-    if (step == null || step <= _firstStep) return;
+    if (step == null) return;
     _settlingSince = DateTime.now();
+    if (step <= _firstStep) {
+      Timer(const Duration(milliseconds: 400), () {
+        if (web.window.location.hash != landed || _rewinding != null) return;
+        // The same address on both: no change of screen, nothing redrawn.
+        web.window.history.pushState({'step': step + 1, 'copy': true}.jsify(), '', landed);
+        web.window.history.back();
+      });
+      return;
+    }
     Timer(const Duration(milliseconds: 400), () {
       if (web.window.location.hash != landed || _rewinding != null) return;
       _rewinding = landed;
