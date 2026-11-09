@@ -13,20 +13,25 @@ import 'plan_cost.dart';
 import 'swipes.dart';
 import 'widgets.dart';
 
-String _number(double value) =>
-    value == value.roundToDouble() ? '${value.toInt()}' : '$value'.replaceAll('.', ',');
+String _number(double value) => value == value.roundToDouble()
+    ? '${value.toInt()}'
+    : '$value'.replaceAll('.', ',');
 
 double? _parseNumber(String text) =>
     double.tryParse(text.trim().replaceAll(',', '.'));
 
 /// Spremi and Odustani under a form opened with a brush.
-web.HTMLElement _saveOrCancel(Ui ui, void Function() save) =>
-    el('div', attrs: {'style': 'display:flex;gap:12px;align-items:center;margin:10px 20px 0'}, children: [
+web.HTMLElement _saveOrCancel(Ui ui, void Function() save) => el('div', attrs: {
+      'style': 'display:flex;gap:12px;align-items:center;margin:10px 20px 0'
+    }, children: [
       primaryButton(tr('Spremi'), save, wide: false),
-      button(cls: 'text-button', text: tr('Odustani'), onTap: () {
-        ui.editingLeg = null;
-        ui.rerender();
-      }),
+      button(
+          cls: 'text-button',
+          text: tr('Odustani'),
+          onTap: () {
+            ui.editingLeg = null;
+            ui.rerender();
+          }),
     ]);
 
 /// Changes what was written of a part of the journey: what and what it costs.
@@ -94,12 +99,15 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
   final drive = editing?.drive ?? Drive(roundTrip: false);
   final like = editing?.drive ?? (last.isEmpty ? drive : last.last);
   final route = input(value: drive.route);
-  final km = numberInput(value: drive.kilometres == 0 ? '' : _number(drive.kilometres));
+  final km = numberInput(
+      value: drive.kilometres == 0 ? '' : _number(drive.kilometres));
   final litres = numberInput(value: _number(like.litresPer100));
   final fuel = amountInput(value: plainAmount(like.fuelPrice));
   final cars = numberInput(value: '${like.cars}');
-  final tolls = amountInput(value: drive.tolls == 0 ? '' : plainAmount(drive.tolls));
-  final ferry = amountInput(value: drive.ferry == 0 ? '' : plainAmount(drive.ferry));
+  final tolls =
+      amountInput(value: drive.tolls == 0 ? '' : plainAmount(drive.tolls));
+  final ferry =
+      amountInput(value: drive.ferry == 0 ? '' : plainAmount(drive.ferry));
   final fuelCost = el('div', cls: 'price');
   final total = el('div', cls: 'price');
 
@@ -159,7 +167,9 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
       unitField(tr('Cestarine'), tolls, moneySign()),
       unitField(tr('Trajekt'), ferry, moneySign()),
     ]),
-    el('div', cls: 'row', attrs: {'style': 'margin-top:8px'}, children: [
+    el('div', cls: 'row', attrs: {
+      'style': 'margin-top:8px'
+    }, children: [
       el('div', cls: 'grow', text: tr('Gorivo')),
       fuelCost,
     ]),
@@ -169,8 +179,10 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
     ]),
   ];
   return editing == null
-      ? adder(tr('Dodaj prijevoz autom'), [...fields, primaryButton(tr('Dodaj'), save)])
-      : el('div', cls: 'leg-edit', children: [...fields, _saveOrCancel(ui, save)]);
+      ? adder(tr('Dodaj prijevoz autom'),
+          [...fields, primaryButton(tr('Dodaj'), save)])
+      : el('div',
+          cls: 'leg-edit', children: [...fields, _saveOrCancel(ui, save)]);
 }
 
 /// One part of the journey on its day: what it costs, Rezervirano (which puts
@@ -185,7 +197,9 @@ List<web.HTMLElement> _legRow(Ui ui, Trip trip, Leg leg) => [
           if (leg.reserved) ui.toast(tr('Dodano u Plan napada.'));
         }, on: leg.reserved),
         button(
-          cls: ui.editingLeg == leg.id ? 'icon-button brush-small on' : 'icon-button brush-small',
+          cls: ui.editingLeg == leg.id
+              ? 'icon-button brush-small on'
+              : 'icon-button brush-small',
           ariaLabel: tr('Uredi: {0}', [legName(leg)]),
           onTap: () {
             ui.editingLeg = ui.editingLeg == leg.id ? null : leg.id;
@@ -196,7 +210,9 @@ List<web.HTMLElement> _legRow(Ui ui, Trip trip, Leg leg) => [
         removeWithUndo(ui, trip.legs, leg, legName(leg)),
       ]),
       if (ui.editingLeg == leg.id)
-        leg.drive != null ? _driveForm(ui, trip, leg.dayIndex, editing: leg) : _legEdit(ui, leg),
+        leg.drive != null
+            ? _driveForm(ui, trip, leg.dayIndex, editing: leg)
+            : _legEdit(ui, leg),
     ];
 
 web.HTMLElement routeScreen(Ui ui, Trip trip) {
@@ -220,15 +236,14 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
           removeWithUndo(ui, trip.stops, stop, stop.title),
         ]),
       for (final leg in legs) ..._legRow(ui, trip, leg),
-      // Both add to this day.
-      _driveForm(ui, trip, shown),
-      _addLeg(ui, trip, shown),
     ]);
   }
 
   // A swipe sideways goes to the day before or after, as the chips do.
   final sliding = el('div', cls: 'slide-page', children: [dayPage(day)]);
-  final dayRow = el('div', cls: 'chips', attrs: {'style': 'padding-top:0'}, children: [
+  final dayRow = el('div', cls: 'chips', attrs: {
+    'style': 'padding-top:0'
+  }, children: [
     for (var i = 0; i < trip.dayCount; i++)
       chip(tr('{0} Dan', [i + 1]), () {
         ui.routeDay = i;
@@ -245,14 +260,25 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     topBar(tr('Prijevoz')),
     dayRow,
     el('div', cls: 'slide-clip', children: [sliding]),
-    el('div', cls: 'stick-bottom', children: [
-      el('div', cls: 'row', attrs: {'style': 'padding:0'}, children: [
-        el('div', cls: 'grow', text: tr('Prijevoz ukupno')),
-        el('div', cls: 'price', text: euros(all)),
+    // At the bottom, standing still whatever the day: the adders for the day
+    // shown, right over the line of the foot.
+    el('div', cls: 'route-foot', children: [
+      _driveForm(ui, trip, day),
+      _addLeg(ui, trip, day),
+      el('div', cls: 'stick-bottom', children: [
+        el('div', cls: 'row', attrs: {
+          'style': 'padding:0'
+        }, children: [
+          el('div', cls: 'grow', text: tr('Prijevoz ukupno')),
+          el('div', cls: 'price', text: euros(all)),
+        ]),
+        if (alsoIn(all) case final also when also.isNotEmpty)
+          el('div',
+              cls: 'small also',
+              attrs: {'style': 'text-align:right'},
+              text: also),
+        planCost(ui, trip, CostCategory.transport.name),
       ]),
-      if (alsoIn(all) case final also when also.isNotEmpty)
-        el('div', cls: 'small also', attrs: {'style': 'text-align:right'}, text: also),
-      planCost(ui, trip, CostCategory.transport.name),
     ]),
   ]);
   // The chip of the day shown stands whole in sight, the last one too.
@@ -267,6 +293,7 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
     slideIn(step);
   },
       peek: (step) => dayPage(day + step),
-      follow: (step, fraction) => mark.follow(dayRow.children.item(day + step) as web.HTMLElement?, fraction));
+      follow: (step, fraction) => mark.follow(
+          dayRow.children.item(day + step) as web.HTMLElement?, fraction));
   return page;
 }

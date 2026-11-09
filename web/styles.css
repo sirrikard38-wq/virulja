@@ -405,6 +405,8 @@ html.held, html.held body { overscroll-behavior: none; }
    is in place or comes in beside another during a swipe. */
 .slide-page { display: flow-root; }
 .swipe-area .stick-bottom { margin-top: auto; }
+.swipe-area > .route-foot { margin-top: auto; }
+.route-foot > .stick-bottom { margin-top: 12px; }
 
 /* The foot of a page: at the bottom of the screen, or after all there is. */
 .stick-bottom {

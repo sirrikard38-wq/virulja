@@ -80,9 +80,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   `.slide-page` is its own block (`flow-root`), so the space over its first line is the
   same beside and in place; otherwise the page jumped 10 px up as it landed. A page of
   another height grows or shrinks smoothly as it lands (`_easeHeight`), so what stands
-  under it, as in Prijevoz, glides. A swipe anywhere on Prijevoz changes the day; its
-  adders slide with the day, and the foot (Prijevoz ukupno, Planirani trošak po osobi)
-  stands at the bottom of the screen as in every category of Plan. A swipe is off while a form is open, as a redraw would wipe it.
+  under it, as in Prijevoz, glides. A swipe anywhere on Prijevoz changes the day. Its
+  adders stand still at the bottom, right over the line of the foot (Prijevoz ukupno,
+  Planirani trošak po osobi), which is at the bottom of the screen as in every
+  category of Plan (`route-foot`; said twice, 2026-11-09). Sliding with the day,
+  they jumped as a day with transport landed. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
 
