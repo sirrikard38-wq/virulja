@@ -70,7 +70,12 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   as it is typed, with no way back counted), added to the day shown, each with a
   brush that opens it for changing (`Ui.editingLeg`). The one car a trip had before
   moves to the first day (`moveOldDrive`, id `drive`, both ways when it counted
-  them). At the foot, over "Planirani trošak po osobi", "Prijevoz ukupno" adds up
+  them). Dodaj prijevoz has Relacija on a third of a row, growing with its text, then
+  Prijevoz and Iznos half and half; any two may stay empty (`Leg.route`; the name is
+  "Prijevoz - Relacija", `legName`). Once a part (a car too) has a price, Dodaj or
+  the brush's Spremi opens the cost box, as Dodaj trošak, and writes it in Troškovi
+  under its name (`Leg.expenseId`, `_afterLeg`); a cost written follows its name and
+  price, and goes with the part, undo bringing both back (2026-11-09). At the foot, over "Planirani trošak po osobi", "Prijevoz ukupno" adds up
   every day, and that is what the tile Prijevoz in Plan shows (2026-11-09), unlike
   the other tiles, which show only what was spent.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a

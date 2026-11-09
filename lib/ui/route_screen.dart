@@ -7,6 +7,7 @@ import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import 'context.dart';
+import 'cost_sheet.dart';
 import 'dom.dart';
 import 'icons.dart';
 import 'plan_cost.dart';
@@ -27,27 +28,72 @@ web.HTMLElement _saveOrCancel(Ui ui, void Function() save) => el('div', attrs: {
           }),
     ]);
 
-/// Changes what was written of a part of the journey: what and what it costs.
-web.HTMLElement _legEdit(Ui ui, Leg leg) {
+/// After a part of the journey is added or changed, its cost in Troškovi. With
+/// a price and no cost written yet, the cost box asks who paid and whom it is
+/// for, as Dodaj trošak does, named as the part is; with one written, it
+/// follows the name and the price.
+void _afterLeg(Ui ui, Trip trip, Leg leg) {
+  final written = legExpense(trip, leg);
+  if (written != null) {
+    written.title = legName(leg);
+    if (leg.cost > 0) written.amount = leg.cost;
+  }
+  ui.changed();
+  if (written != null || leg.cost <= 0) return;
+  costSheet(
+    ui,
+    trip,
+    title: legName(leg),
+    question: tr('Unesi iznos'),
+    action: tr('Dodaj trošak'),
+    category: CostCategory.transport,
+    guess: leg.cost,
+    done: (cost, _) => leg.expenseId = cost.id,
+  );
+}
+
+/// Relacija on a third of its row, growing with its text; under it Prijevoz
+/// and Iznos, half and half. Any of them may stay empty, for the brush later.
+List<web.HTMLElement> _legFields(
+        web.HTMLInputElement title, web.HTMLInputElement route, web.HTMLInputElement cost) =>
+    [
+      el('div', cls: 'form-row', children: [
+        growWithText(field(tr('Relacija'), route, tight: true)..classList.add('third'), route,
+            least: 1 / 3),
+      ]),
+      el('div', cls: 'form-row', children: [
+        field(tr('Prijevoz'), title, tight: true),
+        unitField(tr('Iznos'), cost, moneySign()),
+      ]),
+    ];
+
+/// Whether anything at all was typed of a part of the journey.
+bool _anyTyped(List<web.HTMLInputElement> boxes, web.HTMLElement error) {
+  if (boxes.any((box) => box.value.trim().isNotEmpty)) return true;
+  error.textContent = tr('Upiši prijevoz, relaciju ili iznos.');
+  return false;
+}
+
+/// Changes what was written of a part of the journey: what, where and what it
+/// costs.
+web.HTMLElement _legEdit(Ui ui, Trip trip, Leg leg) {
   final title = input(value: leg.title);
+  final route = input(value: leg.route, placeholder: tr('Početak - kraj'));
   final cost = amountInput(value: leg.cost == 0 ? '' : plainAmount(leg.cost));
   final error = errorLine();
 
   void save() {
-    if (title.value.trim().isEmpty) {
-      error.textContent = tr('Upiši kojim prijevozom i kamo.');
-      return;
-    }
+    if (!_anyTyped([title, route, cost], error)) return;
     leg
       ..title = title.value.trim()
+      ..route = route.value.trim()
       ..cost = parseEuros(cost.value) ?? 0;
     ui.editingLeg = null;
-    ui.changed();
+    _afterLeg(ui, trip, leg);
   }
 
   return el('div', cls: 'leg-edit', children: [
-    field(tr('Prijevoz i relacija'), title),
-    unitField(tr('Trošak za grupu'), cost, moneySign(), tight: false),
+    ..._legFields(title, route, cost),
     error,
     _saveOrCancel(ui, save),
   ]);
@@ -56,26 +102,25 @@ web.HTMLElement _legEdit(Ui ui, Leg leg) {
 /// A part of the journey other than by car, on [day].
 web.HTMLElement _addLeg(Ui ui, Trip trip, int day) {
   final title = input();
+  final route = input(placeholder: tr('Početak - kraj'));
   final cost = amountInput();
   final error = errorLine();
 
   void add() {
-    if (title.value.trim().isEmpty) {
-      error.textContent = tr('Upiši kojim prijevozom i kamo.');
-      return;
-    }
-    trip.legs.add(Leg(
+    if (!_anyTyped([title, route, cost], error)) return;
+    final leg = Leg(
       id: ui.store.newId(),
       title: title.value.trim(),
+      route: route.value.trim(),
       cost: parseEuros(cost.value) ?? 0,
       dayIndex: day,
-    ));
-    ui.changed();
+    );
+    trip.legs.add(leg);
+    _afterLeg(ui, trip, leg);
   }
 
   return adder(tr('Dodaj prijevoz'), [
-    field(tr('Prijevoz i relacija'), title),
-    unitField(tr('Trošak za grupu'), cost, moneySign(), tight: false),
+    ..._legFields(title, route, cost),
     error,
     primaryButton(tr('Dodaj'), add),
   ]);
@@ -128,22 +173,25 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
 
   void save() {
     final now = typed();
+    final Leg leg;
     if (editing == null) {
-      trip.legs.add(Leg(
+      leg = Leg(
         id: ui.store.newId(),
         title: now.route,
         cost: now.totalCost,
         dayIndex: day,
         drive: now,
-      ));
+      );
+      trip.legs.add(leg);
     } else {
-      editing
+      leg = editing
         ..title = now.route
         ..cost = now.totalCost
         ..drive = now;
       ui.editingLeg = null;
     }
-    ui.changed();
+    // Its cost goes in Troškovi as that of any other transport.
+    _afterLeg(ui, trip, leg);
   }
 
   final fields = <web.Node>[
@@ -195,12 +243,18 @@ List<web.HTMLElement> _legRow(Ui ui, Trip trip, Leg leg) => [
           },
           children: [icon('brush', size: 20)],
         ),
-        removeWithUndo(ui, trip.legs, leg, legName(leg)),
+        // Its cost in Troškovi goes with it, and comes back with undo.
+        removeWithUndo(ui, trip.legs, leg, legName(leg), also: () {
+          final at = trip.expenses.indexWhere((cost) => cost.id == leg.expenseId);
+          if (at < 0) return () {};
+          final cost = trip.expenses.removeAt(at);
+          return () => trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
+        }),
       ]),
       if (ui.editingLeg == leg.id)
         leg.drive != null
             ? _driveForm(ui, trip, leg.dayIndex, editing: leg)
-            : _legEdit(ui, leg),
+            : _legEdit(ui, trip, leg),
     ];
 
 web.HTMLElement routeScreen(Ui ui, Trip trip) {

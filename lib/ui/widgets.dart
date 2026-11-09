@@ -130,9 +130,10 @@ web.HTMLInputElement amountInput({String value = '', bool fit = false}) {
 
 web.CanvasRenderingContext2D? _ruler;
 
-/// Lets [field], on half of its row, grow with the text in [box] up to the
-/// whole row; a longer text then scrolls in the box as usual.
-web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box) {
+/// Lets [field], on half of its row ([least] of it), grow with the text in
+/// [box] up to the whole row; a longer text then scrolls in the box as usual.
+web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box,
+    {double least = .5}) {
   void fit() {
     final row = field.parentElement;
     if (row == null || !field.isConnected) return;
@@ -141,8 +142,8 @@ web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box) {
     ruler.font = web.window.getComputedStyle(box).font;
     final need = ruler.measureText(box.value).width + 32;
     final whole = row.clientWidth.toDouble();
-    final half = whole / 2 - 5;
-    field.style.flex = '0 0 ${need.clamp(half, whole)}px';
+    final short = whole * least - 5;
+    field.style.flex = '0 0 ${need.clamp(short, whole)}px';
   }
 
   box.onInput.listen((_) => fit());

@@ -507,6 +507,20 @@ void main() {
       expect(plannedCost(trip, CostCategory.transport), before);
     });
 
+    test('a part of the journey is named by what and where, and keeps its cost', () {
+      expect(legName(Leg(id: 'a', title: 'Trajekt', route: 'Split - Hvar')), 'Trajekt - Split - Hvar');
+      expect(legName(Leg(id: 'b', title: 'Bus')), 'Bus');
+      expect(legName(Leg(id: 'c', title: '', route: 'Split - Hvar')), 'Split - Hvar');
+      expect(legName(Leg(id: 'd', title: '', cost: 500)), 'Prijevoz');
+      final trip = visTrip();
+      final leg = Leg(id: 'e', title: 'Trajekt', route: 'Split - Hvar', cost: 500, expenseId: 'x');
+      final back = Leg.fromJson(leg.toJson());
+      expect(back.route, 'Split - Hvar');
+      expect(back.expenseId, 'x');
+      expect(legExpense(trip, back), isNull, reason: 'no such cost in Troškovi');
+      expect(Leg.fromJson({'id': 'f', 'title': 'Bus'}).toJson().containsKey('route'), isFalse);
+    });
+
     test('each day shows its own', () {
       final trip = visTrip()
         ..legs.addAll([

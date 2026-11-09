@@ -460,9 +460,11 @@ class Leg {
   Leg({
     required this.id,
     required this.title,
+    this.route = '',
     this.cost = 0,
     this.dayIndex = 0,
     this.drive,
+    this.expenseId,
   });
 
   // An older one may still say `reserved` and have `dayVotes`, from when
@@ -470,8 +472,10 @@ class Leg {
   factory Leg.fromJson(Json json) => Leg(
         id: json['id'] as String,
         title: json['title'] as String,
+        route: json['route'] as String? ?? '',
         cost: json['cost'] as int? ?? 0,
         dayIndex: json['dayIndex'] as int? ?? 0,
+        expenseId: json['expenseId'] as String?,
         drive: json['drive'] is Map
             ? Drive.fromJson(Map<String, dynamic>.from(json['drive'] as Map))
             : null,
@@ -479,8 +483,15 @@ class Leg {
 
   final String id;
 
-  /// What and where; for a car, its route.
+  /// What it is, such as Trajekt; for a car, its route.
   String title;
+
+  /// From where to where, such as Split - Hvar; it may stay empty. Older ones
+  /// have it in [title].
+  String route;
+
+  /// The cost in Troškovi it wrote once its price was known.
+  String? expenseId;
 
   /// For the whole group; for a car, worked out from [drive].
   int cost;
@@ -498,13 +509,25 @@ class Leg {
         'cost': cost,
         'dayIndex': dayIndex,
         if (drive != null) 'drive': drive!.toJson(),
+        if (route.isNotEmpty) 'route': route,
+        if (expenseId != null) 'expenseId': expenseId,
       };
 }
 
 /// How a part of the journey is called: a car by its route.
 String legName(Leg leg) {
-  if (leg.drive == null) return leg.title;
-  return leg.title.isEmpty ? tr('Auto') : tr('Auto: {0}', [leg.title]);
+  if (leg.drive != null) return leg.title.isEmpty ? tr('Auto') : tr('Auto: {0}', [leg.title]);
+  // "Trajekt - Split - Hvar", or only what was typed of the two.
+  final parts = [leg.title, leg.route].where((part) => part.isNotEmpty);
+  return parts.isEmpty ? tr('Prijevoz') : parts.join(' - ');
+}
+
+/// The cost in Troškovi that [leg] wrote, while it is still there.
+Expense? legExpense(Trip trip, Leg leg) {
+  for (final cost in trip.expenses) {
+    if (cost.id == leg.expenseId) return cost;
+  }
+  return null;
 }
 
 /// The parts of the journey on [day] in Prijevoz, in the order added.
