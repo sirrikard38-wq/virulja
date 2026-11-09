@@ -422,6 +422,9 @@ html.held, html.held body { overscroll-behavior: none; }
    is in place or comes in beside another during a swipe. */
 .slide-page { display: flow-root; }
 .swipe-area .stick-bottom, .fill-page > .stick-bottom { margin-top: auto; }
+/* However long the page, its foot stands apart from what is above it, as the
+   foot of Smještaj does: the auto margin alone leaves nothing once the page is full. */
+.fill-page > :has(+ .stick-bottom), .swipe-area > :has(+ .stick-bottom) { margin-bottom: 32px; }
 .swipe-area > .route-foot { margin-top: auto; }
 .route-foot > .stick-bottom { margin-top: 12px; }
 

@@ -269,7 +269,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the whole card of a bought list greys, and bought lists stand under Nova lista;
   one just bought folds and stands first of them. A bought list is drawn folded,
   with +, and "Kupljeno · amount · who paid" under its name; a tap still opens it.
-  The foot says "Trošak dućana", every cost of the kind Dućan in Troškovi, the
+  The foot stands 32 px under the last list, as every foot does however long
+  the page (2026-11-09). The foot says "Trošak dućana", every cost of the kind Dućan in Troškovi, the
   bought lists and those written by hand, which show in no list (`shopSpent`), over
   "Planirani trošak po osobi", as Prijevoz ukupno does; the tile Dućan in Plan
   shows the same.
