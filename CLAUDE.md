@@ -270,7 +270,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   through `inMoney`.
 - Forms of Smještaj and of Dodaj trošak: the name on half the width, growing with its text
   up to the whole row (`growWithText`), then rows of two or three fields (`form-row`,
-  `thirds`), units in dark letters inside the box (`unitField`). Vrsta and Tko je platio
+  `thirds`), units in dark letters inside the box (`unitField`). Every box with a
+  unit has it so, grey inside on the right, never in brackets in its label
+  (said twice; 2026-11-09), "Planirani trošak po osobi" too. Vrsta and Tko je platio
   are as wide as their words; with no room the payer goes to the next row. Amount boxes
   write 1.250,50 while it is typed, the cursor kept after the same digits, and a typed
   dot is the decimal comma (`typedAmount`, `amountInput`); the cost box is as wide as
@@ -293,6 +295,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Entering a code with the name (any capitals) and phone number of someone already in
   that trip brings this phone in as that person, at once (`_sameMember`, `rejoin`).
 - A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).
+  Plaćeno has the strong line over it, as "Ukupno za tebe" has under it, and
+  "+ Dodaj trošak" right under its heading.
 - Under "Tko kome duguje" comes first "Ukupno za tebe": all you owe each person added
   up, in red with a minus, and what each owes you, in green (`balanceOf`). The box of a
   tick in Plan napada starts with an empty amount.

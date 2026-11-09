@@ -26,9 +26,10 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key, {String? label}) {
     final text = amount.value;
     measure.textContent = text.length < 3 ? '000' : text;
     final width = measure.offsetWidth;
+    // Room for the digits, the padding and the sign inside on the right.
     amount.style.width = width > 0
-        ? '${width + 22}px'
-        : 'calc(${max(3, text.length)}ch + 22px)';
+        ? 'calc(${width + 22}px + ${moneySign().length}ch + 8px)'
+        : 'calc(${max(3, text.length) + moneySign().length}ch + 30px)';
   }
 
   amount.onInput.listen((event) {
@@ -59,8 +60,10 @@ web.HTMLElement planCost(Ui ui, Trip trip, String key, {String? label}) {
   return el('div', cls: 'plan-cost-foot', children: [
     el('label', cls: 'plan-cost', children: [
       el('span', cls: 'grow', text: label ?? tr('Planirani trošak po osobi:')),
-      amount,
-      el('span', cls: 'price', text: moneySign()),
+      el('span', cls: 'unit-box', children: [
+        amount..style.paddingRight = 'calc(${moneySign().length}ch + 16px)',
+        el('span', cls: 'unit', text: moneySign()),
+      ]),
       measure,
     ]),
   ]);

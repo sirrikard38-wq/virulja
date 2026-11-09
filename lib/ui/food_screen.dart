@@ -129,7 +129,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
     ]),
     el('div', cls: 'fields', children: [
       field(tr('Ocjena'), rating, tight: true),
-      field(inMoney(tr('Cijena po osobi (€)')), price, tight: true),
+      unitField(tr('Cijena po osobi'), price, moneySign()),
     ]),
     field(tr('Bilješka'), note),
     error,
@@ -181,7 +181,7 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   return adder(tr('Dodaj jelo'), [
     field(tr('Jelo'), name),
     el('div', cls: 'fields', children: [
-      field(inMoney(tr('Cijena (€)')), price, tight: true),
+      unitField(tr('Cijena'), price, moneySign()),
       field(tr('Porcija'), servings, tight: true),
     ]),
     field(tr('Gdje'), place),

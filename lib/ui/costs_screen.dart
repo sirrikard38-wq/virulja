@@ -286,8 +286,9 @@ web.HTMLElement costsScreen(Ui ui, Trip trip) {
         (from: payment.fromId, to: payment.toId, row: _paidRow(ui, trip, payment)),
     ]))
       row,
+    el('hr', cls: 'split'),
+    sectionTitle(tr('Plaćeno')),
     _addExpense(ui, trip),
-    if (recent.isNotEmpty) sectionTitle(tr('Plaćeno')),
     for (final expense in recent) _paidCost(ui, trip, expense),
   ]);
 }

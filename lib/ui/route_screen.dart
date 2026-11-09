@@ -47,7 +47,7 @@ web.HTMLElement _legEdit(Ui ui, Leg leg) {
 
   return el('div', cls: 'leg-edit', children: [
     field(tr('Prijevoz i relacija'), title),
-    field(inMoney(tr('Trošak za grupu (€)')), cost),
+    unitField(tr('Trošak za grupu'), cost, moneySign(), tight: false),
     error,
     _saveOrCancel(ui, save),
   ]);
@@ -75,7 +75,7 @@ web.HTMLElement _addLeg(Ui ui, Trip trip, int day) {
 
   return adder(tr('Dodaj prijevoz'), [
     field(tr('Prijevoz i relacija'), title),
-    field(inMoney(tr('Trošak za grupu (€)')), cost),
+    unitField(tr('Trošak za grupu'), cost, moneySign(), tight: false),
     error,
     primaryButton(tr('Dodaj'), add),
   ]);
@@ -146,16 +146,16 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
   final fields = <web.Node>[
     field(tr('Ruta'), route),
     el('div', cls: 'fields', children: [
-      field(tr('Kilometara'), km, tight: true),
+      unitField(tr('Udaljenost'), km, 'km'),
       field(tr('Broj auta'), cars, tight: true),
     ]),
     el('div', cls: 'fields', children: [
-      field(tr('Potrošnja (l/100 km)'), litres, tight: true),
-      field(inMoney(tr('Cijena goriva (€/l)')), fuel, tight: true),
+      unitField(tr('Potrošnja'), litres, 'l/100 km'),
+      unitField(tr('Cijena goriva'), fuel, '${moneySign()}/l'),
     ]),
     el('div', cls: 'fields', children: [
-      field(inMoney(tr('Cestarine (€)')), tolls, tight: true),
-      field(inMoney(tr('Trajekt (€)')), ferry, tight: true),
+      unitField(tr('Cestarine'), tolls, moneySign()),
+      unitField(tr('Trajekt'), ferry, moneySign()),
     ]),
     el('div', cls: 'row', attrs: {'style': 'margin-top:8px'}, children: [
       el('div', cls: 'grow', text: tr('Gorivo')),

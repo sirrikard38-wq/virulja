@@ -247,10 +247,14 @@ List<web.HTMLElement> foldSection(Ui ui, String key, String title, List<web.HTML
 }
 
 /// A field with its unit in dark letters at the right, inside the box.
-web.HTMLElement unitField(String label, web.HTMLInputElement control, String unit) =>
-    el('label', cls: 'field tight', children: [
+web.HTMLElement unitField(String label, web.HTMLInputElement control, String unit,
+        {bool tight = true}) =>
+    el('label', cls: tight ? 'field tight' : 'field', children: [
       web.document.createTextNode(label),
-      el('span', cls: 'unit-box', children: [control, el('span', cls: 'unit', text: unit)]),
+      el('span', cls: 'unit-box', children: [
+        control..style.paddingRight = 'calc(${unit.length}ch + 18px)',
+        el('span', cls: 'unit', text: unit),
+      ]),
     ]);
 
 web.HTMLElement checkbox(String label, web.HTMLInputElement box) =>
