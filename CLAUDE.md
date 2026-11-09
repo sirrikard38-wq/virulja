@@ -238,7 +238,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
   deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
 - Hrana i piće: a new dish has its name on half the row, growing with the text,
-  then Cijena, Porcija and Gdje in one row; Gdje says "Link" in grey, and a dish
+  then Cijena, Porcija and Gdje in one row (Smještaj: Cijena po noći in "€ po osobi",
+  Do plaže and Ocjena in one row too); Gdje says "Link" in grey, and a dish
   with one has the link icon to Google Maps (a name typed there is looked up in the
   trip's city). The field for a new category stands lower, Dodaj kategoriju in the
   middle of the screen (`_toMiddle`).
@@ -253,7 +254,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   and comes back when one of that name is added.
 - Bars move only by dragging their round knob (or a video's piece); a tap elsewhere on a
   bar changes nothing.
-- Names of polls, places and dishes are typed in place (`editableName`); a place or dish
+- Names of polls are typed in place (`editableName`); a place or dish of Hrana i piće
+  changes, name too, only with its brush (`Ui.editingFood`, row and form in one outline,
+  the green brush saves), and not while in Plan napada: it says to take it out first
+  (2026-11-09). A place or dish
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
 - Dućan (`shop_screen.dart`, `Trip.shopLists`): named lists of things to buy, each with a

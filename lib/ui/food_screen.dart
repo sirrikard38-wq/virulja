@@ -43,13 +43,11 @@ void Function() _takePolls(Trip trip, String name) {
   };
 }
 
-/// A new name for a place or dish, which its polls take along.
-void _rename(Ui ui, Trip trip, String old, String name, void Function(String) set) {
+/// A new name for a place or dish goes to its polls, found by name.
+void _renamePolls(Trip trip, String old, String name) {
   for (final poll in trip.polls) {
     if (poll.single && poll.title == old) poll.title = name;
   }
-  set(name);
-  ui.changed();
 }
 
 /// Puts [name] up for a vote, once; a second tap takes the poll back.
@@ -62,41 +60,91 @@ web.HTMLElement _voteChip(Ui ui, Trip trip, String name) {
   }, on: polled);
 }
 
-web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
+/// The brush of a place or dish: it opens its form, and, open and green,
+/// saves it. Something in Plan napada is not changed: it has to come out first.
+web.HTMLElement _brush(Ui ui, String id, String name, bool inAttack,
+        ({List<web.Node> fields, void Function() save})? edit) =>
+    button(
+      cls: edit != null ? 'icon-button brush-small on' : 'icon-button brush-small',
+      ariaLabel: edit != null ? tr('Spremi') : tr('Uredi: {0}', [name]),
+      onTap: () {
+        if (edit != null) {
+          edit.save();
+          return;
+        }
+        if (inAttack) {
+          ui.toast(tr('Prvo makni iz Plana napada.'));
+          return;
+        }
+        ui.editingFood = id;
+        ui.rerender();
+      },
+      children: [icon('brush', size: 20)],
+    );
+
+/// A row, and while its brush is open the row and its form in one outline.
+web.HTMLElement _withForm(web.HTMLElement row, ({List<web.Node> fields, void Function() save})? edit) =>
+    edit == null
+        ? row
+        : el('div', cls: 'card leg-open', children: [
+            row,
+            el('div', cls: 'leg-edit', children: edit.fields),
+          ]);
+
+web.HTMLElement _placeRow(Ui ui, Trip trip, Place place, CustomKind? custom) {
   final link = place.link;
   final inAttack = placeInAttack(trip, place);
-  return el('div', cls: 'row', children: [
-    el('div', cls: 'grow', children: [
-      editableName(place.name, tr('Naziv'),
-          (name) => _rename(ui, trip, place.name, name, (name) => place.name = name)),
-      el('div', cls: 'small', text: _placeFacts(place)),
-      el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
-        _voteChip(ui, trip, place.name),
-        chip(tr('Plan napada'), () {
-          setPlaceInAttack(trip, place, !inAttack, ui.meIn(trip));
-          if (!inAttack) ui.toast(tr('Dodano u Plan napada.'));
-          ui.changed();
-        }, on: inAttack),
+  final edit = ui.editingFood == place.id && !inAttack
+      ? _placeFields(ui, trip, custom, editing: place)
+      : null;
+  return _withForm(
+      el('div', cls: 'row', children: [
+        el('div', cls: 'grow', children: [
+          el('div', cls: 'name', text: place.name),
+          el('div', cls: 'small', text: _placeFacts(place)),
+          el('div', attrs: {'style': 'display:flex;gap:8px;margin-top:6px'}, children: [
+            _voteChip(ui, trip, place.name),
+            chip(tr('Plan napada'), () {
+              setPlaceInAttack(trip, place, !inAttack, ui.meIn(trip));
+              if (!inAttack) {
+                ui.toast(tr('Dodano u Plan napada.'));
+                if (ui.editingFood == place.id) ui.editingFood = null;
+              }
+              ui.changed();
+            }, on: inAttack),
+          ]),
+        ]),
+        if (link != null) linkIcon(link, tr('Otvori {0}', [place.name])),
+        _brush(ui, place.id, place.name, inAttack, edit),
+        removeWithUndo(ui, trip.places, place, place.name, also: () => _takePolls(trip, place.name)),
       ]),
-    ]),
-    if (link != null) linkIcon(link, tr('Otvori {0}', [place.name])),
-    removeWithUndo(ui, trip.places, place, place.name, also: () => _takePolls(trip, place.name)),
-  ]);
+      edit);
 }
 
-web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
-  final name = input();
-  final rating = numberInput();
-  final price = input(); // a phone's number keys have no dash for a range
-  final note = input();
-  final link = input(type: 'url');
+/// A price as typed in its box: a range as 10-30, one price as itself.
+String _typedPrice(Place place) => switch ((place.priceLow, place.priceHigh, place.pricePerPerson)) {
+      (final low?, final high?, _) => '${plainAmount(low)}-${plainAmount(high)}',
+      (_, _, final price?) => plainAmount(price),
+      _ => '',
+    };
+
+/// The fields of a place, for Dodaj mjesto or for the one of [editing] to
+/// change, with what saves them.
+({List<web.Node> fields, void Function() save}) _placeFields(Ui ui, Trip trip, CustomKind? custom,
+    {Place? editing}) {
+  final name = input(value: editing?.name ?? '');
+  final rating = numberInput(value: editing?.rating?.toString().replaceAll('.', ',') ?? '');
+  // A phone's number keys have no dash for a range.
+  final price = input(value: editing == null ? '' : _typedPrice(editing));
+  final note = input(value: editing?.note ?? '');
+  final link = input(type: 'url', value: editing?.link ?? '');
   final error = errorLine();
   link.onInput.listen((_) {
     final found = nameFromLink(link.value);
     if (found != null && name.value.trim().isEmpty) name.value = found;
   });
 
-  void add() {
+  void save() {
     if (name.value.trim().isEmpty) {
       error.textContent = tr('Upiši naziv mjesta.');
       return;
@@ -108,35 +156,48 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
     }
     final address = link.value.trim();
     final remark = note.value.trim();
-    trip.places.add(Place(
-      id: ui.store.newId(),
-      kind: ui.placeKind,
-      customKindId: custom?.id,
-      name: name.value.trim(),
-      rating: parseDecimal(rating.value),
-      pricePerPerson: cost?.middle,
-      priceLow: cost?.low,
-      priceHigh: cost?.high,
-      note: remark.isEmpty ? null : remark,
-      link: address.isEmpty ? null : address,
-    ));
+    final place = editing ??
+        Place(id: ui.store.newId(), kind: ui.placeKind, customKindId: custom?.id, name: '');
+    // A new name goes to its poll too, as they are found by name.
+    if (editing != null) _renamePolls(trip, editing.name, name.value.trim());
+    place
+      ..name = name.value.trim()
+      ..rating = parseDecimal(rating.value)
+      ..pricePerPerson = cost?.middle
+      ..priceLow = cost?.low
+      ..priceHigh = cost?.high
+      ..note = remark.isEmpty ? null : remark
+      ..link = address.isEmpty ? null : address;
+    if (editing == null) trip.places.add(place);
+    ui.editingFood = null;
     ui.changed();
   }
 
-  return adder(tr('Dodaj mjesto'), [
-    el('div', cls: 'form-row', children: [
-      field(tr('Naziv'), name, tight: true)..classList.add('two-thirds'),
-      field(tr('Link'), link, tight: true),
-    ]),
-    el('div', cls: 'fields', children: [
-      field(tr('Ocjena'), rating, tight: true),
-      unitField(tr('Cijena po osobi'), price, moneySign()),
-    ]),
-    field(tr('Bilješka'), note),
-    error,
-    primaryButton(tr('Dodaj mjesto'), add),
-  ]);
+  return (
+    fields: [
+      el('div', cls: 'form-row', children: [
+        field(tr('Naziv'), name, tight: true)..classList.add('two-thirds'),
+        field(tr('Link'), link, tight: true),
+      ]),
+      el('div', cls: 'form-row', children: [
+        field(tr('Ocjena'), rating, tight: true),
+        unitField(tr('Cijena po osobi'), price, moneySign()),
+      ]),
+      el('div', cls: 'form-row', children: [field(tr('Bilješka'), note, tight: true)]),
+      error,
+    ],
+    save: save,
+  );
 }
+
+web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
+  final place = _placeFields(ui, trip, custom);
+  return adder(tr('Dodaj mjesto'), [...place.fields, primaryButton(tr('Dodaj mjesto'), place.save)]);
+}
+
+/// Whether the poll about [dish] is in Plan napada.
+bool _dishInAttack(Trip trip, Dish dish) =>
+    trip.polls.any((poll) => poll.single && poll.title == dish.name && poll.active);
 
 web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
   final place = dish.placeName;
@@ -144,66 +205,80 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
   // if any, and both open Google Maps.
   final isLink = place != null && (Uri.tryParse(place)?.hasScheme ?? false);
   final where = isLink ? nameFromLink(place) : place;
-  return el('div', cls: 'row', children: [
-    el('div', cls: 'grow', children: [
-      editableName(dish.name, tr('Naziv'),
-          (name) => _rename(ui, trip, dish.name, name, (name) => dish.name = name)),
-      el('div', cls: 'small', text: [
-        if (where != null) where,
-        '${dish.servings} × ${euros(dish.price)}',
-      ].join(' · ')),
-    ]),
-    el('div', cls: 'price', text: euros(dish.price * dish.servings)),
-    if (place != null)
-      linkIcon('${mapsOf(isLink ? place : '$place, ${trip.city}')}',
-          tr('Lokacija na Google Maps')),
-    _voteChip(ui, trip, dish.name),
-    removeWithUndo(ui, trip.dishes, dish, dish.name, also: () => _takePolls(trip, dish.name)),
-  ]);
+  final inAttack = _dishInAttack(trip, dish);
+  final edit = ui.editingFood == dish.id && !inAttack ? _dishFields(ui, trip, editing: dish) : null;
+  return _withForm(
+      el('div', cls: 'row', children: [
+        el('div', cls: 'grow', children: [
+          el('div', cls: 'name', text: dish.name),
+          el('div', cls: 'small', text: [
+            if (where != null) where,
+            '${dish.servings} × ${euros(dish.price)}',
+          ].join(' · ')),
+        ]),
+        el('div', cls: 'price', text: euros(dish.price * dish.servings)),
+        if (place != null)
+          linkIcon('${mapsOf(isLink ? place : '$place, ${trip.city}')}',
+              tr('Lokacija na Google Maps')),
+        _voteChip(ui, trip, dish.name),
+        _brush(ui, dish.id, dish.name, inAttack, edit),
+        removeWithUndo(ui, trip.dishes, dish, dish.name, also: () => _takePolls(trip, dish.name)),
+      ]),
+      edit);
 }
 
-web.HTMLElement _addDish(Ui ui, Trip trip) {
-  final name = input();
-  final price = amountInput();
-  final servings = numberInput(value: '1');
-  final place = input(placeholder: tr('Link'));
+/// The fields of a dish, for Dodaj jelo or for the one of [editing] to change.
+({List<web.Node> fields, void Function() save}) _dishFields(Ui ui, Trip trip, {Dish? editing}) {
+  final name = input(value: editing?.name ?? '');
+  final price = amountInput(value: editing == null ? '' : plainAmount(editing.price));
+  final servings = numberInput(value: '${editing?.servings ?? 1}');
+  final place = input(placeholder: tr('Link'), value: editing?.placeName ?? '');
   final error = errorLine();
   place.onInput.listen((_) {
     final found = nameFromLink(place.value);
     if (found != null && name.value.trim().isEmpty) name.value = found;
   });
 
-  void add() {
+  void save() {
     final cents = parseEuros(price.value);
     if (name.value.trim().isEmpty || cents == null) {
       error.textContent = tr('Upiši jelo i cijenu.');
       return;
     }
     final where = place.value.trim();
-    trip.dishes.add(Dish(
-      id: ui.store.newId(),
-      name: name.value.trim(),
-      price: cents,
-      servings: int.tryParse(servings.value.trim()) ?? 1,
-      placeName: where.isEmpty ? null : where,
-    ));
+    final dish = editing ?? Dish(id: ui.store.newId(), name: '', price: 0);
+    if (editing != null) _renamePolls(trip, editing.name, name.value.trim());
+    dish
+      ..name = name.value.trim()
+      ..price = cents
+      ..servings = int.tryParse(servings.value.trim()) ?? 1
+      ..placeName = where.isEmpty ? null : where;
+    if (editing == null) trip.dishes.add(dish);
+    ui.editingFood = null;
     ui.changed();
   }
 
-  return adder(tr('Dodaj jelo'), [
-    // The name on half the width, growing with its text; then price, portions
-    // and where, side by side.
-    el('div', cls: 'form-row', children: [
-      growWithText(field(tr('Jelo'), name, tight: true)..classList.add('half'), name),
-    ]),
-    el('div', cls: 'form-row one-line', children: [
-      unitField(tr('Cijena'), price, moneySign()),
-      field(tr('Porcija'), servings, tight: true)..classList.add('narrow'),
-      field(tr('Gdje'), place, tight: true)..classList.add('wide'),
-    ]),
-    error,
-    primaryButton(tr('Dodaj jelo'), add),
-  ]);
+  return (
+    fields: [
+      // The name on half the width, growing with its text; then price,
+      // portions and where, side by side.
+      el('div', cls: 'form-row', children: [
+        growWithText(field(tr('Jelo'), name, tight: true)..classList.add('half'), name),
+      ]),
+      el('div', cls: 'form-row one-line', children: [
+        unitField(tr('Cijena'), price, moneySign()),
+        field(tr('Porcija'), servings, tight: true)..classList.add('narrow'),
+        field(tr('Gdje'), place, tight: true)..classList.add('wide'),
+      ]),
+      error,
+    ],
+    save: save,
+  );
+}
+
+web.HTMLElement _addDish(Ui ui, Trip trip) {
+  final dish = _dishFields(ui, trip);
+  return adder(tr('Dodaj jelo'), [...dish.fields, primaryButton(tr('Dodaj jelo'), dish.save)]);
 }
 
 web.HTMLElement? get _chipRow => web.document.querySelector('.chips') as web.HTMLElement?;
@@ -609,7 +684,7 @@ web.HTMLElement foodScreen(Ui ui, Trip trip) {
         ]),
         if (its.isEmpty)
           el('p', cls: 'soft pad gap-top', text: tr('Još nema spremljenih mjesta.')),
-        for (final place in its) _placeRow(ui, trip, place),
+        for (final place in its) _placeRow(ui, trip, place, shown.custom),
         _addPlace(ui, trip, shown.custom),
       ],
     ]);

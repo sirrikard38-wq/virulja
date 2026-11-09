@@ -169,10 +169,10 @@ List<web.HTMLElement> _offerFields({
         field(tr('Link ponude'), link, tight: true),
         field(tr('Lokacija'), location, tight: true),
       ]),
-      el('div', cls: 'form-row thirds', children: [
-        unitField(tr('Cijena po noći'), price, moneySign()),
-        unitField(tr('Do plaže'), beach, 'm'),
-        unitField(tr('Ocjena'), rating, '/5'),
+      el('div', cls: 'form-row one-line', children: [
+        unitField(tr('Cijena po noći'), price, tr('{0} po osobi', [moneySign()]))..classList.add('wide'),
+        unitField(tr('Do plaže'), beach, 'm')..classList.add('narrow'),
+        unitField(tr('Ocjena'), rating, '/5')..classList.add('narrow'),
       ]),
     ];
 

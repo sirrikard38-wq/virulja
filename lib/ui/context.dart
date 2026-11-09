@@ -74,6 +74,9 @@ class Ui {
   /// The part of the journey whose brush is open in Prijevoz.
   String? editingLeg;
 
+  /// The place or dish whose brush is open in Hrana i piće.
+  String? editingFood;
+
   /// A new poll being made in Ankete, kept across redraws.
   PollDraft? pollDraft;
 
@@ -165,6 +168,7 @@ class Ui {
         editingLeg = null;
       case 'hrana':
         addingKind = false;
+        editingFood = null;
       case 'grupa':
         openFolds.removeAll(const ['language', 'look', 'currency']);
         noticesOpen = false;
