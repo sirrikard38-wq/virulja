@@ -360,10 +360,6 @@ List<NextUp> planOfAttack(Trip trip, DateTime now) {
             place: place),
     for (final poll in trip.polls)
       if (poll.active && placeOf(trip, poll) == null) fromPoll(poll),
-    for (final leg in trip.legs)
-      if (leg.reserved)
-        item(legName(leg), leg.dayVotes,
-            cost: leg.cost, category: CostCategory.transport, leg: leg),
   ];
   // Each thing keeps its place: votes, days and time never move it.
   return items;

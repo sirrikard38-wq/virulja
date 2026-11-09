@@ -206,8 +206,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   or no stays one answer per person (`Poll.single`), and in Plan napada the added answer
   with most votes shows. Ne and
   Možda never decide a poll.
-- Prijevoz: a part of the journey marked Rezervirano (`Leg.reserved`) goes into Plan
-  napada, where the group votes its day like anything else. Troškovi always shows
+- Prijevoz has no Rezervirano: what is written there is so, with no vote, and it
+  never goes into Plan napada (2026-11-09; `Leg.reserved` stays only in old data). Troškovi always shows
   Smještaj, Hrana i piće and Prijevoz. Categories of Hrana i piće go only in the bin.
 - On a trip's main tabs the settings button is in the corner (it scrolls away with the
   page, as do the speaker and the pin), the anthem's speaker under it,
@@ -282,6 +282,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   dot is the decimal comma (`typedAmount`, `amountInput`); the cost box is as wide as
   its number. A trip's settings fold Šifra putovanja too,
   above Obavijesti.
+- No blur at the top of any screen: an iPhone blurs what scrolls under its status
+  bar, so a strip of the page's colour stands there (`top-cover` in `index.html`),
+  and the cover photo starts under it (2026-11-09).
 - A box over the page holds it by stopping the finger's scroll (`holdPage`), never by
   pinning the body in place: that moved the page, and at its bottom an iPhone jolted
   (2026-11-05). A box taller than the screen scrolls itself.
@@ -302,7 +305,7 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   that trip brings this phone in as that person, at once (`_sameMember`, `rejoin`).
 - A tap on a paid cost in Troškovi opens it for changing (`Ui.editingExpense`).
   Plaćeno has the strong line over it, as "Ukupno za tebe" has under it, and
-  "+ Dodaj trošak" right under its heading.
+  "+ Dodaj trošak" right under its heading, with no gap.
 - Under "Tko kome duguje" comes first "Ukupno za tebe": all you owe each person added
   up, in red with a minus, and what each owes you, in green (`balanceOf`). The box of a
   tick in Plan napada starts with an empty amount.

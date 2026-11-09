@@ -482,6 +482,7 @@ details.adder summary { display: flex; align-items: center; gap: 8px; min-height
 details.adder summary::-webkit-details-marker { display: none; }
 details.adder.on-top { margin-top: 4px; }
 details.adder + details.adder { margin-top: 0; padding-top: 0; }
+hr.split + .section + details.adder { margin-top: 0; padding-top: 0; }
 details.adder.on-top summary { justify-content: flex-end; }
 .more-option { width: 38px; height: 38px; margin-left: auto; border: 1px solid var(--line); border-radius: 50%; color: var(--accent); }
 .more-option.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
@@ -531,6 +532,11 @@ details.adder .wide { width: 100%; }
 .mini .label { display: block; margin-top: 5px; font-size: 14px; overflow-wrap: anywhere; }
 .mini .small { display: block; font-size: 12px; }
 
+/* Under the status bar the page's colour stands still, so nothing scrolls
+   under it to be blurred; the cover starts below it. */
+.top-cover { position: fixed; top: 0; left: 0; right: 0; height: var(--top-safe); z-index: 30; background: var(--bg); pointer-events: none; }
+body:has(.watch) .top-cover { display: none; }
+.hero-photo, .hero-show { margin-top: var(--top-safe); }
 .hero { position: relative; }
 .hero-photo { display: block; width: 100%; height: 196px; object-fit: cover; background: var(--line); }
 .hero-blank { height: calc(var(--top-safe) + 64px); }

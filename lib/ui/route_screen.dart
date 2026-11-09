@@ -185,17 +185,12 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
           cls: 'leg-edit', children: [...fields, _saveOrCancel(ui, save)]);
 }
 
-/// One part of the journey on its day: what it costs, Rezervirano (which puts
-/// it into Plan napada), the brush that opens it for changing, and the x.
+/// One part of the journey on its day: what it costs, the brush that opens it
+/// for changing, and the x. It is so as written: no vote, not in Plan napada.
 List<web.HTMLElement> _legRow(Ui ui, Trip trip, Leg leg) => [
       el('div', cls: 'row', children: [
         el('div', cls: 'grow', text: legName(leg)),
         if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
-        chip(tr('Rezervirano'), () {
-          leg.reserved = !leg.reserved;
-          ui.changed();
-          if (leg.reserved) ui.toast(tr('Dodano u Plan napada.'));
-        }, on: leg.reserved),
         button(
           cls: ui.editingLeg == leg.id
               ? 'icon-button brush-small on'
