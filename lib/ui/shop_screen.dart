@@ -257,8 +257,11 @@ web.HTMLElement _editCard(Ui ui, Trip trip, ShopList list, {required bool draft}
 /// opens the list for changing, with an empty box at the bottom for more.
 web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
   if (ui.shopEditing == list.id) return _editCard(ui, trip, list, draft: false);
-  final open = ui.shopOpen.contains(list.id);
   final cost = trip.expenses.where((each) => each.id == list.expenseId).firstOrNull;
+  // A bought list is folded, with +, until a tap opens it on this visit; it
+  // remembers apart from being open while it was to buy.
+  final key = cost == null ? list.id : 'bought:${list.id}';
+  final open = ui.shopOpen.contains(key);
 
   web.HTMLElement itemRow(ShopItem item) => el('div', cls: 'shop-item-row', children: [
         tick(item.text, item.done, () {
@@ -274,14 +277,18 @@ web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
       button(
         cls: 'grow shop-fold',
         onTap: () {
-          open ? ui.shopOpen.remove(list.id) : ui.shopOpen.add(list.id);
+          open ? ui.shopOpen.remove(key) : ui.shopOpen.add(key);
           ui.rerender();
         },
         children: [
           icon(open ? 'minus' : 'plus', size: 20),
           el('span', cls: 'shop-name', children: [
             el('span', text: list.name),
-            if (cost != null) el('span', cls: 'small', text: tr('Kupljeno')),
+            // Kupljeno · 15 € · who paid.
+            if (cost != null)
+              el('span',
+                  cls: 'small',
+                  text: [tr('Kupljeno'), euros(cost.amount), ui.nameOf(cost.payerId)].join(' · ')),
           ]),
         ],
       )..setAttribute('aria-expanded', '$open'),

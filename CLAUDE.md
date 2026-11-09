@@ -262,7 +262,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
   bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`);
   the whole card of a bought list greys, and bought lists stand under Nova lista;
-  one just bought folds and stands first of them.
+  one just bought folds and stands first of them. A bought list is drawn folded,
+  with +, and "Kupljeno · amount · who paid" under its name; a tap still opens it.
   Kupljeno offers Poništi, which brings the list back where it was. A finger held
   on a list to buy carries it up or down (`movableUpDown` in `list_drag.dart`,
   `orderShopLists`). One whose Kupljeno is taken back stays
