@@ -293,8 +293,9 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       }, on: i == day),
   ]);
   final mark = SwipeMark(dayRow);
-  // All the days together: the cost of transport, shown on its tile in Plan.
-  final all = plannedCost(trip, CostCategory.transport);
+  // All the days together and what Troškovi has of the kind Prijevoz besides,
+  // shown on its tile in Plan.
+  final all = transportTotal(trip);
   // A swipe anywhere on Prijevoz goes to the day before or after; the foot
   // stays at the bottom of the screen.
   final page = el('div', cls: 'swipe-area', children: [

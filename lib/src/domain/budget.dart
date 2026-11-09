@@ -132,6 +132,24 @@ int plannedPlacesCost(Trip trip, Iterable<Place> places) => places
 int dishesCost(Trip trip) =>
     trip.dishes.fold(0, (sum, dish) => sum + dish.price * dish.servings);
 
+/// Prijevoz ukupno: every day's transport, each part at what its cost in
+/// Troškovi says once it has one, and every other cost of the kind Prijevoz
+/// written in Troškovi, which shows on no day.
+int transportTotal(Trip trip) {
+  final written = {for (final cost in trip.expenses) cost.id: cost};
+  final ofLegs = <String>{};
+  var sum = trip.drive.totalCost;
+  for (final leg in trip.legs) {
+    final cost = written[leg.expenseId];
+    if (cost != null) ofLegs.add(cost.id);
+    sum += cost?.amount ?? leg.cost;
+  }
+  for (final cost in trip.expenses) {
+    if (cost.category == CostCategory.transport && !ofLegs.contains(cost.id)) sum += cost.amount;
+  }
+  return sum;
+}
+
 /// The estimate for one [category]:
 ///  * stay: the chosen offer, every night;
 ///  * food: places in Plan napada for the whole group, plus the dishes to try;

@@ -407,10 +407,27 @@ void main() {
       expect(listsInOrder(trip).map((list) => list.id), ['d', 'a', 'c', 'b']);
       orderShopLists(trip, ['d', 'zz']); // not lists of the trip: nothing moves
       expect(trip.shopLists.map((list) => list.id), ['d', 'b', 'a', 'c']);
-      // Trošak dućana: only what the bought lists wrote.
-      trip.expenses.add(
-          Expense(id: 'o', title: 'Taksi', amount: 900, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.transport));
-      expect(shopSpent(trip), 100);
+      // Trošak dućana: every cost of the kind Dućan, not of another kind.
+      trip.expenses.addAll([
+        Expense(id: 'o', title: 'Taksi', amount: 900, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.transport),
+        Expense(id: 'h', title: 'Voda', amount: 50, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.shop),
+      ]);
+      expect(shopSpent(trip), 150);
+    });
+
+    test('Prijevoz ukupno: the parts, at their written cost, and other costs of Prijevoz', () {
+      final trip = visTrip()
+        ..legs.addAll([
+          Leg(id: 'a', title: 'Bus', cost: 1000, dayIndex: 0, expenseId: 'x'),
+          Leg(id: 'b', title: 'Vlak', cost: 500, dayIndex: 1),
+        ])
+        ..expenses.addAll([
+          // Changed in Troškovi: that is what counts.
+          Expense(id: 'x', title: 'Bus', amount: 1200, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.transport),
+          Expense(id: 't', title: 'Taksi', amount: 300, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.transport),
+          Expense(id: 'r', title: 'Ručak', amount: 9000, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.food),
+        ]);
+      expect(transportTotal(trip), 1200 + 500 + 300);
     });
 
     test('changing a trip\'s currency converts every amount in it', () {

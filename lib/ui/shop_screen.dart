@@ -355,7 +355,7 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
     ...toBuy,
     if (draft == null) newList else _editCard(ui, trip, draft, draft: true),
     for (final list in shown.bought) _listCard(ui, trip, list),
-    // At the foot, as in Prijevoz: what the bought lists cost together, over
+    // At the foot, as in Prijevoz: every cost of the kind Dućan together, over
     // what the group plans.
     el('div', cls: 'stick-bottom', children: [
       el('div', cls: 'row', attrs: {'style': 'padding:0'}, children: [

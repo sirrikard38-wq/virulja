@@ -76,8 +76,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the brush's Spremi opens the cost box, as Dodaj trošak, and writes it in Troškovi
   under its name (`Leg.expenseId`, `_afterLeg`); a cost written follows its name and
   price, and goes with the part, undo bringing both back (2026-11-09). At the foot, over "Planirani trošak po osobi", "Prijevoz ukupno" adds up
-  every day, and that is what the tile Prijevoz in Plan shows (2026-11-09), unlike
-  the other tiles, which show only what was spent.
+  every day, each part at its cost in Troškovi once written, and every other cost
+  of the kind Prijevoz written in Troškovi, which shows on no day (`transportTotal`);
+  the tile Prijevoz in Plan shows the same (2026-11-09).
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
   trip's tabs and the days of Plan puta. The next page comes along beside the one
   that goes, as far as the finger has gone (`peek`), and the green mark (the line under
@@ -264,7 +265,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the whole card of a bought list greys, and bought lists stand under Nova lista;
   one just bought folds and stands first of them. A bought list is drawn folded,
   with +, and "Kupljeno · amount · who paid" under its name; a tap still opens it.
-  The foot says "Trošak dućana", what the bought lists cost (`shopSpent`), over
+  The foot says "Trošak dućana", every cost of the kind Dućan in Troškovi, the
+  bought lists and those written by hand, which show in no list (`shopSpent`), over
   "Planirani trošak po osobi", as Prijevoz ukupno does; the tile Dućan in Plan
   shows the same.
   Kupljeno offers Poništi, which brings the list back where it was. A finger held

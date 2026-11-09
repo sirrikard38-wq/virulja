@@ -64,11 +64,11 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
       // Each shows only what was really spent on it.
       _tile(tr('Hrana i piće'), euros(budget.line(CostCategory.food).actual),
           () => ui.go(ui.tripRoute(trip, 'hrana'))),
-      // Dućan: what the bought lists cost, as Trošak dućana at its foot.
+      // Dućan: every cost of its kind, as Trošak dućana at its foot.
       _tile(tr('Dućan'), euros(shopSpent(trip)),
           () => ui.go(ui.tripRoute(trip, 'ducan'))),
-      // Prijevoz: all the days' transport together, as at the foot of Prijevoz.
-      _tile(tr('Prijevoz'), euros(plannedCost(trip, CostCategory.transport)),
+      // Prijevoz: as Prijevoz ukupno at its foot.
+      _tile(tr('Prijevoz'), euros(transportTotal(trip)),
           () => ui.go(ui.tripRoute(trip, 'put'))),
       _tile(tr('Smještaj'), euros(budget.line(CostCategory.stay).actual),
           () => ui.go(ui.tripRoute(trip, 'smjestaj'))),
