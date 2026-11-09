@@ -27,11 +27,14 @@ void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
         list
           ..expenseId = cost.id
           ..boughtAt = DateTime.now().millisecondsSinceEpoch;
+        // Folded, on top of the bought ones; Poništi opens it again.
+        final wasOpen = ui.shopOpen.remove(list.id);
         scheduleMicrotask(() => ui.offerUndo(tr('Kupljeno: {0}', [list.name]), () {
               trip.expenses.removeWhere((each) => each.id == cost.id);
               list
                 ..expenseId = null
                 ..boughtAt = null;
+              if (wasOpen) ui.shopOpen.add(list.id);
               ui.changed();
             }));
       },

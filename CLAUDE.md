@@ -259,7 +259,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (2026-11-09). No box lets the page behind
   it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
   bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`);
-  the whole card of a bought list greys, and bought lists stand under Nova lista.
+  the whole card of a bought list greys, and bought lists stand under Nova lista;
+  one just bought folds and stands first of them.
   Kupljeno offers Poništi, which brings the list back where it was. A finger held
   on a list to buy carries it up or down (`movableUpDown` in `list_drag.dart`,
   `orderShopLists`). One whose Kupljeno is taken back stays
