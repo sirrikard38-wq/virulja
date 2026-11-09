@@ -327,6 +327,31 @@ class ViruljaApp {
   DateTime? _leftAttack;
   static const Duration _attackMemory = Duration(seconds: 20);
 
+  /// When each screen was left. What is folded open on a screen stays open
+  /// when it is back within [_foldMemory], as after a look at the next tab;
+  /// later it is folded again (`Ui.closeFolds`).
+  final Map<String, DateTime> _leftAt = {};
+  static const Duration _foldMemory = Duration(seconds: 5);
+
+  /// The screen of [hash] as folds know it: a trip's section (its first tab
+  /// when it names none), or the page, such as `grupa`.
+  String _foldPlace(String? hash) {
+    final place = _Place(hash ?? '');
+    final id = place.tripId;
+    if (id == null) return place.page;
+    final trip = _data.tripById(id);
+    return place.section ?? (trip == null ? 'plan' : defaultTab(trip));
+  }
+
+  void _foldsOnMove(String? from, String to) {
+    final was = _foldPlace(from), comes = _foldPlace(to);
+    if (was == comes) return;
+    final now = DateTime.now();
+    _leftAt[was] = now;
+    final left = _leftAt.remove(comes);
+    if (left != null && now.difference(left) > _foldMemory) _ui.closeFolds(comes);
+  }
+
   /// Which step of the phone's history the app is on, counted from its start.
   int _step = 0;
 
@@ -552,9 +577,7 @@ class ViruljaApp {
       final leave = _ui.onLeave;
       _ui.onLeave = null;
       leave?.call();
-      _ui.openFolds.clear();
-      _ui.noticesOpen = false;
-      _ui.hiddenCodesOpen = false;
+      _foldsOnMove(_drawnHash, web.window.location.hash);
       final arriving = _Place(web.window.location.hash);
       final going = arriving.tripId == null ? null : _data.tripById(arriving.tripId!);
       if (going != null && arriving.section == 'put' && _Place(_drawnHash ?? '').section != 'put') {

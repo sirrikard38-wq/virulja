@@ -316,6 +316,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Codes in Postavke: the next trip first, past ones last; "Sakrij" hides one on this phone
   (`AppData.hiddenCodes`); with any hidden, a tap on the heading folds them open, faded,
   each with "Prikaži". The anthem takes sound files only. The page does not zoom.
+- What is folded open on a screen (presentations in Uspomene, lists of Dućan, a
+  card's week in Plan napada, Sortiraj, the folds of Postavke, a brush) stays open
+  when the screen is back within 5 s, as after a look at the next tab, and is folded
+  again when it was left for longer (`Ui.closeFolds`, `_foldMemory`; 2026-11-09).
 - A heading that folds a list open has + before it, and − while open. In Postavke,
   Jezik, Izgled and Valuta fold so under Obavijesti, and in a trip's settings
   Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).

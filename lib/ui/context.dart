@@ -136,6 +136,39 @@ class Ui {
   bool showPeople = false;
   PeopleFold? peopleFold;
 
+  /// Folds what is folded open on the screen [place] (a section of a trip,
+  /// or `grupa`), and closes its brushes: it was left for more than 5 s.
+  void closeFolds(String place) {
+    switch (place) {
+      case 'slike':
+        showsOpen = false;
+      case 'napad':
+        openWeek.clear();
+      case 'ducan':
+        shopOpen.clear();
+        shopAdding.clear();
+        shopEditing = null;
+      case 'smjestaj':
+        // As when Sortiraj is turned off by hand.
+        sortOpen = false;
+        offerSorts.clear();
+        editingOffer = null;
+      case 'troskovi':
+        editingExpense = null;
+      case 'put':
+        editingLeg = null;
+      case 'hrana':
+        addingKind = false;
+      case 'grupa':
+        openFolds.removeAll(const ['language', 'look', 'currency']);
+        noticesOpen = false;
+        hiddenCodesOpen = false;
+      case 'uredi':
+        openFolds.removeAll(const ['trip-code', 'travellers', 'trip-currency']);
+        noticesOpen = false;
+    }
+  }
+
   AppData get data => store.data;
 
   String get meId => data.meId!;
