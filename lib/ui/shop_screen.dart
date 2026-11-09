@@ -18,7 +18,6 @@ void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
       ui,
       trip,
       title: list.name,
-      question: tr('Unesi iznos'),
       action: tr('Kupljeno'),
       category: CostCategory.shop,
       done: (cost, _) {

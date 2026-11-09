@@ -44,7 +44,6 @@ void _afterLeg(Ui ui, Trip trip, Leg leg) {
     ui,
     trip,
     title: legName(leg),
-    question: tr('Unesi iznos'),
     action: tr('Dodaj trošak'),
     category: CostCategory.transport,
     guess: leg.cost,

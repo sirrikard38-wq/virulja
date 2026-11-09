@@ -80,7 +80,7 @@ void costSheet(
       button(cls: 'icon-button sheet-x', ariaLabel: tr('Zatvori'), onTap: close,
           children: [icon('close', size: 20)]),
       if (question != null) el('p', cls: 'label', text: question),
-      el('p', cls: question == null ? 'label' : 'small', text: title),
+      el('p', cls: question == null ? 'label sheet-title' : 'small', text: title),
       if (days.length > 1 || (days.length == 1 && days.first >= 0)) ...[
         el('p', cls: 'label', attrs: {'style': 'margin-top:6px'}, text: tr('Koji dan?')),
         el('div', cls: 'checks', attrs: {'style': 'margin:0'}, children: [

@@ -161,9 +161,12 @@ html.held, html.held body { overscroll-behavior: none; }
 .sheet-card { max-height: calc(100dvh - var(--bottom-safe) - 48px); overflow-y: auto; overscroll-behavior: contain; }
 .sheet-card .ticks { padding: 0; }
 .sheet-card .field { margin-left: 0; margin-right: 0; }
-.fit-amount .unit-box { display: inline-block; }
+/* Iznos over its box, a little apart, the box as wide as its number. */
+.fit-amount .unit-box { display: block; width: fit-content; margin-top: 8px; }
 .fit-amount .unit-box .input { width: auto; min-width: 0; }
 .sheet-card .label, .sheet-card .small { margin: 0; }
+/* With no question over it, the name is the box's title. */
+.sheet-card .sheet-title { font-size: 18px; padding-right: 36px; }
 .offer-edit { margin-top: 10px; }
 .cost-edit { margin: 0 20px 12px; }
 .time-picker { display: flex; align-items: center; gap: 4px; }
