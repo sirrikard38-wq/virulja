@@ -935,6 +935,16 @@ List<ShopList> listsInOrder(Trip trip) {
   ];
 }
 
+/// What the bought lists of Dućan cost together: the costs their Kupljeno
+/// wrote in Troškovi.
+int shopSpent(Trip trip) {
+  final ids = {
+    for (final list in trip.shopLists)
+      if (list.expenseId != null) list.expenseId,
+  };
+  return trip.expenses.where((cost) => ids.contains(cost.id)).fold(0, (sum, cost) => sum + cost.amount);
+}
+
 /// Puts the lists of [ids] in that order, each in a place one of them had in
 /// [Trip.shopLists]; the others stay where they are.
 void orderShopLists(Trip trip, List<String> ids) {

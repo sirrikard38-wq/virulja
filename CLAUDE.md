@@ -264,6 +264,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the whole card of a bought list greys, and bought lists stand under Nova lista;
   one just bought folds and stands first of them. A bought list is drawn folded,
   with +, and "Kupljeno · amount · who paid" under its name; a tap still opens it.
+  The foot says "Trošak dućana", what the bought lists cost (`shopSpent`), over
+  "Planirani trošak po osobi", as Prijevoz ukupno does; the tile Dućan in Plan
+  shows the same.
   Kupljeno offers Poništi, which brings the list back where it was. A finger held
   on a list to buy carries it up or down (`movableUpDown` in `list_drag.dart`,
   `orderShopLists`). One whose Kupljeno is taken back stays

@@ -355,6 +355,16 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
     ...toBuy,
     if (draft == null) newList else _editCard(ui, trip, draft, draft: true),
     for (final list in shown.bought) _listCard(ui, trip, list),
-    planCost(ui, trip, CostCategory.shop.name),
+    // At the foot, as in Prijevoz: what the bought lists cost together, over
+    // what the group plans.
+    el('div', cls: 'stick-bottom', children: [
+      el('div', cls: 'row', attrs: {'style': 'padding:0'}, children: [
+        el('div', cls: 'grow', text: tr('Trošak dućana')),
+        el('div', cls: 'price', text: euros(shopSpent(trip))),
+      ]),
+      if (alsoIn(shopSpent(trip)) case final also when also.isNotEmpty)
+        el('div', cls: 'small also', attrs: {'style': 'text-align:right'}, text: also),
+      planCost(ui, trip, CostCategory.shop.name),
+    ]),
   ]);
 }

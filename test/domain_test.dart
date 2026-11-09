@@ -407,6 +407,10 @@ void main() {
       expect(listsInOrder(trip).map((list) => list.id), ['d', 'a', 'c', 'b']);
       orderShopLists(trip, ['d', 'zz']); // not lists of the trip: nothing moves
       expect(trip.shopLists.map((list) => list.id), ['d', 'b', 'a', 'c']);
+      // Trošak dućana: only what the bought lists wrote.
+      trip.expenses.add(
+          Expense(id: 'o', title: 'Taksi', amount: 900, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.transport));
+      expect(shopSpent(trip), 100);
     });
 
     test('changing a trip\'s currency converts every amount in it', () {

@@ -496,6 +496,7 @@ const Map<String, List<String>> _texts = {
   'Više nije kupljeno': ['No longer bought', 'Artık alınmadı'],
   'Kupljeno': ['Bought', 'Alındı'],
   'Kupljeno: {0}': ['Bought: {0}', 'Alındı: {0}'],
+  'Trošak dućana': ['Shopping cost', 'Alışveriş masrafı'],
   'Unesi iznos': ['Enter the amount', 'Tutarı gir'],
   'Upiši iznos.': ['Type the amount.', 'Tutarı yaz.'],
   'Dućan': ['Shop', 'Market'],
