@@ -561,6 +561,12 @@ class ViruljaApp {
 
   void _applyTheme() {
     final root = web.document.documentElement!;
+    // index.html reads it before anything is drawn, the next time.
+    try {
+      web.window.localStorage.setItem('theme', _data.theme.name);
+    } on Object {
+      // No storage: the look comes once the app has loaded.
+    }
     switch (_data.theme) {
       case ThemeChoice.system:
         root.removeAttribute('data-theme');

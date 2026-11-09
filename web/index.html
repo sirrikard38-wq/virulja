@@ -23,10 +23,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500&family=Cormorant+Garamond:wght@600;700&family=Karla:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // The look chosen in Postavke, before anything is drawn: without it the
+    // first picture came in the phone's own look and turned a moment later.
+    try {
+      var look = localStorage.getItem('theme');
+      if (look === 'light' || look === 'dark') document.documentElement.setAttribute('data-theme', look);
+    } catch (e) {}
+  </script>
   <script defer src="main.dart.js"></script>
 </head>
 <body>
   <div id="app"><noscript>VIRULJA treba JavaScript.</noscript></div>
   <div class="top-cover" aria-hidden="true"></div>
+  <!-- VIRULJA on opening, in the page itself, so it is the very first picture:
+       added by the app, it came only once the app had loaded, after an empty
+       screen. main.dart takes it over; the app was only reloaded: no splash. -->
+  <div class="splash" id="splash" aria-hidden="true"><div class="splash-word"><span>V</span><span style="animation-delay:256ms">I</span><span style="animation-delay:512ms">R</span><span style="animation-delay:768ms">U</span><span style="animation-delay:1024ms">L</span><span style="animation-delay:1280ms">J</span><span style="animation-delay:1536ms">A</span></div></div>
+  <script>
+    try {
+      if (sessionStorage.getItem('opened')) document.getElementById('splash').remove();
+    } catch (e) {}
+  </script>
 </body>
 </html>

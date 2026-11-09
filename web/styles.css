@@ -212,6 +212,7 @@ html.held, html.held body { overscroll-behavior: none; }
 .splash-word { font-family: var(--display); font-size: 54px; font-weight: 700; letter-spacing: 8px; color: var(--accent); }
 .splash-word span { display: inline-block; opacity: 0; transform: translateY(16px); animation: splash-in .72s ease forwards; }
 @keyframes splash-in { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .splash-word span { animation-delay: 0s !important; } }
 /* A poll's top: its name, a gap, then the brush and the x in the corner. */
 .poll-top { display: flex; align-items: flex-start; gap: 6px; }
 .poll-gap { flex: 1 1 0; }

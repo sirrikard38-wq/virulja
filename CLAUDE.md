@@ -39,7 +39,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - `lib/ui/cloud.dart`: sharing, on top of the tested logic in `lib/src/domain/tree.dart`,
   `trip_tree.dart` and `session.dart`.
 - Opened anew, the app shows VIRULJA rising letter by letter in the middle for about
-  3 s and starts on the trips (`showSplash`, a `sessionStorage` mark). Putovanja is the
+  3 s and starts on the trips (`showSplash`, a `sessionStorage` mark). The splash is in
+  `index.html` itself, so it is the first picture, and the look chosen in Postavke
+  comes from `localStorage` before anything is drawn: added by the app once it had
+  loaded, it came after a dark flash (2026-11-09). Putovanja is the
   very first step, so a swipe back there only stretches the page; a step of its own
   under it (`#/start`, 2026-11-08) gave a white screen on that swipe (2026-11-09).
   Back on the first step, the way forward is wiped by a copy of the screen put after
