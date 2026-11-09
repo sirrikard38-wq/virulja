@@ -461,22 +461,20 @@ class Leg {
     required this.id,
     required this.title,
     this.cost = 0,
-    this.reserved = false,
     this.dayIndex = 0,
     this.drive,
-    Map<int, Set<String>>? dayVotes,
-  }) : dayVotes = dayVotes ?? {};
+  });
 
+  // An older one may still say `reserved` and have `dayVotes`, from when
+  // Prijevoz went into Plan napada; they are left behind.
   factory Leg.fromJson(Json json) => Leg(
         id: json['id'] as String,
         title: json['title'] as String,
         cost: json['cost'] as int? ?? 0,
-        reserved: json['reserved'] as bool? ?? false,
         dayIndex: json['dayIndex'] as int? ?? 0,
         drive: json['drive'] is Map
             ? Drive.fromJson(Map<String, dynamic>.from(json['drive'] as Map))
             : null,
-        dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
@@ -494,20 +492,12 @@ class Leg {
   /// By car: the kilometres and fuel its cost is worked out from.
   Drive? drive;
 
-  /// Booked: it goes into Plan napada, on the day most vote for.
-  bool reserved;
-
-  /// Day -> who can go that day, once it is in Plan napada.
-  Map<int, Set<String>> dayVotes;
-
   Json toJson() => {
         'id': id,
         'title': title,
         'cost': cost,
-        'reserved': reserved,
         'dayIndex': dayIndex,
         if (drive != null) 'drive': drive!.toJson(),
-        'dayVotes': dayVotesToJson(dayVotes),
       };
 }
 

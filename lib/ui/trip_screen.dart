@@ -163,12 +163,37 @@ void _showTabChange(_TabChange change, int index) {
 }
 
 /// What one tab of a trip shows.
-web.HTMLElement _tabContent(Ui ui, Trip trip, String tab) => switch (tab) {
+web.HTMLElement _drawTab(Ui ui, Trip trip, String tab) => switch (tab) {
       'slike' => galleryTab(ui, trip),
       'ankete' => pollsTab(ui, trip),
       'napad' => attackTab(ui, trip),
       _ => _planTab(ui, trip),
     };
+
+/// The tab drawn beside the open one during a swipe. When the swipe lands on
+/// it, it is put in place as it is: drawing a long tab twice, once beside and
+/// once landed, made the phone stop for a moment. Any other drawing of a tab
+/// throws it away, so it is never older than the last change.
+({Trip trip, String tab, web.HTMLElement content, DateTime at})? _beside;
+
+web.HTMLElement _tabContent(Ui ui, Trip trip, String tab) {
+  final kept = _beside;
+  _beside = null;
+  if (kept != null &&
+      identical(kept.trip, trip) &&
+      kept.tab == tab &&
+      DateTime.now().difference(kept.at) < const Duration(seconds: 2)) {
+    kept.content.remove();
+    return kept.content;
+  }
+  return _drawTab(ui, trip, tab);
+}
+
+web.HTMLElement _peekTab(Ui ui, Trip trip, String tab) {
+  final content = _drawTab(ui, trip, tab);
+  _beside = (trip: trip, tab: tab, content: content, at: DateTime.now());
+  return content;
+}
 
 /// How many presentations, polls and plans there are, after the tab's name.
 Map<String, int> _tabCounts(Trip trip) => {
@@ -333,7 +358,7 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
     sliding,
     canMove,
     (step) => show(keys[index + step]),
-    peek: (step) => el('div', children: [_tabContent(ui, trip, keys[index + step])]),
+    peek: (step) => el('div', children: [_peekTab(ui, trip, keys[index + step])]),
     follow: (step, fraction) =>
         mark?.follow(tabsRow?.querySelectorAll('.tab').item(index + step) as web.HTMLElement?, fraction),
   );

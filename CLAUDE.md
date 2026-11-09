@@ -326,8 +326,13 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   it stays turned where it was whatever is picked (`Ui.attackRowLeft`). A day vote, the day chips, a poll's vote and its Plan
   napada tick redraw only the open tab in place, with the counts on the tabs
   (`redrawTripTab`): a full redraw made an iPhone jump to the top (2026-11-05).
+  A day vote or a week opened on a card draws only that card and the row of days
+  (`_redrawCard`): with 170 plans, drawing them all for one vote lagged (2026-11-09).
+  The tab drawn beside during a swipe of a trip's tabs is the one put in place when
+  it lands (`_beside`), not drawn twice.
 - Numbers are written 1.250,50, and a whole one with no ,00 (`decimal`, `plainAmount`),
-  in boxes too. Planirano is only what the group planned per person
+  in boxes too, and every typed number is read by `parseDecimal` (amounts by
+  `parseEuros` on top of it), so 1.200 km is 1200, not 1,2. Planirano is only what the group planned per person
   ("Planirani trošak po osobi"), times everyone; the app's estimate (`BudgetLine.estimate`)
   is never added to it. The tiles of Plan and "tvoj trošak" show only what was spent. Unticking "Primaj sve
   obavijesti" stops every notification, so there is no separate button to turn them off.
@@ -399,6 +404,9 @@ also be pasted into the Firebase console.
   Storage needs the Blaze plan and a card. A photo takes about 270 KB, so the free 1 GB
   holds about 3,500 photos, and the free 10 GB a month of downloads is shared by the
   group. If they run out, moving pictures to Cloud Storage means Blaze and a card.
+- A stress test (2026-11-09) with 25 people, 30 days, 60 polls, 60 places of each
+  kind, 60 costs and 300 items in Dućan found every screen drawn in under 50 ms on a
+  computer but Plan napada (about 80 ms, 170 cards), now fixed as above.
 - Test two users with `http://localhost:8090` and `http://127.0.0.1:8090`: different
   addresses have separate storage. Delete test trips from the cloud afterwards.
 

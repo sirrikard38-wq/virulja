@@ -170,7 +170,6 @@ String listsCount(int n) => _count(n, ('lista', 'liste', 'lista'), 'list', 'list
 
 String votesCount(int n) => _count(n, ('glas', 'glasa', 'glasova'), 'vote', 'votes', 'oy');
 
-String daysCount(int n) => _count(n, ('dan', 'dana', 'dana'), 'day', 'days', 'gün');
 
 /// `za 224 dana`, `sutra`, `danas`
 String daysUntil(DateTime from, DateTime to) {
@@ -264,18 +263,23 @@ String alsoIn(int cents) {
   return converted == null ? '' : '≈ ${plainAmount(converted)} ${currencyOf(other).sign}';
 }
 
+/// `1200` -> `1.200`: whole digits with a dot between thousands.
+String _grouped(String digits) {
+  final grouped = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) grouped.write('.');
+    grouped.write(digits[i]);
+  }
+  return '$grouped';
+}
+
 /// `1.200`, `4,5`, `4`: any number as people here write it, a dot between
 /// thousands, a comma before decimals, and no decimals for a whole number.
 String decimal(num value, {int digits = 2}) {
   final scale = pow(10, digits).toInt();
   final scaled = (value * scale).round();
   final sign = scaled < 0 ? '−' : '';
-  final whole = (scaled.abs() ~/ scale).toString();
-  final grouped = StringBuffer();
-  for (var i = 0; i < whole.length; i++) {
-    if (i > 0 && (whole.length - i) % 3 == 0) grouped.write('.');
-    grouped.write(whole[i]);
-  }
+  final grouped = _grouped((scaled.abs() ~/ scale).toString());
   var rest = (scaled.abs() % scale).toString().padLeft(digits, '0');
   rest = rest.replaceFirst(RegExp(r'0+$'), '');
   return '$sign$grouped${rest.isEmpty ? '' : ',$rest'}';
@@ -303,13 +307,9 @@ String decimal(num value, {int digits = 2}) {
       .length;
   var before = head.split('').where(counts).length - min(whole.length - trimmed.length, wholeBefore);
   if (trimmed.isEmpty && fraction != null && comma < head.length) before++;
-  final grouped = StringBuffer();
-  for (var i = 0; i < trimmed.length; i++) {
-    if (i > 0 && (trimmed.length - i) % 3 == 0) grouped.write('.');
-    grouped.write(trimmed[i]);
-  }
+  final grouped = _grouped(trimmed);
   final shown = fraction == null
-      ? '$grouped'
+      ? grouped
       : '${grouped.isEmpty ? '0' : grouped},${fraction.length > 2 ? fraction.substring(0, 2) : fraction}';
   // The cursor goes after as many digits and commas as stood before it.
   var seen = 0, at = 0;
@@ -323,13 +323,8 @@ String decimal(num value, {int digits = 2}) {
 /// `2.420`, `12,50`: an amount without its sign.
 String plainAmount(int cents) {
   final sign = cents < 0 ? '−' : '';
-  final whole = (cents.abs() ~/ 100).toString();
+  final grouped = _grouped((cents.abs() ~/ 100).toString());
   final rest = cents.abs() % 100;
-  final grouped = StringBuffer();
-  for (var i = 0; i < whole.length; i++) {
-    if (i > 0 && (whole.length - i) % 3 == 0) grouped.write('.');
-    grouped.write(whole[i]);
-  }
   final fraction = rest == 0 ? '' : ',${rest.toString().padLeft(2, '0')}';
   return '$sign$grouped$fraction';
 }
@@ -354,10 +349,9 @@ String eurosRange(int low, int high) => '${plainAmount(low)}–${euros(high)}';
   );
 }
 
-/// Reads an amount as people type it: `12`, `12,5`, `1.200`, `1.200,50`,
-/// `12.50 €`. Returns cents, or null when it is not an amount.
-int? parseEuros(String text) {
-  // Signs and letters of any currency go.
+/// Reads a number as people type it: `4,5`, `4.5`, `1.200`, `1.200,5`, with
+/// any unit or sign around it. Null when it is not a number.
+double? parseDecimal(String text) {
   var value = text.replaceAll(RegExp(r'[^\d,.\-−]'), '');
   if (value.isEmpty) return null;
   if (value.contains(',')) {
@@ -365,7 +359,14 @@ int? parseEuros(String text) {
   } else if (RegExp(r'^\d{1,3}(\.\d{3})+$').hasMatch(value)) {
     value = value.replaceAll('.', '');
   }
-  final amount = double.tryParse(value);
-  if (amount == null || amount < 0 || !amount.isFinite) return null;
+  final number = double.tryParse(value);
+  return number == null || !number.isFinite ? null : number;
+}
+
+/// Reads an amount as people type it: `12`, `12,5`, `1.200`, `1.200,50`,
+/// `12.50 €`. Returns cents, or null when it is not an amount.
+int? parseEuros(String text) {
+  final amount = parseDecimal(text);
+  if (amount == null || amount < 0) return null;
   return (amount * 100).round();
 }

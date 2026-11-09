@@ -191,7 +191,7 @@ web.HTMLElement _offerEdit(Ui ui, Offer offer) {
       error.textContent = tr('Upiši cijenu po noći.');
       return;
     }
-    final stars = double.tryParse(rating.value.trim().replaceAll(',', '.'));
+    final stars = parseDecimal(rating.value);
     if (rating.value.trim().isNotEmpty && (stars == null || stars < 0 || stars > 5)) {
       error.textContent = tr('Ocjena ide od 0 do 5.');
       return;
@@ -316,7 +316,7 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
               : tr('Upiši cijenu po noći.');
       return;
     }
-    final stars = double.tryParse(rating.value.trim().replaceAll(',', '.'));
+    final stars = parseDecimal(rating.value);
     if (rating.value.trim().isNotEmpty && (stars == null || stars < 0 || stars > 5)) {
       error.textContent = tr('Ocjena ide od 0 do 5.');
       return;

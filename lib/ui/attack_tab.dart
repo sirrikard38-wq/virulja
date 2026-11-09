@@ -23,7 +23,7 @@ String _when(Trip trip, NextUp item) => [
 /// Takes [item] out of the plan of attack, with a moment to change your mind.
 /// A poll stays in Ankete, a stop in Plan puta and a place in Hrana i piće.
 void _remove(Ui ui, Trip trip, NextUp item) {
-  final poll = item.poll, stop = item.stop, place = item.place, leg = item.leg;
+  final poll = item.poll, stop = item.stop, place = item.place;
   final active = poll?.active, activeBy = poll?.activeBy;
   final planned = place?.planned, plannedBy = place?.plannedBy;
   final polls = {
@@ -33,7 +33,6 @@ void _remove(Ui ui, Trip trip, NextUp item) {
   if (poll != null) setPollInAttack(trip, poll, false, ui.meIn(trip));
   if (place != null) setPlaceInAttack(trip, place, false, ui.meIn(trip));
   stop?.hiddenInAttack = true;
-  leg?.reserved = false;
   ui.changed();
   ui.offerUndo(tr('Maknuto iz Plana napada'), () {
     poll
@@ -44,7 +43,6 @@ void _remove(Ui ui, Trip trip, NextUp item) {
       ..plannedBy = plannedBy;
     polls.forEach((other, wasActive) => other.active = wasActive);
     stop?.hiddenInAttack = false;
-    leg?.reserved = true;
     ui.changed();
   });
 }
@@ -53,6 +51,25 @@ void _remove(Ui ui, Trip trip, NextUp item) {
 /// and where it is scrolled stay as they are. A full redraw made an iPhone
 /// jump to the top when a day was voted at the bottom of the list.
 void _redrawTab(Ui ui, Trip trip) => redrawTripTab(ui, trip);
+
+/// Draws the card of [id] again in its place, with the row of days over the
+/// list and its counts, and nothing else: with a long plan, drawing every card
+/// again for one vote made the phone lag. A card that leaves the view this way
+/// (a vote moved it out of the open week) needs the whole tab drawn again.
+void _redrawCard(Ui ui, Trip trip, String id) {
+  final tab = web.document.querySelector('.attack-tab');
+  final old = tab?.querySelector('[data-item="${_cssId(id)}"]');
+  if (tab == null || old == null) return _redrawTab(ui, trip);
+  final fresh = attackTab(ui, trip, only: id);
+  final card = fresh.querySelector('[data-item="${_cssId(id)}"]');
+  final row = fresh.querySelector('.chips');
+  final oldRow = tab.querySelector('.chips');
+  if (card == null || row == null || oldRow == null) return _redrawTab(ui, trip);
+  old.replaceWith(card);
+  oldRow.replaceWith(row);
+}
+
+String _cssId(String id) => id.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
 
 /// Which of the days left suit each person. The day with most votes is marked.
 web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
@@ -63,7 +80,7 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
       chip(tr('{0} Dan · {1}', [day + 1, trip.membersAmong(votes[day] ?? const {})]), () {
         toggleDayVote(votes, day, me);
         ui.saved();
-        _redrawTab(ui, trip);
+        _redrawCard(ui, trip, item.id);
       }, on: votes[day]?.contains(me) ?? false)
         ..classList.toggle('agreed', item.days.contains(day));
 
@@ -84,7 +101,7 @@ web.HTMLElement _dayVotes(Ui ui, Trip trip, NextUp item) {
         for (final week in weeks)
           chip(tr('Tjedan {0}', [week + 1]), () {
             open == week ? ui.openWeek.remove(item.id) : ui.openWeek[item.id] = week;
-            _redrawTab(ui, trip);
+            _redrawCard(ui, trip, item.id);
           }, on: open == week)
             ..classList.toggle('agreed', item.days.any((day) => day ~/ 7 == week)),
     ]),
@@ -147,7 +164,7 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item, int? day) {
   // thing ticked on some of its days has a green edge.
   final share = day == null ? tickedShare(trip, item) : (tickedOn(trip, item, day) ? 1.0 : 0.0);
   final done = share == 1;
-  return el('div', cls: [
+  return el('div', attrs: {'data-item': item.id}, cls: [
     'poll card attack-card',
     if (item.past) 'past',
     if (done) 'done' else if (share > 0) 'partly',
@@ -182,7 +199,10 @@ web.HTMLElement _card(Ui ui, Trip trip, NextUp item, int? day) {
 /// one day. Nothing moves within the list; what has gone by turns grey. While a day is open, what
 /// was on it stays, even if a vote moves it to another day; it moves once the
 /// day is left.
-web.HTMLElement attackTab(Ui ui, Trip trip) {
+///
+/// With [only], the row of days and just the card of that id are drawn, for
+/// [_redrawCard].
+web.HTMLElement attackTab(Ui ui, Trip trip, {String? only}) {
   final items = planOfAttack(trip, DateTime.now());
   final day = ui.attackDays[trip.id];
   final shown = day == null || day >= trip.dayCount ? null : day;
@@ -263,6 +283,7 @@ web.HTMLElement attackTab(Ui ui, Trip trip) {
     else if (chosen.isEmpty)
       el('p', cls: 'soft pad gap-top',
           text: shown == null ? tr('Za ovaj tjedan još ništa nije dogovoreno.') : tr('Za ovaj dan još ništa nije dogovoreno.')),
-    for (final item in ordered) _card(ui, trip, item, shown),
+    for (final item in ordered)
+      if (only == null || item.id == only) _card(ui, trip, item, shown),
   ]);
 }

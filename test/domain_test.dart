@@ -217,16 +217,12 @@ void main() {
     });
 
     test('a part of the journey never goes into Plan napada, reserved or not', () {
-      final trip = visTrip()
-        ..legs.add(Leg(id: 'l', title: 'Trajekt', cost: 4000, dayVotes: {
-          1: {'ana', 'marko'},
-        }));
-      trip.legs.single.reserved = true;
-      expect(planOfAttack(trip, DateTime(2027, 6, 1)).where((i) => i.leg != null), isEmpty);
-      // Old data still reads back whole.
-      final back = Leg.fromJson(jsonDecode(jsonEncode(trip.legs.single.toJson())) as Json);
-      expect(back.reserved, isTrue);
-      expect(back.dayVotes[1], {'ana', 'marko'});
+      final trip = visTrip()..legs.add(Leg(id: 'l', title: 'Trajekt', cost: 4000));
+      expect(planOfAttack(trip, DateTime(2027, 6, 1)).where((i) => i.title == 'Trajekt'), isEmpty);
+      // An old one that still says reserved reads well, and is no different.
+      final back = Leg.fromJson({...trip.legs.single.toJson(), 'reserved': true});
+      expect(back.title, 'Trajekt');
+      expect(back.toJson().containsKey('reserved'), isFalse);
     });
 
     test('a thing added to or taken off a shopping list is news', () {
@@ -1454,6 +1450,17 @@ void main() {
       expect(parseEuros('puno'), isNull);
       expect(parseEuros('-5'), isNull);
       expect(parseEuros('Infinity'), isNull);
+    });
+
+    test('reads a number as people type it, and writes it back the same', () {
+      expect(parseDecimal('4,5'), 4.5);
+      expect(parseDecimal('4.5'), 4.5);
+      expect(parseDecimal('1.200'), 1200);
+      expect(parseDecimal('6,5 km'), 6.5);
+      expect(parseDecimal(''), isNull);
+      // Kilometres written back in a box are read as the same number.
+      expect(parseDecimal(decimal(1200)), 1200);
+      expect(parseDecimal(decimal(6.5)), 6.5);
     });
 
     test('reads a price that may be a range', () {

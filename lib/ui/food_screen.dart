@@ -112,7 +112,7 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
       kind: ui.placeKind,
       customKindId: custom?.id,
       name: name.value.trim(),
-      rating: double.tryParse(rating.value.trim().replaceAll(',', '.')),
+      rating: parseDecimal(rating.value),
       pricePerPerson: cost?.middle,
       priceLow: cost?.low,
       priceHigh: cost?.high,

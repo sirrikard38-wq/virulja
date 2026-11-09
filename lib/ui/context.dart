@@ -1,5 +1,3 @@
-import 'package:web/web.dart' as web;
-
 import '../src/domain/i18n.dart';
 import '../src/domain/models.dart';
 import '../src/domain/offers.dart';
@@ -187,11 +185,6 @@ class Ui {
     return blob == null ? null : store.blobAddress(id);
   }
 
-  /// The link that lets someone into [trip].
-  String inviteLink(Trip trip) {
-    final page = web.window.location.href.split('#').first;
-    return '$page#/pridruzi/${trip.id}';
-  }
 }
 
 /// A new poll before Izradi anketu: its name as typed and its answers, Da, Ne

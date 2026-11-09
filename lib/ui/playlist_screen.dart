@@ -154,27 +154,33 @@ web.HTMLElement _songRow(Ui ui, Trip trip, Song song) {
 
   void toggle() {
     ui.anthem.stop();
-    if (isList) {
-      web.window.open(song.link, '_blank');
-      return;
-    }
     ui.playingSongId = playing ? null : song.id;
     ui.rerender();
   }
 
+  final about = [
+    el('div', cls: 'label', text: song.title),
+    el('div', cls: 'small', text: '${isList ? tr('YouTube playlista') : player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
+  ];
+  final link = {'href': song.link, 'target': '_blank', 'rel': 'noopener'};
   return el('div', children: [
     el('div', cls: 'row', attrs: {'style': 'padding:2px 0'}, children: [
-      button(
-        cls: 'icon-button',
-        ariaLabel: playing ? tr('Zatvori {0}', [song.title]) : tr('Pusti {0}', [song.title]),
-        onTap: toggle,
-        children: [icon(playing ? 'minus' : 'play')],
-      ),
-      el('div', cls: 'grow', attrs: {'style': 'cursor:pointer'}, children: [
-        el('div', cls: 'label', text: song.title),
-        el('div', cls: 'small', text: '${isList ? tr('YouTube playlista') : player?.service ?? 'Link'} · ${ui.nameOf(song.addedBy)}'),
-      ])
-        ..onClick.listen((_) => toggle()),
+      if (isList)
+        el('a', cls: 'icon-button', attrs: {...link, 'aria-label': tr('Pusti {0}', [song.title])}, children: [icon('play')])
+          ..onClick.listen((_) => ui.anthem.stop())
+      else
+        button(
+          cls: 'icon-button',
+          ariaLabel: playing ? tr('Zatvori {0}', [song.title]) : tr('Pusti {0}', [song.title]),
+          onTap: toggle,
+          children: [icon(playing ? 'minus' : 'play')],
+        ),
+      if (isList)
+        el('a', cls: 'grow plain-link', attrs: link, children: about)
+          ..onClick.listen((_) => ui.anthem.stop())
+      else
+        el('div', cls: 'grow', attrs: {'style': 'cursor:pointer'}, children: about)
+          ..onClick.listen((_) => toggle()),
       removeWithUndo(ui, trip.songs, song, song.title, also: () {
         if (playing) ui.playingSongId = null;
         return () {};

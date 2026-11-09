@@ -482,6 +482,7 @@ details.adder summary { display: flex; align-items: center; gap: 8px; min-height
 details.adder summary::-webkit-details-marker { display: none; }
 details.adder.on-top { margin-top: 4px; }
 details.adder + details.adder { margin-top: 0; padding-top: 0; }
+a.plain-link { color: inherit; text-decoration: none; }
 hr.split + .section + details.adder { margin-top: 0; padding-top: 0; }
 details.adder.on-top summary { justify-content: flex-end; }
 .more-option { width: 38px; height: 38px; margin-left: auto; border: 1px solid var(--line); border-radius: 50%; color: var(--accent); }

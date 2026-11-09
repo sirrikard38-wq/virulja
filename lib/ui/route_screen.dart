@@ -13,13 +13,6 @@ import 'plan_cost.dart';
 import 'swipes.dart';
 import 'widgets.dart';
 
-String _number(double value) => value == value.roundToDouble()
-    ? '${value.toInt()}'
-    : '$value'.replaceAll('.', ',');
-
-double? _parseNumber(String text) =>
-    double.tryParse(text.trim().replaceAll(',', '.'));
-
 /// Spremi and Odustani under a form opened with a brush.
 web.HTMLElement _saveOrCancel(Ui ui, void Function() save) => el('div', attrs: {
       'style': 'display:flex;gap:12px;align-items:center;margin:10px 20px 0'
@@ -100,8 +93,8 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
   final like = editing?.drive ?? (last.isEmpty ? drive : last.last);
   final route = input(value: drive.route);
   final km = numberInput(
-      value: drive.kilometres == 0 ? '' : _number(drive.kilometres));
-  final litres = numberInput(value: _number(like.litresPer100));
+      value: drive.kilometres == 0 ? '' : decimal(drive.kilometres));
+  final litres = numberInput(value: decimal(like.litresPer100));
   final fuel = amountInput(value: plainAmount(like.fuelPrice));
   final cars = numberInput(value: '${like.cars}');
   final tolls =
@@ -113,9 +106,9 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
 
   Drive typed() => Drive(
         route: route.value.trim(),
-        kilometres: _parseNumber(km.value) ?? 0,
+        kilometres: parseDecimal(km.value) ?? 0,
         roundTrip: false,
-        litresPer100: _parseNumber(litres.value) ?? like.litresPer100,
+        litresPer100: parseDecimal(litres.value) ?? like.litresPer100,
         fuelPrice: parseEuros(fuel.value) ?? like.fuelPrice,
         cars: int.tryParse(cars.value.trim()) ?? like.cars,
         tolls: parseEuros(tolls.value) ?? 0,
