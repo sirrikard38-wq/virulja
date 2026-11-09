@@ -78,9 +78,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   The page coming in has its faded edges from the start; the green over chips carries
   their words in dark, so each letter turns as the green passes (`marker-words`).
   `.slide-page` is its own block (`flow-root`), so the space over its first line is the
-  same beside and in place; otherwise the page jumped 10 px up as it landed. A page of
-  another height grows or shrinks smoothly as it lands (`_easeHeight`), so what stands
-  under it, as in Prijevoz, glides. A swipe anywhere on Prijevoz changes the day. Its
+  same beside and in place; otherwise the page jumped 10 px up as it landed. A shorter
+  page shrinks smoothly as it lands (`_easeHeight`), so what stands under it glides; a
+  taller one takes its height at once, as growing hid its bottom and Dodaj jelo popped
+  in (2026-11-09). A swipe anywhere on Prijevoz changes the day. Its
   adders stand still at the bottom, right over the line of the foot (Prijevoz ukupno,
   Planirani trošak po osobi), which is at the bottom of the screen as in every
   category of Plan (`route-foot`; said twice, 2026-11-09). Sliding with the day,
