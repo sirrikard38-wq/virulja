@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/format.dart';
@@ -59,129 +61,217 @@ List<ShopList> _shown(Ui ui, Trip trip) {
   return lists;
 }
 
-/// One list. Folded it shows "+ Naziv"; a tap unfolds what is to buy, each
-/// with a tick. While wishes are being typed there is the field and Spremi;
-/// then Dodaj opens the field again and Kupljeno asks what it cost. The brush
-/// in the corner opens the names of the list and of its things for changing.
-web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
+/// What was typed in the empty field of a list being changed, kept across a
+/// redraw that was not meant to take it in (an x on a thing).
+final Map<String, String> _typedNext = {};
+
+/// A list being made or changed, its brush on: the name under a grey "Naziv
+/// liste", each thing in its own box with an x, and at the bottom an empty box,
+/// "Dodaj u listu", where the keyboard's tick puts what was typed in and opens
+/// the next one. The brush takes it all in; the x in the corner throws the
+/// list away, with the usual undo. A [draft] is a new list, not yet in [trip].
+web.HTMLElement _editCard(Ui ui, Trip trip, ShopList list, {required bool draft}) {
   final me = ui.meIn(trip);
-  final open = ui.shopOpen.contains(list.id);
-  final adding = ui.shopAdding.contains(list.id);
-  final editing = ui.shopEditing == list.id;
-  final next = input(placeholder: tr('Dodaj želju'));
-  void keep() {
+  final cost = trip.expenses.where((each) => each.id == list.expenseId).firstOrNull;
+  web.HTMLInputElement box(String key, String value, String placeholder) =>
+      input(value: value, placeholder: placeholder)
+        ..setAttribute('data-box', key)
+        ..setAttribute('enterkeyhint', 'done');
+  final name = box('name', list.name, tr('Naziv liste'))..classList.add('shop-name-box');
+  final boxes = {for (final item in list.items) item: box(item.id, item.text, '')};
+  final next = box('next', _typedNext.remove(list.id) ?? '', tr('Dodaj u listu'));
+
+  /// Writes the name and the things as they are typed into the list; an empty
+  /// box keeps what it had.
+  void take() {
+    final title = name.value.trim();
+    if (title.isNotEmpty) {
+      list.name = title;
+      cost?.title = title;
+    }
+    for (final MapEntry(key: item, value: typed) in boxes.entries) {
+      if (typed.value.trim().isNotEmpty) item.text = typed.value.trim();
+    }
+  }
+
+  void redraw() => draft ? ui.rerender() : ui.changed();
+
+  void focus(String key) => (web.document
+          .querySelector('[data-list="${list.id}"] [data-box="$key"]') as web.HTMLElement?)
+      ?.focus();
+
+  /// The box the cursor is in, when it is one of this list's.
+  String? focused() {
+    final now = web.document.activeElement;
+    if (now == null || now.closest('[data-list="${list.id}"]') == null) return null;
+    return now.getAttribute('data-box');
+  }
+
+  void addNext() {
+    take();
     final text = next.value.trim();
-    if (text.isEmpty) return;
-    list.items.add(ShopItem(id: ui.store.newId(), text: text, addedBy: me));
+    if (text.isNotEmpty) {
+      list.items.add(ShopItem(id: ui.store.newId(), text: text, addedBy: me));
+    }
+    next.value = '';
+    redraw();
+    focus('next'); // ready for the next one
   }
 
-  void add() {
-    keep();
+  void done() {
+    take();
+    final text = next.value.trim();
+    if (text.isNotEmpty) list.items.add(ShopItem(id: ui.store.newId(), text: text, addedBy: me));
+    if (draft) {
+      if (list.name.trim().isEmpty) list.name = tr('Dućan');
+      trip.shopLists.add(list);
+      ui.shopDraft = null;
+    }
+    ui.shopEditing = null;
+    ui.shopOpen.add(list.id);
     ui.changed();
-    // Ready for the next one.
-    (web.document.querySelector('[data-list="${list.id}"] .shop-next input') as web.HTMLElement?)?.focus();
   }
 
-  void save() {
-    keep();
-    ui.shopAdding.remove(list.id);
-    ui.changed();
-  }
-
-  next.onKeyDown.listen((event) {
-    if (event.key == 'Enter') add();
+  name.onKeyDown.listen((event) {
+    if (event.key == 'Enter') focus('next');
   });
+  next.onKeyDown.listen((event) {
+    if (event.key == 'Enter') addNext();
+  });
+  for (final typed in [name, ...boxes.values]) {
+    typed.onChange.listen((_) {
+      take();
+      if (!draft) ui.saved();
+    });
+    if (typed != name) {
+      typed.onKeyDown.listen((event) {
+        if (event.key == 'Enter') typed.blur();
+      });
+    }
+  }
+
+  // An x that leaves the cursor where it is: a press on it takes no focus.
+  web.HTMLElement keepsCursor(web.HTMLElement x) {
+    x.addEventListener('mousedown', ((web.Event event) => event.preventDefault()).toJS);
+    return x;
+  }
+
+  web.HTMLElement itemRow(ShopItem item) => el('div', cls: 'shop-item-row', children: [
+        el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [boxes[item]!]),
+        keepsCursor(button(
+          cls: 'icon-button',
+          ariaLabel: tr('Ukloni: {0}', [item.text]),
+          onTap: () {
+            final was = focused();
+            take();
+            _typedNext[list.id] = next.value;
+            final at = list.items.indexOf(item);
+            list.items.removeAt(at);
+            if (!draft) list.removed[item.id] = (text: item.text, by: me);
+            redraw();
+            if (was != null && was != item.id) focus(was);
+            ui.offerUndo(tr('Uklonjeno: {0}', [item.text]), () {
+              list.items.insert(at.clamp(0, list.items.length), item);
+              list.removed.remove(item.id);
+              redraw();
+            });
+          },
+          children: [icon('close', size: 20)],
+        )),
+      ]);
+
+  final throwAway = draft
+      ? button(
+          cls: 'icon-button shop-x',
+          ariaLabel: tr('Ukloni: {0}', [list.name.isEmpty ? tr('Nova lista') : list.name]),
+          onTap: () {
+            take();
+            ui.shopDraft = null;
+            ui.shopEditing = null;
+            ui.rerender();
+            ui.offerUndo(tr('Uklonjeno'), () {
+              ui.shopDraft = list;
+              ui.shopEditing = list.id;
+              ui.rerender();
+            });
+          },
+          children: [icon('close', size: 20)],
+        )
+      : removeWithUndo(ui, trip.shopLists, list, list.name)
+    ..classList.add('shop-x');
+
+  return el('div', cls: cost == null ? 'card shop-list shop-edit' : 'card shop-list shop-edit bought',
+      attrs: {'data-list': list.id}, children: [
+    el('div', cls: 'shop-head', children: [
+      el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [name]),
+      button(
+        cls: 'icon-button brush-small on',
+        ariaLabel: tr('Spremi'),
+        onTap: done,
+        children: [icon('brush', size: 20)],
+      ),
+      throwAway,
+    ]),
+    for (final item in list.items) itemRow(item),
+    el('div', cls: 'shop-item-row', children: [
+      el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [next]),
+    ]),
+  ]);
+}
+
+/// One list. Folded it shows "+ Naziv"; a tap unfolds what is to buy, each
+/// with a tick, and Kupljeno, which asks what it cost. The brush in the corner
+/// opens the list for changing, with an empty box at the bottom for more.
+web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
+  if (ui.shopEditing == list.id) return _editCard(ui, trip, list, draft: false);
+  final open = ui.shopOpen.contains(list.id);
   final cost = trip.expenses.where((each) => each.id == list.expenseId).firstOrNull;
 
   web.HTMLElement itemRow(ShopItem item) => el('div', cls: 'shop-item-row', children: [
-        if (editing)
-          el('div', cls: 'grow', children: [
-            editableName(item.text, tr('Naziv stavke'), (text) {
-              item.text = text;
-              ui.changed();
-            }),
-          ])
-        else
-          tick(item.text, item.done, () {
-            item.done = !item.done;
-            ui.changed();
-          })
-            ..classList.add('shop-item'),
-        if (editing)
-          button(
-            cls: 'icon-button',
-            ariaLabel: tr('Ukloni: {0}', [item.text]),
-            onTap: () {
-              final at = list.items.indexOf(item);
-              list.items.removeAt(at);
-              list.removed[item.id] = (text: item.text, by: me);
-              ui.changed();
-              ui.offerUndo(tr('Uklonjeno: {0}', [item.text]), () {
-                list.items.insert(at.clamp(0, list.items.length), item);
-                list.removed.remove(item.id);
-                ui.changed();
-              });
-            },
-            children: [icon('close', size: 20)],
-          ),
+        tick(item.text, item.done, () {
+          item.done = !item.done;
+          ui.changed();
+        })
+          ..classList.add('shop-item'),
       ]);
 
   // Bought, it greys as a ticked wish does, and says so under its name.
   return el('div', cls: cost == null ? 'card shop-list' : 'card shop-list bought', attrs: {'data-list': list.id}, children: [
     el('div', cls: 'shop-head', children: [
-      if (editing)
-        el('div', cls: 'grow', children: [
-          editableName(list.name, tr('Naziv liste'), (name) {
-            list.name = name;
-            cost?.title = name;
-            ui.changed();
-          })..style.fontSize = '16px',
-        ])
-      else
-        button(
-          cls: 'grow shop-fold',
-          onTap: () {
-            open ? ui.shopOpen.remove(list.id) : ui.shopOpen.add(list.id);
-            ui.rerender();
-          },
-          children: [
-            icon(open ? 'minus' : 'plus', size: 20),
-            el('span', cls: 'shop-name', children: [
-              el('span', text: list.name),
-              if (cost != null) el('span', cls: 'small', text: tr('Kupljeno')),
-            ]),
-          ],
-        )..setAttribute('aria-expanded', '$open'),
-      if (editing) removeWithUndo(ui, trip.shopLists, list, list.name),
       button(
-        cls: editing ? 'icon-button brush-small on' : 'icon-button brush-small',
+        cls: 'grow shop-fold',
+        onTap: () {
+          open ? ui.shopOpen.remove(list.id) : ui.shopOpen.add(list.id);
+          ui.rerender();
+        },
+        children: [
+          icon(open ? 'minus' : 'plus', size: 20),
+          el('span', cls: 'shop-name', children: [
+            el('span', text: list.name),
+            if (cost != null) el('span', cls: 'small', text: tr('Kupljeno')),
+          ]),
+        ],
+      )..setAttribute('aria-expanded', '$open'),
+      button(
+        cls: 'icon-button brush-small',
         ariaLabel: tr('Uredi listu'),
         onTap: () {
-          ui.shopEditing = editing ? null : list.id;
-          if (!editing) ui.shopOpen.add(list.id);
+          ui.shopEditing = list.id;
+          ui.shopOpen.add(list.id);
           ui.rerender();
+          (web.document.querySelector('[data-list="${list.id}"] [data-box="next"]') as web.HTMLElement?)
+              ?.focus();
         },
         children: [icon('brush', size: 20)],
       ),
     ]),
-    if (open || editing) ...[
+    if (open) ...[
       for (final item in list.items) itemRow(item),
-      if (adding)
-        el('div', cls: 'shop-next', children: [
-          el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [next]),
-          button(cls: 'text-button', text: tr('Dodaj'), onTap: save),
-        ])
-      else if (!editing)
-        el('div', cls: 'shop-actions', children: [
-          chip(tr('Dodaj'), () {
-            ui.shopAdding.add(list.id);
-            ui.rerender();
-            (web.document.querySelector('[data-list="${list.id}"] .shop-next input') as web.HTMLElement?)?.focus();
-          }),
-          cost == null
-              ? chip(tr('Kupljeno'), () => _buy(ui, trip, list))
-              : chip('${tr('Kupljeno')} · ${euros(cost.amount)}', () => _unbuy(ui, trip, list), on: true),
-        ]),
+      el('div', cls: 'shop-actions', children: [
+        cost == null
+            ? chip(tr('Kupljeno'), () => _buy(ui, trip, list))
+            : chip('${tr('Kupljeno')} · ${euros(cost.amount)}', () => _unbuy(ui, trip, list), on: true),
+      ]),
     ],
   ]);
 }
@@ -189,27 +279,26 @@ web.HTMLElement _listCard(Ui ui, Trip trip, ShopList list) {
 /// Dućan: lists of what the group wants to buy. Anyone adds to them and ticks
 /// what is in the basket; Kupljeno asks what it cost and puts it in Troškovi.
 web.HTMLElement shopScreen(Ui ui, Trip trip) {
-  final name = input();
-  void make() {
-    final title = name.value.trim();
-    final list = ShopList(id: ui.store.newId(), name: title.isEmpty ? tr('Dućan') : title);
-    trip.shopLists.add(list);
-    // A new list opens with its field for wishes.
-    ui.shopOpen.add(list.id);
-    ui.shopAdding.add(list.id);
-    ui.changed();
-  }
+  final draft = ui.shopDraft;
+  // Nova lista opens a new list as it will be, being changed: its name and its
+  // first thing ready for typing.
+  final newList = adder(tr('Nova lista'), []);
+  newList.querySelector('summary')!.addEventListener('click', ((web.Event event) {
+    event.preventDefault();
+    final list = ShopList(id: ui.store.newId(), name: '');
+    ui.shopDraft = list;
+    ui.shopEditing = list.id;
+    ui.rerender();
+    (web.document.querySelector('[data-list="${list.id}"] [data-box="name"]') as web.HTMLElement?)
+        ?.focus();
+  }).toJS);
 
   return el('div', cls: 'fill-page', children: [
     topBar(tr('Dućan')),
-    if (trip.shopLists.isEmpty)
+    if (trip.shopLists.isEmpty && draft == null)
       el('p', cls: 'soft pad', text: tr('Napravite listu i dodajte što treba kupiti.')),
     for (final list in _shown(ui, trip)) _listCard(ui, trip, list),
-    adder(tr('Nova lista'), [
-      field(tr('Naziv liste'), name),
-      primaryButton(tr('Napravi listu'), make),
-    ]),
+    if (draft == null) newList else _editCard(ui, trip, draft, draft: true),
     planCost(ui, trip, CostCategory.shop.name),
   ]);
 }
-

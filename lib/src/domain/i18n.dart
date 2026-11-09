@@ -503,7 +503,7 @@ const Map<String, List<String>> _texts = {
   'Promjene na listama za dućan': ['Changes to the shopping lists', 'Alışveriş listelerindeki değişiklikler'],
   'Uredi listu': ['Change the list', 'Listeyi değiştir'],
   'Naziv stavke': ['Name of the item', 'Ürünün adı'],
-  'Dodaj želju': ['Add a wish', 'Dilek ekle'],
+  'Dodaj u listu': ['Add to the list', 'Listeye ekle'],
   'Već si dio ovog prekrasnog putovanja': ['You are already part of this wonderful trip', 'Zaten bu harika seyahatin bir parçasısın'],
   'Koliko je zapravo bilo?': ['What did it really cost?', 'Gerçekte ne kadar tuttu?'],
   'Procjena {0}': ['Estimate {0}', 'Tahmin {0}'],

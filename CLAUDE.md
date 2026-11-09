@@ -250,9 +250,13 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   taken out of Hrana i piće takes its poll along, and undo brings both back; a poll taken
   out of Ankete leaves the place. Its button always says "Anketa".
 - Dućan (`shop_screen.dart`, `Trip.shopLists`): named lists of things to buy, each with a
-  tick that greys and strikes it out. A list folds as "+ Naziv"; while wishes are typed
-  it shows "Dodaj želju" with a Dodaj that closes it, then Dodaj and Kupljeno; its brush opens the names
-  of the list and its things for changing, with an x each. No box lets the page behind
+  tick that greys and strikes it out. A list folds as "+ Naziv", open with Kupljeno
+  only. Nova lista and a list's brush open the same card (`_editCard`; a new one is
+  `Ui.shopDraft` until saved): a box for the name ("Naziv liste" in grey), a box with
+  an x for each thing, and an empty "Dodaj u listu" at the bottom; the keyboard's
+  tick puts it in and opens the next. An x leaves the cursor where it is. The brush,
+  green, saves; the x in the corner, right of the others, throws the list away
+  (2026-11-09). No box lets the page behind
   it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
   bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`);
   the whole card of a bought list greys. One whose Kupljeno is taken back stays

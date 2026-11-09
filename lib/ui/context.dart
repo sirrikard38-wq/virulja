@@ -125,15 +125,17 @@ class Ui {
   /// The paid cost being changed.
   String? editingExpense;
 
-  /// Shopping lists unfolded, those with their field for wishes open, and the
-  /// one whose names are being changed.
+  /// Shopping lists unfolded, and the one being changed (its brush on).
   final Set<String> shopOpen = {};
-  final Set<String> shopAdding = {};
+  String? shopEditing;
+
+  /// A new list from Nova lista, being made: in the trip once its brush is
+  /// tapped.
+  ShopList? shopDraft;
 
   /// A list whose Kupljeno was taken back, and where it stood: it stays there
   /// while Dućan is open, instead of going up among those still to buy.
   ({String trip, String list, int at})? shopKept;
-  String? shopEditing;
   String? playingSongId;
   String? queueAddress;
   String? replyingTo;
@@ -150,8 +152,8 @@ class Ui {
         openWeek.clear();
       case 'ducan':
         shopOpen.clear();
-        shopAdding.clear();
-        shopEditing = null;
+        // A new list being made keeps what was typed, as a new poll does.
+        shopEditing = shopDraft?.id;
       case 'smjestaj':
         // As when Sortiraj is turned off by hand.
         sortOpen = false;
