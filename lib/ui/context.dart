@@ -129,6 +129,10 @@ class Ui {
   /// one whose names are being changed.
   final Set<String> shopOpen = {};
   final Set<String> shopAdding = {};
+
+  /// A list whose Kupljeno was taken back, and where it stood: it stays there
+  /// while Dućan is open, instead of going up among those still to buy.
+  ({String trip, String list, int at})? shopKept;
   String? shopEditing;
   String? playingSongId;
   String? queueAddress;

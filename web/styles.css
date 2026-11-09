@@ -179,7 +179,10 @@ html.held, html.held body { overscroll-behavior: none; }
 .shop-fold { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 16px; font-weight: 700; text-align: left; }
 .shop-fold .icon { flex: none; color: var(--accent); }
 .shop-name { display: flex; flex-direction: column; }
-.shop-list.bought .shop-fold { color: var(--soft); opacity: .7; }
+/* A bought list is done: the whole card greys and fades. */
+.shop-list.bought { background: color-mix(in srgb, var(--line) 55%, var(--bg)); border-color: transparent; }
+.shop-list.bought > * { opacity: .6; }
+.shop-list.bought .shop-fold { color: var(--soft); }
 .shop-list.bought .shop-fold .icon { color: var(--soft); }
 .shop-actions { display: flex; gap: 8px; margin-top: 10px; }
 .ticks .tick.tick-in { padding-left: 28px; }
@@ -440,6 +443,10 @@ html.held, html.held body { overscroll-behavior: none; }
 .form-row > .field.half { flex: 0 0 calc(50% - 5px); }
 .form-row > .field.two-thirds { flex: 2 1 0; }
 .form-row.thirds { flex-wrap: wrap; }
+/* Price, portions and where of a dish: always one row, the portions narrow. */
+.form-row.one-line > .field { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.form-row.one-line > .field.narrow { flex: .65 1 0; }
+.form-row.one-line > .field.wide { flex: 1.35 1 0; }
 .form-row.thirds > .field { flex: 1 1 100px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 100px; }
 /* A choice as wide as its words, so that they are all seen. */
 .form-row.thirds > .field.fit { flex: 1 0 auto; }

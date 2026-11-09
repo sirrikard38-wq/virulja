@@ -139,16 +139,23 @@ web.HTMLElement _addPlace(Ui ui, Trip trip, CustomKind? custom) {
 
 web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
   final place = dish.placeName;
+  // Gdje is a link or the name of a place: a link shows the name it carries,
+  // if any, and both open Google Maps.
+  final isLink = place != null && (Uri.tryParse(place)?.hasScheme ?? false);
+  final where = isLink ? nameFromLink(place) : place;
   return el('div', cls: 'row', children: [
     el('div', cls: 'grow', children: [
       editableName(dish.name, tr('Naziv'),
           (name) => _rename(ui, trip, dish.name, name, (name) => dish.name = name)),
       el('div', cls: 'small', text: [
-        if (place != null) place,
+        if (where != null) where,
         '${dish.servings} × ${euros(dish.price)}',
       ].join(' · ')),
     ]),
     el('div', cls: 'price', text: euros(dish.price * dish.servings)),
+    if (place != null)
+      linkIcon('${mapsOf(isLink ? place : '$place, ${trip.city}')}',
+          tr('Lokacija na Google Maps')),
     _voteChip(ui, trip, dish.name),
     removeWithUndo(ui, trip.dishes, dish, dish.name, also: () => _takePolls(trip, dish.name)),
   ]);
@@ -158,8 +165,12 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   final name = input();
   final price = amountInput();
   final servings = numberInput(value: '1');
-  final place = input();
+  final place = input(placeholder: tr('Link'));
   final error = errorLine();
+  place.onInput.listen((_) {
+    final found = nameFromLink(place.value);
+    if (found != null && name.value.trim().isEmpty) name.value = found;
+  });
 
   void add() {
     final cents = parseEuros(price.value);
@@ -179,12 +190,16 @@ web.HTMLElement _addDish(Ui ui, Trip trip) {
   }
 
   return adder(tr('Dodaj jelo'), [
-    field(tr('Jelo'), name),
-    el('div', cls: 'fields', children: [
-      unitField(tr('Cijena'), price, moneySign()),
-      field(tr('Porcija'), servings, tight: true),
+    // The name on half the width, growing with its text; then price, portions
+    // and where, side by side.
+    el('div', cls: 'form-row', children: [
+      growWithText(field(tr('Jelo'), name, tight: true)..classList.add('half'), name),
     ]),
-    field(tr('Gdje'), place),
+    el('div', cls: 'form-row one-line', children: [
+      unitField(tr('Cijena'), price, moneySign()),
+      field(tr('Porcija'), servings, tight: true)..classList.add('narrow'),
+      field(tr('Gdje'), place, tight: true)..classList.add('wide'),
+    ]),
     error,
     primaryButton(tr('Dodaj jelo'), add),
   ]);
@@ -468,10 +483,24 @@ void _reorderOnHold(
 /// The field for a new category, under the row of categories.
 web.HTMLElement _newKind(Ui ui, void Function(String label) add) {
   final name = input();
-  return el('div', cls: 'new-kind', children: [
+  final box = el('div', cls: 'new-kind', children: [
     field(tr('Nova kategorija'), name),
     primaryButton(tr('Dodaj kategoriju'), () => add(name.value.trim())),
   ]);
+  scheduleMicrotask(() => _toMiddle(box));
+  return box;
+}
+
+/// Lowers the field for a new category so that Dodaj kategoriju stands in the
+/// middle of the screen, between its top and the bar at the bottom.
+void _toMiddle(web.HTMLElement box) {
+  final button = box.querySelector('button') as web.HTMLElement?;
+  if (!box.isConnected || button == null) return;
+  final bar = web.document.querySelector('nav.nav')?.getBoundingClientRect();
+  final bottom = bar?.top ?? web.window.innerHeight.toDouble();
+  final rect = button.getBoundingClientRect();
+  final lower = bottom / 2 - (rect.top + rect.height / 2);
+  if (lower > 0) box.style.paddingTop = '${lower.round()}px';
 }
 
 web.HTMLElement foodScreen(Ui ui, Trip trip) {

@@ -227,6 +227,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   "Glasaj". With both a location and an offer link, the link icon asks which to open. The name is
   typed in place; the brush opens the rest for changing. "Sortiraj" adds sorts, the first
   deciding most, each removed with its x; turning Sortiraj off clears them (`sortOffersBy`).
+- Hrana i piće: a new dish has its name on half the row, growing with the text,
+  then Cijena, Porcija and Gdje in one row; Gdje says "Link" in grey, and a dish
+  with one has the link icon to Google Maps (a name typed there is looked up in the
+  trip's city). The field for a new category stands lower, Dodaj kategoriju in the
+  middle of the screen (`_toMiddle`).
 - Hrana i piće: a swipe past the last category opens the field for a new one, as the +
   does, without the keyboard; a swipe back closes it. While it is open the + is green, not
   the category before it, and nothing of that category shows under the field.
@@ -244,7 +249,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   it shows "Dodaj želju" with a Dodaj that closes it, then Dodaj and Kupljeno; its brush opens the names
   of the list and its things for changing, with an x each. No box lets the page behind
   it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
-  bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`).
+  bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`);
+  the whole card of a bought list greys. One whose Kupljeno is taken back stays
+  where it stood while Dućan is open (`Ui.shopKept`), then goes among those to buy.
   Kupljeno asks the amount, who paid and whom it is for
   (all ticked at first) and writes it in Troškovi under Dućan; a tap
   on it in Troškovi changes it (`ShopList.expenseId`). Adding to

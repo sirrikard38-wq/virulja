@@ -28,6 +28,8 @@ void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
 
 /// Takes the purchase of [list] back, with its cost in Troškovi.
 void _unbuy(Ui ui, Trip trip, ShopList list) {
+  final stood = _shown(ui, trip).indexOf(list);
+  ui.shopKept = (trip: trip.id, list: list.id, at: stood);
   final at = trip.expenses.indexWhere((cost) => cost.id == list.expenseId);
   final cost = at < 0 ? null : trip.expenses.removeAt(at);
   final id = list.expenseId;
@@ -43,6 +45,18 @@ void _unbuy(Ui ui, Trip trip, ShopList list) {
     if (cost != null) trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
     ui.changed();
   });
+}
+
+/// The lists as they show: [listsInOrder], but one whose Kupljeno was just
+/// taken back stays where it stood until Dućan is left (`Ui.shopKept`).
+List<ShopList> _shown(Ui ui, Trip trip) {
+  final lists = listsInOrder(trip);
+  final kept = ui.shopKept;
+  if (kept == null || kept.trip != trip.id) return lists;
+  final at = lists.indexWhere((list) => list.id == kept.list);
+  if (at < 0 || lists[at].expenseId != null) return lists; // bought again
+  lists.insert(kept.at.clamp(0, lists.length - 1), lists.removeAt(at));
+  return lists;
 }
 
 /// One list. Folded it shows "+ Naziv"; a tap unfolds what is to buy, each
@@ -190,7 +204,7 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
     topBar(tr('Dućan')),
     if (trip.shopLists.isEmpty)
       el('p', cls: 'soft pad', text: tr('Napravite listu i dodajte što treba kupiti.')),
-    for (final list in listsInOrder(trip)) _listCard(ui, trip, list),
+    for (final list in _shown(ui, trip)) _listCard(ui, trip, list),
     adder(tr('Nova lista'), [
       field(tr('Naziv liste'), name),
       primaryButton(tr('Napravi listu'), make),

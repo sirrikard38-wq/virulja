@@ -601,6 +601,7 @@ class ViruljaApp {
     if (trip == null && _anthem.isPlaying) _anthem.stop();
     // Leaving Plan napada lets what was voted elsewhere move to its day. Back
     // within 20 s it opens on the same day; later, on Sve.
+    if (place.section != 'ducan') _ui.shopKept = null;
     if (place.section != 'ankete') {
       _ui.pollsKept = null;
       _ui.editingPoll = null;
