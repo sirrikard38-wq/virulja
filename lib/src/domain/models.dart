@@ -571,6 +571,8 @@ class Drive {
     this.cars = 1,
     this.tolls = 0,
     this.ferry = 0,
+    this.fuel,
+    this.extra = 0,
   });
 
   factory Drive.fromJson(Json json) => Drive(
@@ -582,6 +584,8 @@ class Drive {
         cars: json['cars'] as int? ?? 1,
         tolls: json['tolls'] as int? ?? 0,
         ferry: json['ferry'] as int? ?? 0,
+        fuel: json['fuel'] as int?,
+        extra: json['extra'] as int? ?? 0,
       );
 
   String route;
@@ -601,12 +605,20 @@ class Drive {
   /// All cars, both ways.
   int ferry;
 
+  /// What was paid for fuel, as typed; a car from before has none, and its
+  /// fuel is worked out from the kilometres.
+  int? fuel;
+
+  /// Anything else the car cost.
+  int extra;
+
   int get fuelCost {
+    if (fuel case final paid?) return paid;
     final distance = kilometres * (roundTrip ? 2 : 1);
     return (distance / 100 * litresPer100 * fuelPrice * cars).round();
   }
 
-  int get totalCost => fuelCost + tolls + ferry;
+  int get totalCost => fuelCost + tolls + ferry + extra;
 
   Json toJson() => {
         'route': route,
@@ -617,6 +629,8 @@ class Drive {
         'cars': cars,
         'tolls': tolls,
         'ferry': ferry,
+        if (fuel != null) 'fuel': fuel,
+        if (extra != 0) 'extra': extra,
       };
 }
 

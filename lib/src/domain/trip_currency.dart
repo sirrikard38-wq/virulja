@@ -33,7 +33,9 @@ bool changeTripCurrency(Trip trip, String to, Map<String, double> perEuro) {
       drive
         ..fuelPrice = c(drive.fuelPrice)
         ..tolls = c(drive.tolls)
-        ..ferry = c(drive.ferry);
+        ..ferry = c(drive.ferry)
+        ..extra = c(drive.extra);
+      if (drive.fuel case final paid?) drive.fuel = c(paid);
     }
   }
   trip.drive

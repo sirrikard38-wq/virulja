@@ -66,9 +66,13 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   steps while the phone steps back froze an iPhone and left it white (2026-11-04).
 - The screen of the day plan and the journey (`route_screen.dart`, called Plan puta in
   these notes) is named "Prijevoz" in the app. Each day has its own cars and other
-  transport (`Leg.dayIndex`; a car is a leg with `Leg.drive`, its cost worked out
-  as it is typed, with no way back counted), added to the day shown, each with a
-  brush that opens it for changing (`Ui.editingLeg`). The one car a trip had before
+  transport (`Leg.dayIndex`; a car is a leg with `Leg.drive`: Ruta on a third of
+  a row, growing with its text, then Gorivo, Cestarine, Trajekt and Ekstra in one
+  row, all paid amounts; `Drive.fuel`, while a car from before still works its
+  fuel out from kilometres), added to the day shown, each with a brush that opens
+  it for changing (`Ui.editingLeg`): the part and its form in one outline
+  (`leg-open`), no line between, and the brush, green, saves; no Spremi
+  (2026-11-09). The one car a trip had before
   moves to the first day (`moveOldDrive`, id `drive`, both ways when it counted
   them). Dodaj prijevoz has Relacija on a third of a row, growing with its text, then
   Prijevoz and Iznos half and half; any two may stay empty (`Leg.route`; the name is
@@ -330,7 +334,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - A redraw of the same screen puts the page back exactly where it was (`_stayAt` in
   `app.dart`): an iPhone moved it while the screen was swapped (2026-11-05).
 - Taking something out of a list leaves what is above where it was: a redraw of the
-  same screen keeps the page tall enough for its scroll (`_drawnHash` in `app.dart`). A place of Hrana i piće in Plan
+  same screen keeps the page tall enough for its scroll (`_drawnHash` in `app.dart`),
+  and a page with its foot at the bottom fills that height, so no empty space
+  stands under the foot to scroll to (2026-11-09). A place of Hrana i piće in Plan
   napada whose day has come shows under "Za razdijeliti" (`toSplit`); Razdijeli asks what
   it really cost, who paid and whom it is for (`Place.expenseId`).
 - Entering a code with the name (any capitals) and phone number of someone already in
@@ -341,8 +347,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Under "Tko kome duguje" comes first "Ukupno za tebe": all you owe each person added
   up, in red with a minus, and what each owes you, in green (`balanceOf`). The box of a
   tick in Plan napada starts with an empty amount.
-- The trip's header shows "tvoj trošak": your part of each written cost you share, and an
-  equal part of what is planned and not yet written (`Budget.shareOf`).
+- The trip's header shows "tvoj trošak": your part of each written cost you share,
+  nothing planned (`Budget.shareOf`).
 - Each presentation shows how long ago it was changed (`Show.changedAt`, `sinceCount`).
 - Codes in Postavke: the next trip first, past ones last; "Sakrij" hides one on this phone
   (`AppData.hiddenCodes`); with any hidden, a tap on the heading folds them open, faded,

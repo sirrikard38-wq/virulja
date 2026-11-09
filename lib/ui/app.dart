@@ -681,7 +681,15 @@ class ViruljaApp {
             _walkLink(trip, stay),
         if (hasMenu) _menu(place.page),
       ]);
-    if (keep > 0) frame.style.minHeight = '${keep.round()}px';
+    if (keep > 0) {
+      frame.style.minHeight = '${keep.round()}px';
+      // A page with its foot at the bottom fills that height, so nothing but
+      // empty space can stand under the foot.
+      if (page.classList.contains('swipe-area') || page.classList.contains('fill-page')) {
+        page.style.minHeight =
+            'calc(${keep.round()}px - var(--nav-height) - var(--bottom-safe) - 16px)';
+      }
+    }
     show(_root, frame);
     // A redraw of the same screen leaves the page exactly where it was: an
     // iPhone may move it while the old screen is swapped for the new one,

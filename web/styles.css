@@ -455,6 +455,10 @@ html.held, html.held body { overscroll-behavior: none; }
 .form-row > .field { margin: 0; flex: 1 1 0; min-width: 0; }
 .form-row > .field.half { flex: 0 0 calc(50% - 5px); }
 .form-row > .field.third { flex: 0 0 calc(33.333% - 5px); }
+/* A part of Prijevoz open with its brush: it and its form in one outline. */
+.leg-open { margin: 6px 8px; padding-bottom: 12px; }
+.leg-open > .row { margin: 0 12px; border-bottom: 0; }
+.leg-open .form-row, .leg-open .error { margin-left: 12px; margin-right: 12px; }
 .form-row > .field.two-thirds { flex: 2 1 0; }
 .form-row.thirds { flex-wrap: wrap; }
 /* Price, portions and where of a dish: always one row, the portions narrow. */

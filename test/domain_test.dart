@@ -594,6 +594,18 @@ void main() {
         2000,
       );
     });
+
+    test('a car costs the fuel paid, tolls, the ferry and the rest', () {
+      final drive = Drive(kilometres: 400, fuel: 5000, tolls: 1000, ferry: 2000, extra: 500);
+      expect(drive.fuelCost, 5000);
+      expect(drive.totalCost, 8500);
+      final back = Drive.fromJson(drive.toJson());
+      expect(back.fuel, 5000);
+      expect(back.extra, 500);
+      // One from before has no fuel paid: it is worked out as it was.
+      expect(Drive.fromJson({'kilometres': 100, 'roundTrip': false, 'litresPer100': 10, 'fuelPrice': 200}).totalCost,
+          2000);
+    });
   });
 
   group('settling up', () {

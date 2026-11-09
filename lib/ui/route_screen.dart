@@ -14,20 +14,6 @@ import 'plan_cost.dart';
 import 'swipes.dart';
 import 'widgets.dart';
 
-/// Spremi and Odustani under a form opened with a brush.
-web.HTMLElement _saveOrCancel(Ui ui, void Function() save) => el('div', attrs: {
-      'style': 'display:flex;gap:12px;align-items:center;margin:10px 20px 0'
-    }, children: [
-      primaryButton(tr('Spremi'), save, wide: false),
-      button(
-          cls: 'text-button',
-          text: tr('Odustani'),
-          onTap: () {
-            ui.editingLeg = null;
-            ui.rerender();
-          }),
-    ]);
-
 /// After a part of the journey is added or changed, its cost in Troškovi. With
 /// a price and no cost written yet, the cost box asks who paid and whom it is
 /// for, as Dodaj trošak does, named as the part is; with one written, it
@@ -73,9 +59,9 @@ bool _anyTyped(List<web.HTMLInputElement> boxes, web.HTMLElement error) {
   return false;
 }
 
-/// Changes what was written of a part of the journey: what, where and what it
-/// costs.
-web.HTMLElement _legEdit(Ui ui, Trip trip, Leg leg) {
+/// What was written of a part of the journey, open for changing: what, where
+/// and what it costs. Its brush, tapped again, saves it.
+({web.HTMLElement form, void Function() save}) _legEdit(Ui ui, Trip trip, Leg leg) {
   final title = input(value: leg.title);
   final route = input(value: leg.route, placeholder: tr('Početak - kraj'));
   final cost = amountInput(value: leg.cost == 0 ? '' : plainAmount(leg.cost));
@@ -91,11 +77,10 @@ web.HTMLElement _legEdit(Ui ui, Trip trip, Leg leg) {
     _afterLeg(ui, trip, leg);
   }
 
-  return el('div', cls: 'leg-edit', children: [
-    ..._legFields(title, route, cost),
-    error,
-    _saveOrCancel(ui, save),
-  ]);
+  return (
+    form: el('div', cls: 'leg-edit', children: [..._legFields(title, route, cost), error]),
+    save: save,
+  );
 }
 
 /// A part of the journey other than by car, on [day].
@@ -125,53 +110,29 @@ web.HTMLElement _addLeg(Ui ui, Trip trip, int day) {
   ]);
 }
 
-/// A drive by car on [day], or the one of [editing] to change: what it costs is
-/// worked out from the kilometres and the fuel as it is typed.
-web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
-  // A new car starts from the last one: the same cars use the same fuel.
-  final last = [
-    for (final leg in trip.legs)
-      if (leg.drive != null) leg.drive!,
-  ];
+/// A drive by car on [day], or the one of [editing] to change: Ruta on a third
+/// of its row, growing with its text, and under it what was paid for fuel,
+/// tolls, the ferry and anything else, which add up to its cost.
+({List<web.Node> fields, void Function() save}) _driveFields(Ui ui, Trip trip, int day,
+    {Leg? editing}) {
   final drive = editing?.drive ?? Drive(roundTrip: false);
-  final like = editing?.drive ?? (last.isEmpty ? drive : last.last);
-  final route = input(value: drive.route);
-  final km = numberInput(
-      value: drive.kilometres == 0 ? '' : decimal(drive.kilometres));
-  final litres = numberInput(value: decimal(like.litresPer100));
-  final fuel = amountInput(value: plainAmount(like.fuelPrice));
-  final cars = numberInput(value: '${like.cars}');
-  final tolls =
-      amountInput(value: drive.tolls == 0 ? '' : plainAmount(drive.tolls));
-  final ferry =
-      amountInput(value: drive.ferry == 0 ? '' : plainAmount(drive.ferry));
-  final fuelCost = el('div', cls: 'price');
-  final total = el('div', cls: 'price');
-
-  Drive typed() => Drive(
-        route: route.value.trim(),
-        kilometres: parseDecimal(km.value) ?? 0,
-        roundTrip: false,
-        litresPer100: parseDecimal(litres.value) ?? like.litresPer100,
-        fuelPrice: parseEuros(fuel.value) ?? like.fuelPrice,
-        cars: int.tryParse(cars.value.trim()) ?? like.cars,
-        tolls: parseEuros(tolls.value) ?? 0,
-        ferry: parseEuros(ferry.value) ?? 0,
-      );
-
-  void show() {
-    final now = typed();
-    fuelCost.textContent = euros(now.fuelCost);
-    total.textContent = euros(now.totalCost);
-  }
-
-  for (final box in [km, litres, fuel, cars, tolls, ferry]) {
-    box.onInput.listen((_) => show());
-  }
-  show();
+  String typed(int cents) => cents == 0 ? '' : plainAmount(cents);
+  final route = input(value: drive.route, placeholder: tr('Početak - kraj'));
+  final fuel = amountInput(value: typed(drive.fuelCost));
+  final tolls = amountInput(value: typed(drive.tolls));
+  final ferry = amountInput(value: typed(drive.ferry));
+  final extra = amountInput(value: typed(drive.extra));
 
   void save() {
-    final now = typed();
+    final now = Drive(
+      route: route.value.trim(),
+      kilometres: drive.kilometres,
+      roundTrip: false,
+      fuel: parseEuros(fuel.value) ?? 0,
+      tolls: parseEuros(tolls.value) ?? 0,
+      ferry: parseEuros(ferry.value) ?? 0,
+      extra: parseEuros(extra.value) ?? 0,
+    );
     final Leg leg;
     if (editing == null) {
       leg = Leg(
@@ -193,68 +154,69 @@ web.HTMLElement _driveForm(Ui ui, Trip trip, int day, {Leg? editing}) {
     _afterLeg(ui, trip, leg);
   }
 
-  final fields = <web.Node>[
-    field(tr('Ruta'), route),
-    el('div', cls: 'fields', children: [
-      unitField(tr('Udaljenost'), km, 'km'),
-      field(tr('Broj auta'), cars, tight: true),
-    ]),
-    el('div', cls: 'fields', children: [
-      unitField(tr('Potrošnja'), litres, 'l/100 km'),
-      unitField(tr('Cijena goriva'), fuel, '${moneySign()}/l'),
-    ]),
-    el('div', cls: 'fields', children: [
-      unitField(tr('Cestarine'), tolls, moneySign()),
-      unitField(tr('Trajekt'), ferry, moneySign()),
-    ]),
-    el('div', cls: 'row', attrs: {
-      'style': 'margin-top:8px'
-    }, children: [
-      el('div', cls: 'grow', text: tr('Gorivo')),
-      fuelCost,
-    ]),
-    el('div', cls: 'row', children: [
-      el('div', cls: 'grow strong', text: tr('Auto ukupno')),
-      total,
-    ]),
-  ];
-  return editing == null
-      ? adder(tr('Dodaj prijevoz autom'),
-          [...fields, primaryButton(tr('Dodaj'), save)])
-      : el('div',
-          cls: 'leg-edit', children: [...fields, _saveOrCancel(ui, save)]);
+  return (
+    fields: [
+      el('div', cls: 'form-row', children: [
+        growWithText(field(tr('Ruta'), route, tight: true)..classList.add('third'), route,
+            least: 1 / 3),
+      ]),
+      el('div', cls: 'form-row one-line', children: [
+        unitField(tr('Gorivo'), fuel, moneySign()),
+        unitField(tr('Cestarine'), tolls, moneySign()),
+        unitField(tr('Trajekt'), ferry, moneySign()),
+        unitField(tr('Ekstra'), extra, moneySign()),
+      ]),
+    ],
+    save: save,
+  );
+}
+
+/// Dodaj prijevoz autom, on [day].
+web.HTMLElement _driveForm(Ui ui, Trip trip, int day) {
+  final drive = _driveFields(ui, trip, day);
+  return adder(tr('Dodaj prijevoz autom'), [...drive.fields, primaryButton(tr('Dodaj'), drive.save)]);
 }
 
 /// One part of the journey on its day: what it costs, the brush that opens it
 /// for changing, and the x. It is so as written: no vote, not in Plan napada.
-List<web.HTMLElement> _legRow(Ui ui, Trip trip, Leg leg) => [
-      el('div', cls: 'row', children: [
-        el('div', cls: 'grow', text: legName(leg)),
-        if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
-        button(
-          cls: ui.editingLeg == leg.id
-              ? 'icon-button brush-small on'
-              : 'icon-button brush-small',
-          ariaLabel: tr('Uredi: {0}', [legName(leg)]),
-          onTap: () {
-            ui.editingLeg = ui.editingLeg == leg.id ? null : leg.id;
-            ui.rerender();
-          },
-          children: [icon('brush', size: 20)],
-        ),
-        // Its cost in Troškovi goes with it, and comes back with undo.
-        removeWithUndo(ui, trip.legs, leg, legName(leg), also: () {
-          final at = trip.expenses.indexWhere((cost) => cost.id == leg.expenseId);
-          if (at < 0) return () {};
-          final cost = trip.expenses.removeAt(at);
-          return () => trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
-        }),
-      ]),
-      if (ui.editingLeg == leg.id)
-        leg.drive != null
-            ? _driveForm(ui, trip, leg.dayIndex, editing: leg)
-            : _legEdit(ui, trip, leg),
-    ];
+/// Open, the part and its form stand in one outline, and the brush, green,
+/// saves it.
+List<web.HTMLElement> _legRow(Ui ui, Trip trip, Leg leg) {
+  final open = ui.editingLeg == leg.id;
+  ({web.HTMLElement form, void Function() save})? edit;
+  if (open && leg.drive != null) {
+    final drive = _driveFields(ui, trip, leg.dayIndex, editing: leg);
+    edit = (form: el('div', cls: 'leg-edit', children: drive.fields), save: drive.save);
+  } else if (open) {
+    edit = _legEdit(ui, trip, leg);
+  }
+  final row = el('div', cls: 'row', children: [
+    el('div', cls: 'grow', text: legName(leg)),
+    if (leg.cost > 0) el('div', cls: 'price', text: euros(leg.cost)),
+    button(
+      cls: open ? 'icon-button brush-small on' : 'icon-button brush-small',
+      ariaLabel: open ? tr('Spremi') : tr('Uredi: {0}', [legName(leg)]),
+      onTap: () {
+        if (edit != null) {
+          edit.save();
+          return;
+        }
+        ui.editingLeg = leg.id;
+        ui.rerender();
+      },
+      children: [icon('brush', size: 20)],
+    ),
+    // Its cost in Troškovi goes with it, and comes back with undo.
+    removeWithUndo(ui, trip.legs, leg, legName(leg), also: () {
+      final at = trip.expenses.indexWhere((cost) => cost.id == leg.expenseId);
+      if (at < 0) return () {};
+      final cost = trip.expenses.removeAt(at);
+      return () => trip.expenses.insert(at.clamp(0, trip.expenses.length), cost);
+    }),
+  ]);
+  if (edit == null) return [row];
+  return [el('div', cls: 'card leg-open', children: [row, edit.form])];
+}
 
 web.HTMLElement routeScreen(Ui ui, Trip trip) {
   if (moveOldDrive(trip)) ui.saved();
