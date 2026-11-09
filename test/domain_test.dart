@@ -496,6 +496,37 @@ void main() {
     });
   });
 
+  group('cars by day', () {
+    test('the old car of a trip moves to the first day, both ways', () {
+      final trip = visTrip()
+        ..drive = Drive(route: 'Zagreb - Split', kilometres: 100, litresPer100: 10, fuelPrice: 200, tolls: 500);
+      final before = trip.drive.totalCost;
+      expect(moveOldDrive(trip), isTrue);
+      final leg = trip.legs.single;
+      expect(leg.id, 'drive');
+      expect(leg.drive!.roundTrip, isFalse);
+      expect(leg.drive!.kilometres, 200);
+      expect(leg.cost, before);
+      expect(legName(leg), 'Auto: Zagreb - Split');
+      expect(trip.drive.totalCost, 0);
+      expect(moveOldDrive(trip), isFalse);
+      expect(plannedCost(trip, CostCategory.transport), before);
+    });
+
+    test('each day shows its own', () {
+      final trip = visTrip()
+        ..legs.addAll([
+          Leg(id: 'a', title: 'Bus', cost: 1000),
+          Leg(id: 'b', title: 'Trajekt', cost: 3000, dayIndex: 2),
+        ]);
+      expect(legsOn(trip, 0).map((leg) => leg.id), ['a']);
+      expect(legsOn(trip, 2).map((leg) => leg.id), ['b']);
+      expect(plannedCost(trip, CostCategory.transport), 4000);
+      final back = Leg.fromJson(trip.legs.last.toJson());
+      expect(back.dayIndex, 2);
+    });
+  });
+
   group('drive', () {
     test('fuel counts both ways and every car', () {
       final drive = Drive(

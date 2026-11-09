@@ -66,7 +66,8 @@ web.HTMLElement _planTab(Ui ui, Trip trip) {
           () => ui.go(ui.tripRoute(trip, 'hrana'))),
       _tile(tr('Dućan'), euros(budget.line(CostCategory.shop).actual),
           () => ui.go(ui.tripRoute(trip, 'ducan'))),
-      _tile(tr('Prijevoz'), euros(budget.line(CostCategory.transport).actual),
+      // Prijevoz: all the days' transport together, as at the foot of Prijevoz.
+      _tile(tr('Prijevoz'), euros(plannedCost(trip, CostCategory.transport)),
           () => ui.go(ui.tripRoute(trip, 'put'))),
       _tile(tr('Smještaj'), euros(budget.line(CostCategory.stay).actual),
           () => ui.go(ui.tripRoute(trip, 'smjestaj'))),
@@ -210,7 +211,8 @@ web.HTMLElement tripScreen(Ui ui, Trip trip, String tab) {
   // presentation of the day changes only for more votes.
   final yeses = trip.polls.any((poll) => wholeYesChanged(trip, poll));
   if (yeses) addWholeYeses(trip, ui.meIn(trip));
-  if (keepShowOfTheDay(trip) || yeses) ui.saved();
+  final moved = moveOldDrive(trip);
+  if (keepShowOfTheDay(trip) || yeses || moved) ui.saved();
   final peopleShown = ui.showPeople; // still drawn while it folds shut
   _foldPeople(ui);
   final cover = trip.coverId;

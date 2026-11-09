@@ -62,9 +62,14 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   Copies of screens (`/~`) made a swipe back show the same trip again; pushing history
   steps while the phone steps back froze an iPhone and left it white (2026-11-04).
 - The screen of the day plan and the journey (`route_screen.dart`, called Plan puta in
-  these notes) is named "Prijevoz" in the app. Its days show what is on them with no
-  adder; under them come the parts of the journey with no heading, each with a brush
-  that opens what or what it costs for changing (`Ui.editingLeg`).
+  these notes) is named "Prijevoz" in the app. Each day has its own cars and other
+  transport (`Leg.dayIndex`; a car is a leg with `Leg.drive`, its cost worked out
+  as it is typed, with no way back counted), added to the day shown, each with a
+  brush that opens it for changing (`Ui.editingLeg`). The one car a trip had before
+  moves to the first day (`moveOldDrive`, id `drive`, both ways when it counted
+  them). At the foot, over "Planirani trošak po osobi", "Prijevoz ukupno" adds up
+  every day, and that is what the tile Prijevoz in Plan shows (2026-11-09), unlike
+  the other tiles, which show only what was spent.
 - `lib/ui/swipes.dart`: sideways swipes between pages, for the food categories, a
   trip's tabs and the days of Plan puta. The next page comes along beside the one
   that goes, as far as the finger has gone (`peek`), and the green mark (the line under

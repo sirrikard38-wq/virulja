@@ -462,6 +462,8 @@ class Leg {
     required this.title,
     this.cost = 0,
     this.reserved = false,
+    this.dayIndex = 0,
+    this.drive,
     Map<int, Set<String>>? dayVotes,
   }) : dayVotes = dayVotes ?? {};
 
@@ -470,12 +472,27 @@ class Leg {
         title: json['title'] as String,
         cost: json['cost'] as int? ?? 0,
         reserved: json['reserved'] as bool? ?? false,
+        dayIndex: json['dayIndex'] as int? ?? 0,
+        drive: json['drive'] is Map
+            ? Drive.fromJson(Map<String, dynamic>.from(json['drive'] as Map))
+            : null,
         dayVotes: dayVotesFrom(json['dayVotes']),
       );
 
   final String id;
+
+  /// What and where; for a car, its route.
   String title;
+
+  /// For the whole group; for a car, worked out from [drive].
   int cost;
+
+  /// The day of the trip it is on in Prijevoz (from 0); older ones were on none
+  /// and show on the first.
+  int dayIndex;
+
+  /// By car: the kilometres and fuel its cost is worked out from.
+  Drive? drive;
 
   /// Booked: it goes into Plan napada, on the day most vote for.
   bool reserved;
@@ -488,11 +505,49 @@ class Leg {
         'title': title,
         'cost': cost,
         'reserved': reserved,
+        'dayIndex': dayIndex,
+        if (drive != null) 'drive': drive!.toJson(),
         'dayVotes': dayVotesToJson(dayVotes),
       };
 }
 
-/// The drive there: the part of the transport estimate worked out from fuel.
+/// How a part of the journey is called: a car by its route.
+String legName(Leg leg) {
+  if (leg.drive == null) return leg.title;
+  return leg.title.isEmpty ? tr('Auto') : tr('Auto: {0}', [leg.title]);
+}
+
+/// The parts of the journey on [day] in Prijevoz, in the order added.
+List<Leg> legsOn(Trip trip, int day) => [
+      for (final leg in trip.legs)
+        if (leg.dayIndex.clamp(0, trip.dayCount - 1) == day) leg,
+    ];
+
+/// The one car of a trip from before each day had its own becomes a car on
+/// the first day, its kilometres both ways when it counted both, and is gone
+/// from the trip. Every phone makes the same one (id `drive`), so two phones
+/// doing it at once agree. True when something changed.
+bool moveOldDrive(Trip trip) {
+  final old = trip.drive;
+  if (old.kilometres == 0 && old.tolls == 0 && old.ferry == 0) return false;
+  if (!trip.legs.any((leg) => leg.id == 'drive')) {
+    final drive = Drive(
+      route: old.route,
+      kilometres: old.kilometres * (old.roundTrip ? 2 : 1),
+      roundTrip: false,
+      litresPer100: old.litresPer100,
+      fuelPrice: old.fuelPrice,
+      cars: old.cars,
+      tolls: old.tolls,
+      ferry: old.ferry,
+    );
+    trip.legs.add(Leg(id: 'drive', title: old.route, cost: drive.totalCost, drive: drive));
+  }
+  trip.drive = Drive();
+  return true;
+}
+
+/// A drive by car: the part of the transport worked out from fuel.
 class Drive {
   Drive({
     this.route = '',
@@ -518,7 +573,7 @@ class Drive {
 
   String route;
 
-  /// One way.
+  /// One way when [roundTrip]; the days' cars count no way back.
   double kilometres;
   bool roundTrip;
   double litresPer100;
