@@ -349,6 +349,7 @@ const Map<String, List<String>> _texts = {
   'Udaljenost': ['Distance', 'Mesafe'],
   'Trošak za grupu': ['Cost for the group', 'Grup için masraf'],
   'Cijena po osobi': ['Price per person', 'Kişi başı fiyat'],
+  'Potvrdi valutu': ['Confirm the currency', 'Para birimini onayla'],
   'Prijevoz ukupno': ['Transport total', 'Toplam ulaşım'],
   'Izračunaj': ['Calculate', 'Hesapla'],
   'Za ovaj dan još nema plana.': ['No plan for this day yet.', 'Bu gün için henüz plan yok.'],

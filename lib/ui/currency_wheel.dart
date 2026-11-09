@@ -10,6 +10,7 @@ import '../src/domain/format.dart';
 import '../src/domain/i18n.dart';
 import 'context.dart';
 import 'dom.dart';
+import 'icons.dart';
 
 String? _askedOn;
 
@@ -41,10 +42,13 @@ Future<void> loadRates(Ui ui, {void Function()? done, bool now = false}) async {
 }
 
 /// A wheel of currencies, turned as the time is: the one standing in the
-/// middle, under the green ring, is the chosen one. [onChange] gets it once the
-/// wheel stops; the wheel shows it itself, with no redraw, so it stays where it
-/// was turned. One currency for now; a second one beside it may come back.
-web.HTMLElement currencyWheel(Ui ui, List<String> chosen, void Function(List<String>) onChange) {
+/// middle, under the green ring, is taken with the tick beside it, which
+/// [onConfirm] gets; true from it means it is now the one in use. The tick is
+/// green while the wheel stands on the one in use, as the tick of Plan napada.
+/// The wheel shows it all itself, with no redraw, so it stays where it was
+/// turned. One currency for now; a second one beside it may come back.
+web.HTMLElement currencyWheel(
+    Ui ui, List<String> chosen, Future<bool> Function(String code) onConfirm) {
   var now = cleanCurrencies(chosen).first;
   final note = el('p', cls: 'small pad centered');
   final rows = <web.HTMLElement>[
@@ -69,23 +73,33 @@ web.HTMLElement currencyWheel(Ui ui, List<String> chosen, void Function(List<Str
     note.textContent = tr('Iznosi se pišu u: {0}', [currencies[at].code]);
   }
 
-  Timer? settle;
-  wheel.onScroll.listen((_) {
-    show(middle());
-    settle?.cancel();
-    settle = Timer(const Duration(milliseconds: 160), () {
+  late final web.HTMLElement tick;
+  void showTick() => tick.classList.toggle('on', currencies[middle()].code == now);
+  tick = button(
+    cls: 'icon-button cost-tick currency-tick',
+    ariaLabel: tr('Potvrdi valutu'),
+    onTap: () async {
       final code = currencies[middle()].code;
       if (code == now) return;
-      now = code;
-      onChange([code]);
-    });
+      if (await onConfirm(code)) now = code;
+      showTick();
+    },
+    children: [icon('check', size: 26)],
+  );
+  wheel.onScroll.listen((_) {
+    show(middle());
+    showTick();
   });
   final first = max(0, currencies.indexWhere((currency) => currency.code == now));
   show(first);
+  tick.classList.add('on');
   // Turned so that the chosen one stands in the middle.
   scheduleMicrotask(() => wheel.scrollTop = first * rows.first.offsetHeight.toDouble());
   return el('div', children: [
-    el('div', cls: 'currency-frame', children: [wheel]),
+    el('div', cls: 'currency-pick', children: [
+      el('div', cls: 'currency-frame', children: [wheel]),
+      tick,
+    ]),
     note,
   ]);
 }

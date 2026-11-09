@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/budget.dart';
@@ -218,6 +220,9 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
           removeWithUndo(ui, trip.stops, stop, stop.title),
         ]),
       for (final leg in legs) ..._legRow(ui, trip, leg),
+      // Both add to this day.
+      _driveForm(ui, trip, shown),
+      _addLeg(ui, trip, shown),
     ]);
   }
 
@@ -232,30 +237,14 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       }, on: i == day),
   ]);
   final mark = SwipeMark(dayRow);
-  // Only the day swipes; the rest of Prijevoz follows right under it.
-  final days = el('div', cls: 'swipe-area day-swipe', children: [
-    el('div', cls: 'slide-clip', children: [sliding]),
-  ]);
-  followSwipes(days, sliding, (step) {
-    final next = day + step;
-    return next >= 0 && next < trip.dayCount;
-  }, (step) {
-    ui.routeDay = day + step;
-    ui.editingLeg = null;
-    ui.rerender();
-    slideIn(step);
-  },
-      peek: (step) => dayPage(day + step),
-      follow: (step, fraction) => mark.follow(dayRow.children.item(day + step) as web.HTMLElement?, fraction));
   // All the days together: the cost of transport, shown on its tile in Plan.
   final all = plannedCost(trip, CostCategory.transport);
-  return el('div', cls: 'fill-page', children: [
+  // A swipe anywhere on Prijevoz goes to the day before or after; the foot
+  // stays at the bottom of the screen.
+  final page = el('div', cls: 'swipe-area', children: [
     topBar(tr('Prijevoz')),
     dayRow,
-    days,
-    // Both add to the day shown.
-    _driveForm(ui, trip, day),
-    _addLeg(ui, trip, day),
+    el('div', cls: 'slide-clip', children: [sliding]),
     el('div', cls: 'stick-bottom', children: [
       el('div', cls: 'row', attrs: {'style': 'padding:0'}, children: [
         el('div', cls: 'grow', text: tr('Prijevoz ukupno')),
@@ -266,4 +255,18 @@ web.HTMLElement routeScreen(Ui ui, Trip trip) {
       planCost(ui, trip, CostCategory.transport.name),
     ]),
   ]);
+  // The chip of the day shown stands whole in sight, the last one too.
+  scheduleMicrotask(() => showChosenChip(dayRow));
+  followSwipes(page, sliding, (step) {
+    final next = day + step;
+    return next >= 0 && next < trip.dayCount;
+  }, (step) {
+    ui.routeDay = day + step;
+    ui.editingLeg = null;
+    ui.rerender();
+    slideIn(step);
+  },
+      peek: (step) => dayPage(day + step),
+      follow: (step, fraction) => mark.follow(dayRow.children.item(day + step) as web.HTMLElement?, fraction));
+  return page;
 }

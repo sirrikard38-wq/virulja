@@ -80,8 +80,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   `.slide-page` is its own block (`flow-root`), so the space over its first line is the
   same beside and in place; otherwise the page jumped 10 px up as it landed. A page of
   another height grows or shrinks smoothly as it lands (`_easeHeight`), so what stands
-  under it, as in Prijevoz, glides. The days of Prijevoz swipe in a part only as tall as
-  the day (`day-swipe`), with the rest of Prijevoz right under it. A swipe is off while a form is open, as a redraw would wipe it.
+  under it, as in Prijevoz, glides. A swipe anywhere on Prijevoz changes the day; its
+  adders slide with the day, and the foot (Prijevoz ukupno, Planirani trošak po osobi)
+  stands at the bottom of the screen as in every category of Plan. A swipe is off while a form is open, as a redraw would wipe it.
 - Tool icons and the temporary logo: `tool/make_icons.ps1`, `lib/ui/icons.dart`
   (`logoMark`), `web/styles.css` (`--logo`).
 
@@ -261,8 +262,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   day, kept in `AppData.rates`). Changing a trip's currency converts every amount of
   the trip at the day's rate (`changeTripCurrency`; with no rate it says so and keeps
   the currency). A trip's settings have no Spremi: Država and Grad keep as typed, the
-  postcard photo once picked, the dates and the currency once the settings are left
-  (`Ui.onLeave`, run by `render` when the address changes). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
+  postcard photo once picked, the dates once the settings are left (`Ui.onLeave`, run
+  by `render` when the address changes). A currency is taken only with the tick
+  beside its wheel, green while the wheel stands on the one in use (2026-11-09). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
   narrow wheel (`currencyWheel`) turned like the time: the one in the middle, under a
   green ring that stands still, is chosen once the wheel stops. The second currency is
   off for now (2026-11-05, the user's wish): the wheel sets one and `alsoCode` stays
@@ -285,7 +287,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`AppStore.knownAddress`); waiting for it flashed every picture blank, which looked
   like the screen jumping. Prezentacija dana folds in place, nothing else redrawn.
 - Rows that scroll sideways (`.chips`, `.show-strip`) fade on the side where more is
-  hidden (`markEdges`, after every drawing).
+  hidden (`markEdges`, after every drawing and on every scroll, heard by the page),
+  never at the very end; the chosen day of Prijevoz is turned whole into sight
+  (`showChosenChip`).
 - A redraw of the same screen puts the page back exactly where it was (`_stayAt` in
   `app.dart`): an iPhone moved it while the screen was swapped (2026-11-05).
 - Taking something out of a list leaves what is above where it was: a redraw of the

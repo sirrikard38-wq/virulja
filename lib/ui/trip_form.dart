@@ -89,16 +89,6 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
           ..end = to;
         ui.saved();
       }
-      final next = money.first;
-      if (next == trip.currencies.first) return;
-      loadRates(ui, now: true).then((_) {
-        if (changeTripCurrency(trip, next, ui.data.rates)) {
-          ui.changed();
-          ui.toast(tr('Svi iznosi su preračunati u {0} po današnjem tečaju.', [next]), long: true);
-        } else {
-          ui.toast(tr('Za preračun treba internet. Valuta nije promijenjena.'), long: true);
-        }
-      });
     };
   }
 
@@ -196,9 +186,23 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
               for (final id in trip.memberIds) memberRow(ui, trip, id),
             ]),
           ]),
-    // Kept when the settings are left, so that turning past others changes nothing.
+    // Taken with its tick: every amount of the trip is then worked out anew.
     ...foldSection(ui, 'trip-currency', tr('Valuta'), () => [
-          currencyWheel(ui, money, (chosen) => money = chosen),
+          currencyWheel(ui, money, (code) async {
+            if (trip == null || code == trip.currencies.first) {
+              money = [code];
+              return true;
+            }
+            await loadRates(ui, now: true);
+            if (!changeTripCurrency(trip, code, ui.data.rates)) {
+              ui.toast(tr('Za preračun treba internet. Valuta nije promijenjena.'), long: true);
+              return false;
+            }
+            money = [code];
+            ui.changed();
+            ui.toast(tr('Svi iznosi su preračunati u {0} po današnjem tečaju.', [code]), long: true);
+            return true;
+          }),
         ]),
     if (trip != null)
       el('div', cls: 'pad gap-top', children: [

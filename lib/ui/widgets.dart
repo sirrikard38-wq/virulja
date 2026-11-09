@@ -60,22 +60,46 @@ void typeAmount(web.HTMLInputElement box, web.Event event) {
 /// is plain there is more to see. Each row is watched once; [markEdges] runs
 /// after every drawing.
 void markEdges() {
+  if (!_edgesWatched) {
+    _edgesWatched = true;
+    // A row's scroll does not rise to the page, but the page hears it first.
+    web.document.addEventListener(
+      'scroll',
+      ((web.Event event) {
+        final row = event.target as web.Element?;
+        final list = row?.classList;
+        if (row != null && list != null &&
+            (list.contains('chips') || list.contains('show-strip'))) {
+          _markRow(row as web.HTMLElement);
+        }
+      }).toJS,
+      true.toJS,
+    );
+  }
   final rows = web.document.querySelectorAll('.chips, .show-strip');
   for (var i = 0; i < rows.length; i++) {
     final row = rows.item(i) as web.HTMLElement;
-    void mark() {
-      final most = row.scrollWidth - row.clientWidth;
-      row.classList.toggle('more-left', row.scrollLeft > 2);
-      row.classList.toggle('more-right', most - row.scrollLeft > 2);
-    }
-
-    if (!row.hasAttribute('data-edges')) {
-      row.setAttribute('data-edges', '');
-      row.addEventListener('scroll', ((web.Event _) => mark()).toJS);
-    }
-    mark();
-    web.window.requestAnimationFrame(((double _) => mark()).toJS);
+    _markRow(row);
+    web.window.requestAnimationFrame(((double _) => _markRow(row)).toJS);
   }
+}
+
+bool _edgesWatched = false;
+
+/// At the very end of a row there is nothing more on that side: no fade.
+void _markRow(web.HTMLElement row) {
+  final most = row.scrollWidth - row.clientWidth;
+  row.classList.toggle('more-left', row.scrollLeft > 2);
+  row.classList.toggle('more-right', most - row.scrollLeft > 2);
+}
+
+/// Turns [row] so that its chosen chip stands whole in sight, in the middle
+/// when it can; the first and last ones go to their end, where nothing fades.
+void showChosenChip(web.HTMLElement row) {
+  final chosen = row.querySelector('.chip.on') as web.HTMLElement?;
+  if (chosen == null) return;
+  row.scrollLeft = chosen.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2;
+  _markRow(row);
 }
 
 /// A box for an amount, written as all amounts are while it is typed: 1.250,50.

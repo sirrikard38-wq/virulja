@@ -130,9 +130,10 @@ web.HTMLElement groupScreen(Ui ui) {
         ]),
     ...foldSection(ui, 'currency', tr('Valuta'), () => [
           el('p', cls: 'small pad', text: tr('Za nova putovanja. Svako putovanje ima svoju u postavkama putovanja.')),
-          currencyWheel(ui, ui.data.currencies, (chosen) {
-            ui.data.currencies = chosen;
+          currencyWheel(ui, ui.data.currencies, (code) async {
+            ui.data.currencies = [code];
             ui.store.save();
+            return true;
           }),
         ]),
     if (help == InstallHelp.prompt) ...[
