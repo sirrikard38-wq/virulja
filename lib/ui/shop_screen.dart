@@ -155,6 +155,22 @@ web.HTMLElement _editCard(Ui ui, Trip trip, ShopList list, {required bool draft}
   next.onKeyDown.listen((event) {
     if (event.key == 'Enter') addNext();
   });
+  // An iPhone has its own tick over the keyboard, which a page cannot take
+  // away; it only takes the cursor out. What was typed goes in then as with
+  // the keyboard's own tick. A moment later, so that a tap that took the
+  // cursor out (the brush, another box) is done first: the brush takes it in
+  // itself, and the box tapped keeps the cursor.
+  next.onBlur.listen((_) {
+    Timer(const Duration(milliseconds: 250), () {
+      if (!next.isConnected || next.value.trim().isEmpty) return;
+      final was = focused();
+      take();
+      list.items.add(ShopItem(id: ui.store.newId(), text: next.value.trim(), addedBy: me));
+      next.value = '';
+      redraw();
+      focus(was ?? 'next');
+    });
+  });
   for (final typed in [name, ...boxes.values]) {
     typed.onChange.listen((_) {
       take();

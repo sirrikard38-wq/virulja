@@ -254,7 +254,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   only. Nova lista and a list's brush open the same card (`_editCard`; a new one is
   `Ui.shopDraft` until saved): a box for the name ("Naziv liste" in grey), a box with
   an x for each thing, and an empty "Dodaj u listu" at the bottom; the keyboard's
-  tick puts it in and opens the next. An x leaves the cursor where it is. The brush,
+  tick puts it in and opens the next; so does the tick an iPhone shows over the
+  keyboard, which a page cannot remove (it only blurs: `onBlur`, 250 ms later, so a
+  tap on the brush or another box goes first). An x leaves the cursor where it is. The brush,
   green, saves; the x in the corner, right of the others, throws the list away
   (2026-11-09). No box lets the page behind
   it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
