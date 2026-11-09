@@ -74,6 +74,7 @@ web.HTMLElement _placeRow(Ui ui, Trip trip, Place place) {
         _voteChip(ui, trip, place.name),
         chip(tr('Plan napada'), () {
           setPlaceInAttack(trip, place, !inAttack, ui.meIn(trip));
+          if (!inAttack) ui.toast(tr('Dodano u Plan napada.'));
           ui.changed();
         }, on: inAttack),
       ]),

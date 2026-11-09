@@ -174,6 +174,7 @@ web.HTMLElement _pollCard(Ui ui, Trip trip, Poll poll) {
     el('div', attrs: {'style': 'margin-top:6px'}, children: [
       tick(tr('Dodaj u plan napada'), inAttack, () {
         setPollInAttack(trip, poll, !inAttack, me);
+        if (!inAttack) ui.toast(tr('Dodano u Plan napada.'));
         ui.saved();
         redrawTripTab(ui, trip);
       }),
