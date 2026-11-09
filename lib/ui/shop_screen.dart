@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
@@ -9,11 +10,13 @@ import 'context.dart';
 import 'cost_sheet.dart';
 import 'dom.dart';
 import 'icons.dart';
+import 'list_drag.dart';
 import 'plan_cost.dart';
 import 'widgets.dart';
 
 /// Asks what [list] cost, who paid and whom it is for, and writes it in
-/// Troškovi under Dućan. Troškovi can change it later.
+/// Troškovi under Dućan. Troškovi can change it later. The list goes down among
+/// the bought ones; Poništi takes it all back, and the list is where it was.
 void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
       ui,
       trip,
@@ -24,12 +27,19 @@ void _buy(Ui ui, Trip trip, ShopList list) => costSheet(
         list
           ..expenseId = cost.id
           ..boughtAt = DateTime.now().millisecondsSinceEpoch;
+        scheduleMicrotask(() => ui.offerUndo(tr('Kupljeno: {0}', [list.name]), () {
+              trip.expenses.removeWhere((each) => each.id == cost.id);
+              list
+                ..expenseId = null
+                ..boughtAt = null;
+              ui.changed();
+            }));
       },
     );
 
 /// Takes the purchase of [list] back, with its cost in Troškovi.
 void _unbuy(Ui ui, Trip trip, ShopList list) {
-  final stood = _shown(ui, trip).indexOf(list);
+  final stood = _shown(ui, trip).bought.indexOf(list);
   ui.shopKept = (trip: trip.id, list: list.id, at: stood);
   final at = trip.expenses.indexWhere((cost) => cost.id == list.expenseId);
   final cost = at < 0 ? null : trip.expenses.removeAt(at);
@@ -48,16 +58,21 @@ void _unbuy(Ui ui, Trip trip, ShopList list) {
   });
 }
 
-/// The lists as they show: [listsInOrder], but one whose Kupljeno was just
-/// taken back stays where it stood until Dućan is left (`Ui.shopKept`).
-List<ShopList> _shown(Ui ui, Trip trip) {
+/// The lists as they show: those to buy, in the group's order, and the bought
+/// ones, the last bought first, under Nova lista. One whose Kupljeno was just
+/// taken back stays where it stood among the bought until Dućan is left
+/// (`Ui.shopKept`).
+({List<ShopList> toBuy, List<ShopList> bought}) _shown(Ui ui, Trip trip) {
   final lists = listsInOrder(trip);
+  bool bought(ShopList list) => trip.expenses.any((cost) => cost.id == list.expenseId);
+  final toBuy = [for (final list in lists) if (!bought(list)) list];
+  final done = [for (final list in lists) if (bought(list)) list];
   final kept = ui.shopKept;
-  if (kept == null || kept.trip != trip.id) return lists;
-  final at = lists.indexWhere((list) => list.id == kept.list);
-  if (at < 0 || lists[at].expenseId != null) return lists; // bought again
-  lists.insert(kept.at.clamp(0, lists.length - 1), lists.removeAt(at));
-  return lists;
+  if (kept != null && kept.trip == trip.id) {
+    final at = toBuy.indexWhere((list) => list.id == kept.list);
+    if (at >= 0) done.insert(kept.at.clamp(0, done.length), toBuy.removeAt(at));
+  }
+  return (toBuy: toBuy, bought: done);
 }
 
 /// What was typed in the empty field of a list being changed, kept across a
@@ -292,12 +307,28 @@ web.HTMLElement shopScreen(Ui ui, Trip trip) {
         ?.focus();
   }).toJS);
 
+  final shown = _shown(ui, trip);
+  final toBuy = [for (final list in shown.toBuy) _listCard(ui, trip, list)];
+  // A finger held on a list carries it up or down among those to buy; not
+  // while one is being changed.
+  if (ui.shopEditing == null) {
+    for (final card in toBuy) {
+      movableUpDown(card, toBuy, (from, to) {
+        final ids = [for (final list in shown.toBuy) list.id];
+        ids.insert(to, ids.removeAt(from));
+        orderShopLists(trip, ids);
+        ui.changed();
+      });
+    }
+  }
+
   return el('div', cls: 'fill-page', children: [
     topBar(tr('Dućan')),
     if (trip.shopLists.isEmpty && draft == null)
       el('p', cls: 'soft pad', text: tr('Napravite listu i dodajte što treba kupiti.')),
-    for (final list in _shown(ui, trip)) _listCard(ui, trip, list),
+    ...toBuy,
     if (draft == null) newList else _editCard(ui, trip, draft, draft: true),
+    for (final list in shown.bought) _listCard(ui, trip, list),
     planCost(ui, trip, CostCategory.shop.name),
   ]);
 }

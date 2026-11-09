@@ -259,7 +259,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (2026-11-09). No box lets the page behind
   it scroll (`holdPage`). A bought list greys and says Kupljeno under its name;
   bought lists go last, the last bought first (`listsInOrder`, `ShopList.boughtAt`);
-  the whole card of a bought list greys. One whose Kupljeno is taken back stays
+  the whole card of a bought list greys, and bought lists stand under Nova lista.
+  Kupljeno offers Poništi, which brings the list back where it was. A finger held
+  on a list to buy carries it up or down (`movableUpDown` in `list_drag.dart`,
+  `orderShopLists`). One whose Kupljeno is taken back stays
   where it stood while Dućan is open (`Ui.shopKept`), then goes among those to buy.
   Kupljeno asks the amount, who paid and whom it is for
   (all ticked at first) and writes it in Troškovi under Dućan; a tap

@@ -392,6 +392,23 @@ void main() {
       expect(tripFromTree('t1', (tree as Map).cast<String, dynamic>())!.trip.shopLists.firstWhere((l) => l.id == 'c').boughtAt, 200);
     });
 
+    test('lists to buy are moved among themselves, the bought ones stay', () {
+      final trip = visTrip()
+        ..shopLists.addAll([
+          ShopList(id: 'a', name: 'A'),
+          ShopList(id: 'b', name: 'B', expenseId: 'x', boughtAt: 100),
+          ShopList(id: 'c', name: 'C'),
+          ShopList(id: 'd', name: 'D'),
+        ])
+        ..expenses.add(
+            Expense(id: 'x', title: 'B', amount: 100, payerId: 'ana', sharedBy: ['ana'], category: CostCategory.shop));
+      orderShopLists(trip, ['d', 'a', 'c']);
+      expect(trip.shopLists.map((list) => list.id), ['d', 'b', 'a', 'c']);
+      expect(listsInOrder(trip).map((list) => list.id), ['d', 'a', 'c', 'b']);
+      orderShopLists(trip, ['d', 'zz']); // not lists of the trip: nothing moves
+      expect(trip.shopLists.map((list) => list.id), ['d', 'b', 'a', 'c']);
+    });
+
     test('changing a trip\'s currency converts every amount in it', () {
       final trip = visTrip()
         ..offers.add(Offer(id: 'o', name: 'Vila', pricePerNight: 10000))

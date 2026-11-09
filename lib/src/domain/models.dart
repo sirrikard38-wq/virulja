@@ -935,6 +935,24 @@ List<ShopList> listsInOrder(Trip trip) {
   ];
 }
 
+/// Puts the lists of [ids] in that order, each in a place one of them had in
+/// [Trip.shopLists]; the others stay where they are.
+void orderShopLists(Trip trip, List<String> ids) {
+  final places = [
+    for (var i = 0; i < trip.shopLists.length; i++)
+      if (ids.contains(trip.shopLists[i].id)) i,
+  ];
+  final byId = {for (final list in trip.shopLists) list.id: list};
+  final wanted = [
+    for (final id in ids)
+      if (byId[id] case final list?) list,
+  ];
+  if (wanted.length != places.length) return;
+  for (var i = 0; i < places.length; i++) {
+    trip.shopLists[places[i]] = wanted[i];
+  }
+}
+
 class ShopList {
   ShopList({
     required this.id,
