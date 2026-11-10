@@ -159,6 +159,26 @@ web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box,
   return field;
 }
 
+/// A box alone in its row, as wide as what is typed in it, or its grey hint
+/// while empty, and a little more; it grows with the text up to the whole row.
+web.HTMLInputElement fitToText(web.HTMLInputElement box) {
+  void fit() {
+    if (!box.isConnected) return;
+    final ruler = _ruler ??= (web.document.createElement('canvas') as web.HTMLCanvasElement)
+        .getContext('2d') as web.CanvasRenderingContext2D;
+    final empty = box.value.isEmpty;
+    ruler.font = web.window.getComputedStyle(box, empty ? '::placeholder' : null).font;
+    final text = empty ? box.placeholder : box.value;
+    box.style.width = '${(ruler.measureText(text).width + 40).ceil().clamp(64, 100000)}px';
+  }
+
+  box
+    ..style.maxWidth = '100%'
+    ..onInput.listen((_) => fit());
+  scheduleMicrotask(fit);
+  return box;
+}
+
 /// The most letters a poll's name may have.
 const int longestTitle = 400;
 

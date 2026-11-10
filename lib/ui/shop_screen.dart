@@ -90,10 +90,11 @@ final Map<String, String> _typedNext = {};
 web.HTMLElement _editCard(Ui ui, Trip trip, ShopList list, {required bool draft}) {
   final me = ui.meIn(trip);
   final cost = trip.expenses.where((each) => each.id == list.expenseId).firstOrNull;
+  // Each box is as wide as its words, and grows with them.
   web.HTMLInputElement box(String key, String value, String placeholder) =>
-      input(value: value, placeholder: placeholder)
+      fitToText(input(value: value, placeholder: placeholder)
         ..setAttribute('data-box', key)
-        ..setAttribute('enterkeyhint', 'done');
+        ..setAttribute('enterkeyhint', 'done'));
   final name = box('name', list.name, tr('Naziv liste'))..classList.add('shop-name-box');
   final boxes = {for (final item in list.items) item: box(item.id, item.text, '')};
   final next = box('next', _typedNext.remove(list.id) ?? '', tr('Dodaj u listu'));
