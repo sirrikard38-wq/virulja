@@ -363,7 +363,7 @@ const Map<String, List<String>> _texts = {
   'Odaberi': ['Choose', 'Seç'],
   'Otvori ponudu': ['Open the offer', 'Teklifi aç'],
   'Upiši naziv i cijenu po noći.': ['Write the name and the price per night.', 'Adı ve gecelik fiyatı yaz.'],
-  'Ocjena ide od 0 do 5.': ['The rating goes from 0 to 5.', 'Puan 0 ile 5 arasındadır.'],
+  'Ocjena ide od 0 do {0}.': ['The rating goes from 0 to {0}.', 'Puan 0 ile {0} arasındadır.'],
   'Dodaj ponudu': ['Add an offer', 'Teklif ekle'],
   'Link ponude': ['Offer link', 'Teklif bağlantısı'],
   'Cijena po noći (€)': ['Price per night (€)', 'Gecelik fiyat (€)'],

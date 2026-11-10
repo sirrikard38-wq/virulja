@@ -172,9 +172,27 @@ List<web.HTMLElement> _offerFields({
       el('div', cls: 'form-row one-line stay-facts', children: [
         unitField(tr('Cijena po noći'), price, tr('{0} po osobi', [moneySign()]))..classList.add('wide'),
         unitField(tr('Do plaže'), beach, 'm')..classList.add('narrow'),
-        unitField(tr('Ocjena'), rating, '/5')..classList.add('narrow'),
+        _ratingField(rating, link),
       ]),
     ];
+
+/// Ocjena, out of 5, or out of 10 while the link is one of Booking.
+web.HTMLElement _ratingField(web.HTMLInputElement rating, web.HTMLInputElement link) {
+  final box = unitField(tr('Ocjena'), rating, '/${ratingOutOf(link.value)}')..classList.add('narrow');
+  link.onInput.listen((_) {
+    box.querySelector('.unit')?.textContent = '/${ratingOutOf(link.value)}';
+    rating.dispatchEvent(web.FocusEvent('focus'));
+  });
+  return box;
+}
+
+/// Whether the rating typed fits its scale; if not, says so.
+bool _ratingFits(double? stars, String typed, String link, web.HTMLElement error) {
+  final most = ratingOutOf(link);
+  if (typed.trim().isEmpty || (stars != null && stars >= 0 && stars <= most)) return true;
+  error.textContent = tr('Ocjena ide od 0 do {0}.', [most]);
+  return false;
+}
 
 /// Changes what was written about a stay: its link, place, price and the rest.
 web.HTMLElement _offerEdit(Ui ui, Offer offer) {
@@ -192,10 +210,7 @@ web.HTMLElement _offerEdit(Ui ui, Offer offer) {
       return;
     }
     final stars = parseDecimal(rating.value);
-    if (rating.value.trim().isNotEmpty && (stars == null || stars < 0 || stars > 5)) {
-      error.textContent = tr('Ocjena ide od 0 do 5.');
-      return;
-    }
+    if (!_ratingFits(stars, rating.value, link.value, error)) return;
     final address = link.value.trim();
     final place = location.value.trim();
     offer
@@ -317,10 +332,7 @@ web.HTMLElement _addOffer(Ui ui, Trip trip) {
       return;
     }
     final stars = parseDecimal(rating.value);
-    if (rating.value.trim().isNotEmpty && (stars == null || stars < 0 || stars > 5)) {
-      error.textContent = tr('Ocjena ide od 0 do 5.');
-      return;
-    }
+    if (!_ratingFits(stars, rating.value, link.value, error)) return;
     final address = link.value.trim();
     final place = location.value.trim();
     trip.offers.add(Offer(

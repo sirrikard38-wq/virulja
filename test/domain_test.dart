@@ -708,6 +708,16 @@ void main() {
       expect(sortOffersBy(even, [OfferSort.rating, OfferSort.price]).map((o) => o.id), ['b', 'a', 'c']);
     });
 
+    test('a Booking rating is out of 10, the rest out of 5, and they sort as shares', () {
+      expect(ratingOutOf('https://www.booking.com/hotel/hr/x.html'), 10);
+      expect(ratingOutOf('https://airbnb.com/rooms/1'), 5);
+      expect(ratingOutOf(null), 5);
+      final booking = Offer(id: 'b', name: 'B', pricePerNight: 100, rating: 8, link: 'https://booking.com/h');
+      final own = Offer(id: 'o', name: 'O', pricePerNight: 100, rating: 4.5);
+      expect(sortOffers([booking, own], OfferSort.rating).map((o) => o.id), ['o', 'b']);
+      expect(factsFor(booking, [booking, own], 1).rating, 0.8);
+    });
+
     test('facts run from 0 to 1 and the best value gets 1', () {
       final offers = [cheap, near, good];
       expect(factsFor(cheap, offers, 2).price, 1);

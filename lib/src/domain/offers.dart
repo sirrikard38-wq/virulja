@@ -29,9 +29,14 @@ List<Offer> sortOffersBy(List<Offer> offers, List<OfferSort> sorts) {
     return ascending ? a.compareTo(b) : b.compareTo(a);
   }
 
+  double? share(Offer offer) => switch (offer.rating) {
+        final stars? => stars / ratingOutOf(offer.link),
+        _ => null,
+      };
+
   int by(OfferSort sort, Offer a, Offer b) => switch (sort) {
         OfferSort.price => a.pricePerNight.compareTo(b.pricePerNight),
-        OfferSort.rating => compareMissingLast(a.rating, b.rating, ascending: false),
+        OfferSort.rating => compareMissingLast(share(a), share(b), ascending: false),
         OfferSort.beach => compareMissingLast(a.beachMeters, b.beachMeters),
         OfferSort.votes => b.votes.length.compareTo(a.votes.length),
       };
@@ -79,7 +84,7 @@ OfferFacts factsFor(Offer offer, List<Offer> all, int groupSize) {
   final beachMeters = offer.beachMeters;
   return OfferFacts(
     price: offer.pricePerNight == 0 ? 0 : cheapest / offer.pricePerNight,
-    rating: (offer.rating ?? 0) / 5,
+    rating: (offer.rating ?? 0) / ratingOutOf(offer.link),
     beach: beachMeters == null || nearest == null
         ? 0
         : (nearest + 50) / (beachMeters + 50),
@@ -107,3 +112,5 @@ Offer? recommendedOffer(List<Offer> offers, int groupSize) {
   }
   return best;
 }
+/// What a stay's rating is out of: Booking rates out of 10, the rest out of 5.
+int ratingOutOf(String? link) => (link ?? '').toLowerCase().contains('booking.') ? 10 : 5;

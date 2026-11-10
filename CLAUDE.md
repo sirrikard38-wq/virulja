@@ -241,7 +241,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   growing with the text, then Cijena po osobi, Ocjena (/5) and Link in one row
   (2026-11-10). A new dish has its name on half the row, growing with the text,
   then Cijena, Porcija and Gdje in one row (Smještaj: Cijena po noći in "€ po osobi",
-  Do plaže and Ocjena in one row too, `stay-facts`; a unit of words stands on two small
+  Do plaže and Ocjena in one row too, `stay-facts`; Ocjena is out of 10 while the link
+  is one of Booking, else of 5, sorted and scored as a share (`ratingOutOf`, 2026-11-10); a unit of words stands on two small
   lines and a unit box keeps only the room its unit takes, measured, so the number shows
   on a 320 px phone); Gdje says "Link" in grey, and a dish
   with one has the link icon to Google Maps (a name typed there is looked up in the
