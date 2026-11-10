@@ -234,7 +234,7 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
   final name = input(value: editing?.name ?? '');
   final price = amountInput(value: editing == null ? '' : plainAmount(editing.price));
   final servings = numberInput(value: '${editing?.servings ?? 1}');
-  final place = input(placeholder: tr('Link'), value: editing?.placeName ?? '');
+  final place = input(value: editing?.placeName ?? '');
   final error = errorLine();
   place.onInput.listen((_) {
     final found = nameFromLink(place.value);
@@ -270,7 +270,7 @@ web.HTMLElement _dishRow(Ui ui, Trip trip, Dish dish) {
       el('div', cls: 'form-row one-line', children: [
         unitField(tr('Cijena'), price, moneySign()),
         field(tr('Porcija'), servings, tight: true)..classList.add('narrow'),
-        field(tr('Gdje'), place, tight: true)..classList.add('wide'),
+        field(tr('Link'), place, tight: true)..classList.add('wide'),
       ]),
       error,
     ],

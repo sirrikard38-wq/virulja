@@ -53,7 +53,6 @@ const Map<String, List<String>> _texts = {
   'Link': ['Link', 'Bağlantı'],
   'Naziv': ['Name', 'Ad'],
   'Što': ['What', 'Ne'],
-  'Gdje': ['Where', 'Nerede'],
   'Vrijeme': ['Time', 'Saat'],
   'Ime': ['Name', 'Ad'],
   'Broj mobitela': ['Mobile number', 'Cep telefonu'],
