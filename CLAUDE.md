@@ -268,7 +268,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Dućan (`shop_screen.dart`, `Trip.shopLists`): named lists of things to buy, each with a
   tick that greys and strikes it out. A list folds as "+ Naziv", open with Kupljeno
   only. Nova lista and a list's brush open the same card (`_editCard`; a new one is
-  `Ui.shopDraft` until saved): a box for the name ("Naziv liste" in grey), a box with
+  `Ui.shopDraft` until saved): a box for the name ("Naziv liste" in grey), each box as wide as
+  its words and growing with them (`fitToText`, 2026-11-10), a box with
   an x for each thing, and an empty "Dodaj u listu" at the bottom; the keyboard's
   tick puts it in and opens the next; so does the tick an iPhone shows over the
   keyboard, which a page cannot remove (it only blurs: `onBlur`, 250 ms later, so a
