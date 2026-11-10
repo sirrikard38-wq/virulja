@@ -341,7 +341,6 @@ const Map<String, List<String>> _texts = {
   'Trajekt (€)': ['Ferry (€)', 'Feribot (€)'],
   'Računaj oba smjera': ['Count both ways', 'Gidiş dönüş hesapla'],
   'Gorivo': ['Fuel', 'Yakıt'],
-  'Ekstra': ['Extra', 'Ekstra'],
   'Za ovaj dan još nema prijevoza.': ['No transport on this day yet.', 'Bu gün için henüz ulaşım yok.'],
   'Kilometara': ['Kilometres', 'Kilometre'],
   'Trajekt': ['Ferry', 'Feribot'],

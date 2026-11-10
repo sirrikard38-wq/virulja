@@ -98,8 +98,11 @@ web.HTMLElement _addSong(Ui ui, Trip trip) {
   }
 
   return adder(tr('Dodaj pjesmu'), [
-    field(tr('Link'), link),
-    field(tr('Naziv'), title),
+    // Naziv on two thirds of the row, Link on the third left.
+    el('div', cls: 'form-row', children: [
+      field(tr('Naziv'), title, tight: true)..classList.add('two-thirds'),
+      field(tr('Link'), link, tight: true),
+    ]),
     error,
     primaryButton(tr('Dodaj pjesmu'), add),
   ]);

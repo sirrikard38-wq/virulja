@@ -164,7 +164,7 @@ web.HTMLElement _addLeg(Ui ui, Trip trip, int day) {
         unitField(tr('Gorivo'), fuel, moneySign()),
         unitField(tr('Cestarina'), tolls, moneySign()),
         unitField(tr('Trajekt'), ferry, moneySign()),
-        unitField(tr('Ekstra'), extra, moneySign()),
+        unitField(tr('Ostalo'), extra, moneySign()),
       ]),
     ],
     save: save,

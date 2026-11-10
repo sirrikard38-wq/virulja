@@ -67,7 +67,7 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - The screen of the day plan and the journey (`route_screen.dart`, called Plan puta in
   these notes) is named "Prijevoz" in the app. Each day has its own cars and other
   transport (`Leg.dayIndex`; a car is a leg with `Leg.drive`: Ruta on a third of
-  a row, growing with its text, then Gorivo, Cestarina, Trajekt and Ekstra in one
+  a row, growing with its text, then Gorivo, Cestarina, Trajekt and Ostalo in one
   row, all paid amounts; `Drive.fuel`, while a car from before still works its
   fuel out from kilometres), added to the day shown, each with a brush that opens
   it for changing (`Ui.editingLeg`): the part and its form in one outline
