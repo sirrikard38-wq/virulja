@@ -321,7 +321,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   up to the whole row (`growWithText`), then rows of two or three fields (`form-row`,
   `thirds`), units in dark letters inside the box (`unitField`). Every box with a
   unit has it so, grey inside on the right, never in brackets in its label
-  (said twice; 2026-11-09), "Planirani trošak po osobi" too. Vrsta and Tko je platio
+  (said twice; 2026-11-09), "Planirani trošak po osobi" too. Every grey word in a
+  box, hint or unit, is 12px (2026-11-10), and a box growing with its text is at
+  least as wide as its grey hint (`growWithText`). Vrsta and Tko je platio
   are as wide as their words; with no room the payer goes to the next row. Amount boxes
   write 1.250,50 while it is typed, the cursor kept after the same digits, and a typed
   dot is the decimal comma (`typedAmount`, `amountInput`); the cost box is as wide as

@@ -454,7 +454,8 @@ html.held, html.held body { overscroll-behavior: none; }
   appearance: none;
   -webkit-appearance: none;
 }
-.input::placeholder { color: var(--soft); }
+/* Every grey word in a box, its hint or its unit, is of one small size. */
+.input::placeholder { color: var(--soft); font-size: 12px; font-weight: 600; }
 /* Fields side by side: a row of two, or of three narrower ones. */
 .form-row { display: flex; gap: 10px; margin: 12px 20px 0; }
 .form-row > .field { margin: 0; flex: 1 1 0; min-width: 0; }
@@ -469,7 +470,7 @@ html.held, html.held body { overscroll-behavior: none; }
 /* Price, portions and where of a dish: always one row, the portions narrow. */
 /* Boxes side by side in one row keep their room for what is typed. */
 .form-row.one-line .input { padding-left: 8px; }
-.form-row.one-line .unit { right: 6px; font-size: 12px; }
+.form-row.one-line .unit { right: 6px; }
 /* A unit of words, as € po osobi, stands on two small lines. */
 .form-row.one-line .unit { white-space: normal; line-height: 1.05; text-align: right; max-width: 42px; }
 .form-row.one-line.stay-facts > .field.wide { flex: 1.25 1 0; }
@@ -508,7 +509,7 @@ html.held, html.held body { overscroll-behavior: none; }
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .5)); pointer-events: none; z-index: 5;
 }
 .unit-box .input { padding-right: 34px; }
-.unit { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--soft); font-weight: 600; font-size: 14px; pointer-events: none; }
+.unit { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--soft); font-weight: 600; font-size: 12px; pointer-events: none; }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 20px 0; }
 .checks { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 20px 0; }
 .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; background: var(--card); border: 1px solid var(--line); font-size: 15px; }

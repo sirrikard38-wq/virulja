@@ -139,15 +139,23 @@ web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box,
     if (row == null || !field.isConnected) return;
     final ruler = _ruler ??= (web.document.createElement('canvas') as web.HTMLCanvasElement)
         .getContext('2d') as web.CanvasRenderingContext2D;
-    ruler.font = web.window.getComputedStyle(box).font;
-    final need = ruler.measureText(box.value).width + 32;
     final whole = row.clientWidth.toDouble();
+    // Folded away, nothing can be measured; it fits again when opened.
+    if (whole <= 0) return;
+    // Empty, the grey words in it show whole, in their own small letters.
+    final empty = box.value.isEmpty;
+    final style = web.window.getComputedStyle(box, empty ? '::placeholder' : null);
+    ruler.font = style.font;
+    final need = ruler.measureText(empty ? box.placeholder : box.value).width + 32;
     final short = whole * least - 5;
     field.style.flex = '0 0 ${need.clamp(short, whole)}px';
   }
 
   box.onInput.listen((_) => fit());
-  scheduleMicrotask(fit);
+  scheduleMicrotask(() {
+    fit();
+    field.closest('details')?.addEventListener('toggle', ((web.Event _) => fit()).toJS);
+  });
   return field;
 }
 
