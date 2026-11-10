@@ -162,7 +162,7 @@ web.HTMLElement _addLeg(Ui ui, Trip trip, int day) {
       ]),
       el('div', cls: 'form-row one-line', children: [
         unitField(tr('Gorivo'), fuel, moneySign()),
-        unitField(tr('Cestarine'), tolls, moneySign()),
+        unitField(tr('Cestarina'), tolls, moneySign()),
         unitField(tr('Trajekt'), ferry, moneySign()),
         unitField(tr('Ekstra'), extra, moneySign()),
       ]),

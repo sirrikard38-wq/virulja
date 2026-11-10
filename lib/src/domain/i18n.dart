@@ -345,7 +345,7 @@ const Map<String, List<String>> _texts = {
   'Za ovaj dan još nema prijevoza.': ['No transport on this day yet.', 'Bu gün için henüz ulaşım yok.'],
   'Kilometara': ['Kilometres', 'Kilometre'],
   'Trajekt': ['Ferry', 'Feribot'],
-  'Cestarine': ['Tolls', 'Otoyol ücretleri'],
+  'Cestarina': ['Toll', 'Otoyol ücreti'],
   'Trošak za grupu': ['Cost for the group', 'Grup için masraf'],
   'Cijena po osobi': ['Price per person', 'Kişi başı fiyat'],
   'Potvrdi valutu': ['Confirm the currency', 'Para birimini onayla'],
