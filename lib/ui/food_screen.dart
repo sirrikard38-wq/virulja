@@ -175,13 +175,15 @@ String _typedPrice(Place place) => switch ((place.priceLow, place.priceHigh, pla
 
   return (
     fields: [
+      // The name alone on its row, on half of it, growing with its text; then
+      // price, rating and link side by side.
       el('div', cls: 'form-row', children: [
-        field(tr('Naziv'), name, tight: true)..classList.add('two-thirds'),
-        field(tr('Link'), link, tight: true),
+        growWithText(field(tr('Naziv'), name, tight: true)..classList.add('half'), name),
       ]),
-      el('div', cls: 'form-row', children: [
-        field(tr('Ocjena'), rating, tight: true),
+      el('div', cls: 'form-row one-line', children: [
         unitField(tr('Cijena po osobi'), price, moneySign()),
+        unitField(tr('Ocjena'), rating, '/5')..classList.add('narrow'),
+        field(tr('Link'), link, tight: true),
       ]),
       el('div', cls: 'form-row', children: [field(tr('Bilješka'), note, tight: true)]),
       error,
