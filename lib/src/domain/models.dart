@@ -1416,6 +1416,13 @@ class Trip {
   int photoDay(Photo photo) =>
       (photo.dayIndex ?? photo.day.difference(start).inDays).clamp(-1, dayCount);
 
+  /// Where a photo added on [day] goes: that day of the trip, before the trip
+  /// (-1) or after it ([afterTrip]), whenever it was taken.
+  int dayOfAdding(DateTime day) {
+    final at = day.difference(start).inDays;
+    return at < 0 ? -1 : (at >= dayCount ? afterTrip : at);
+  }
+
 
   /// The votes against [person] that count: those of members, not their own.
   int kickVotesAgainst(String person) => (kickVotes[person] ?? const <String>{})

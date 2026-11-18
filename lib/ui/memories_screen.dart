@@ -30,7 +30,7 @@ Future<void> _savePictures(Ui ui, Trip trip, List<web.File> files) async {
     if (photo == null) {
       failed++;
     } else {
-      trip.photos.add(photo);
+      trip.photos.add(photo..dayIndex = trip.dayOfAdding(today()));
       trip.coverId ??= photo.id;
     }
   }
@@ -54,7 +54,10 @@ web.HTMLElement _addPhotos(Ui ui, Trip trip) {
     final videos = files.where(isVideoFile).toList();
     if (pictures.isNotEmpty) await _savePictures(ui, trip, pictures);
     if (videos.isNotEmpty) {
-      trip.photos.addAll(await prepareVideos(ui, videos, ui.meIn(trip)));
+      final added = trip.dayOfAdding(today());
+      trip.photos.addAll([
+        for (final video in await prepareVideos(ui, videos, ui.meIn(trip))) video..dayIndex = added,
+      ]);
       ui.changed();
     }
   });
@@ -119,16 +122,7 @@ web.HTMLElement galleryTab(Ui ui, Trip trip) {
     if (trip.photos.isNotEmpty) ...[
       el('p', cls: 'small pad', attrs: {'style': 'margin-top:16px'},
           text: tr('Povuci uspomenu na drugi dan.')),
-      for (var day = -1; day <= trip.dayCount; day++)
-        el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
-          el('div', cls: 'day-title', text: photoDayTitle(trip, day)),
-          if (byDay[day] == null)
-            el('div', cls: 'day-empty', text: tr('Ovdje još nema ničega.'))
-          else
-            el('div', cls: 'grid', children: [
-              for (final photo in byDay[day]!) _shot(ui, trip, photo),
-            ]),
-        ]),
+      for (var day = -1; day <= trip.dayCount; day++) _dayGroup(ui, trip, day, byDay[day]),
     ],
   ]);
 }
@@ -311,5 +305,38 @@ web.HTMLElement photoScreen(Ui ui, Trip trip, Photo photo) {
         children: [icon('send', size: 22)],
       ),
     ]),
+  ]);
+}
+
+/// How many photos a day shows before a tap on its name shows them all.
+const _photosShown = 9;
+
+/// A day of Uspomene: its name and photos, at most [_photosShown] of them with
+/// the last row fading while there are more; a tap on the name shows them all
+/// and another folds them again.
+web.HTMLElement _dayGroup(Ui ui, Trip trip, int day, List<Photo>? photos) {
+  final key = 'photos:${trip.id}:$day';
+  final open = ui.openFolds.contains(key);
+  final more = (photos?.length ?? 0) - _photosShown;
+  final title = photoDayTitle(trip, day);
+  return el('div', cls: 'day-group', attrs: {'data-day': '$day'}, children: [
+    if (more > 0)
+      button(
+        cls: 'day-title day-more',
+        text: open ? '$title  −' : '$title  +$more',
+        onTap: () {
+          open ? ui.openFolds.remove(key) : ui.openFolds.add(key);
+          ui.rerender();
+        },
+      )..setAttribute('aria-expanded', '$open')
+    else
+      el('div', cls: 'day-title', text: title),
+    if (photos == null)
+      el('div', cls: 'day-empty', text: tr('Ovdje još nema ničega.'))
+    else
+      el('div', cls: more > 0 && !open ? 'grid folded' : 'grid', children: [
+        for (final photo in open ? photos : photos.take(_photosShown)) _shot(ui, trip, photo),
+        if (more > 0 && !open) el('div', cls: 'more-fade'),
+      ]),
   ]);
 }

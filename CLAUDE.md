@@ -111,7 +111,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   by day. No automatic gallery reading. Uspomene shows "Prije puta", the days of the trip and
   "Poslije puta" (-1 and `dayCount` from `Trip.photoDay`; a photo moved after the trip
   stores `afterTrip`), and a finger held on a photo drags it to any of them
-  (`Photo.dayIndex`, `lib/ui/photo_drag.dart`).
+  (`Photo.dayIndex`, `lib/ui/photo_drag.dart`). A photo or video goes to the day it is
+  added on, before or after the trip when added then, whenever it was taken
+  (`Trip.dayOfAdding`, 2026-11-18). A day shows 9, the last row fading while there are
+  more; a tap on its name shows them all (`_dayGroup`, key `photos:<trip>:<day>`).
 - Photos have reactions and comments, one reaction per person.
 - The speaker's ring starts each new screen where the anthem already is (`_progress` in
   `app.dart`); drawn from nothing, it jumped back at every screen.

@@ -599,6 +599,9 @@ body:has(.watch) .top-cover { display: none; }
 .shot-play .icon { fill: currentColor; }
 .counts { position: absolute; left: 4px; bottom: 4px; display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: #161612; color: #F7F5F0; font-size: 12px; }
 .day-title { padding: 12px 20px 6px; font-size: 14px; font-weight: 700; }
+button.day-title { display: block; width: 100%; border: 0; background: none; color: inherit; font-family: inherit; text-align: left; cursor: pointer; }
+.grid.folded { position: relative; }
+.more-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 34%; pointer-events: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); background: linear-gradient(to bottom, transparent, var(--bg)); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%); mask-image: linear-gradient(to bottom, transparent, #000 70%); }
 .full-photo { display: block; width: 100%; max-height: 62dvh; object-fit: contain; background: #111; min-height: 240px; }
 .reactions { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px 20px 2px; }
 .reaction { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; color: var(--soft); }

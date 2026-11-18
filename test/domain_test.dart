@@ -1183,6 +1183,9 @@ void main() {
       expect([for (final day in [1, 2, 3, 5, 6, 9]) plan.photoDay(at(day))], [-1, 0, 1, 3, 4, 4]);
       expect(plan.photoDay(at(2, 2)), 2);
       expect(plan.photoDay(at(2, afterTrip)), 4);
+      // Added during the trip, a photo goes to that day; before or after it, there.
+      expect([for (final day in [1, 2, 3, 5, 6, 9]) plan.dayOfAdding(DateTime.utc(2026, 11, day))],
+          [-1, 0, 1, 3, afterTrip, afterTrip]);
       expect(plan.photoDay(at(4, -1)), -1);
       expect([photoDayTitle(plan, -1), photoDayTitle(plan, 4)], ['Prije puta', 'Poslije puta']);
     });
