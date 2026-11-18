@@ -114,7 +114,10 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   (`Photo.dayIndex`, `lib/ui/photo_drag.dart`). A photo or video goes to the day it is
   added on, before or after the trip when added then, whenever it was taken
   (`Trip.dayOfAdding`, 2026-11-18). A day shows 9, the last row fading while there are
-  more; a tap on its name shows them all (`_dayGroup`, key `photos:<trip>:<day>`).
+  more; a tap on its name or on that row shows them all (`_dayGroup`, key
+  `photos:<trip>:<day>`). Adding and folding redraw Uspomene alone and hold still what
+  is at the top of the screen (`_keepStill`, as polls do); adding says "Medij dodan."
+  or "Mediji dodani." (2026-11-18).
 - Photos have reactions and comments, one reaction per person.
 - The speaker's ring starts each new screen where the anthem already is (`_progress` in
   `app.dart`); drawn from nothing, it jumped back at every screen.

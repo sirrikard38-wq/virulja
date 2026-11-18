@@ -239,8 +239,6 @@ class _VideoWork {
       ui.toast(tr('Video nije spremljen. Ostani u aplikaciji dok se priprema.'));
     } else if (failed > 0) {
       ui.toast(tr('Ovaj mobitel ne može pripremiti video.'));
-    } else if (saved.isNotEmpty) {
-      ui.toast(tr('Video je spremljen.'));
     }
     return saved;
   }

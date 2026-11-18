@@ -246,7 +246,9 @@ const Map<String, List<String>> _texts = {
 
   // Memories
   'Spremam {0}...': ['Saving {0}...', '{0} kaydediliyor...'],
-  'Fotografije su spremljene.': ['The photos are saved.', 'Fotoğraflar kaydedildi.'],
+  'Medij dodan.': ['Media added.', 'Medya eklendi.'],
+  'Mediji dodani.': ['Media added.', 'Medyalar eklendi.'],
+  'Prikaži sve': ['Show all', 'Hepsini göster'],
   'Neke fotografije ne mogu pročitati ({0}).': ["Some photos can't be read ({0}).", 'Bazı fotoğraflar okunamıyor ({0}).'],
   'Fotografija, {0}': ['Photo, {0}', 'Fotoğraf, {0}'],
   'Dodajte fotografije i videe iz galerije, a aplikacija će ih sama složiti po danima.': ['Add photos and videos from the gallery and the app will sort them by day.', 'Galeriden fotoğraf ve video ekleyin, uygulama onları günlere göre sıralasın.'],
@@ -259,7 +261,6 @@ const Map<String, List<String>> _texts = {
   'Pripremi video': ['Prepare the video', 'Videoyu hazırla'],
   'Spremit će se prvih {0} sekundi, u manjoj kvaliteti, da stane u besplatni prostor grupe. Priprema traje koliko i video, pa ostani u aplikaciji.': ['The first {0} seconds will be saved, in lower quality, to fit the group\'s free storage. It takes as long as the video, so stay in the app.', 'İlk {0} saniye, grubun ücretsiz alanına sığması için daha düşük kalitede kaydedilecek. Hazırlık video kadar sürer, uygulamada kal.'],
   'Pripremam video: {0} s od {1} s': ['Preparing the video: {0} s of {1} s', 'Video hazırlanıyor: {0} / {1} sn'],
-  'Video je spremljen.': ['The video is saved.', 'Video kaydedildi.'],
   'Ovaj mobitel ne može pripremiti video.': ["This phone can't prepare the video.", 'Bu telefon videoyu hazırlayamıyor.'],
   'Video nije spremljen. Ostani u aplikaciji dok se priprema.': ['The video is not saved. Stay in the app while it is being prepared.', 'Video kaydedilmedi. Hazırlanırken uygulamada kal.'],
   'Fotografija je na razglednici.': ['The photo is on the postcard.', 'Fotoğraf kartpostalda.'],

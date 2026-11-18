@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web/web.dart' as web;
 
 import '../src/domain/format.dart';
@@ -11,6 +13,8 @@ import 'icons.dart';
 import 'media.dart';
 import 'photo_drag.dart';
 import 'shows_section.dart';
+import 'swipes.dart' show wantsLessMotion;
+import 'trip_screen.dart' show redrawTripTab;
 import 'video_work.dart';
 import 'widgets.dart';
 
@@ -34,9 +38,9 @@ Future<void> _savePictures(Ui ui, Trip trip, List<web.File> files) async {
       trip.coverId ??= photo.id;
     }
   }
-  ui.changed();
+  _keepStill(ui, trip, ui.saved);
   ui.toast(failed == 0
-      ? tr('Fotografije su spremljene.')
+      ? _addedMessage(files.length)
       : tr('Neke fotografije ne mogu pročitati ({0}).', [failed]));
 }
 
@@ -55,10 +59,10 @@ web.HTMLElement _addPhotos(Ui ui, Trip trip) {
     if (pictures.isNotEmpty) await _savePictures(ui, trip, pictures);
     if (videos.isNotEmpty) {
       final added = trip.dayOfAdding(today());
-      trip.photos.addAll([
-        for (final video in await prepareVideos(ui, videos, ui.meIn(trip))) video..dayIndex = added,
-      ]);
-      ui.changed();
+      final made = await prepareVideos(ui, videos, ui.meIn(trip));
+      trip.photos.addAll([for (final video in made) video..dayIndex = added]);
+      _keepStill(ui, trip, ui.saved);
+      if (made.isNotEmpty) ui.toast(_addedMessage(made.length));
     }
   });
   return el('label', cls: 'secondary', children: [
@@ -93,6 +97,7 @@ web.HTMLElement _shot(Ui ui, Trip trip, Photo photo) {
         ]),
       ],
     );
+  shot.setAttribute('data-photo', photo.id);
   movableToDay(shot, (day) {
     if (trip.photoDay(photo) == day) return;
     photo.dayIndex = day >= trip.dayCount ? afterTrip : day;
@@ -324,10 +329,7 @@ web.HTMLElement _dayGroup(Ui ui, Trip trip, int day, List<Photo>? photos) {
       button(
         cls: 'day-title day-more',
         text: open ? '$title  −' : '$title  +$more',
-        onTap: () {
-          open ? ui.openFolds.remove(key) : ui.openFolds.add(key);
-          ui.rerender();
-        },
+        onTap: () => _showAll(ui, trip, key, day),
       )..setAttribute('aria-expanded', '$open')
     else
       el('div', cls: 'day-title', text: title),
@@ -336,7 +338,80 @@ web.HTMLElement _dayGroup(Ui ui, Trip trip, int day, List<Photo>? photos) {
     else
       el('div', cls: more > 0 && !open ? 'grid folded' : 'grid', children: [
         for (final photo in open ? photos : photos.take(_photosShown)) _shot(ui, trip, photo),
-        if (more > 0 && !open) el('div', cls: 'more-fade'),
+        if (more > 0 && !open)
+          button(
+            cls: 'more-fade',
+            ariaLabel: tr('Prikaži sve'),
+            onTap: () => _showAll(ui, trip, key, day),
+          ),
       ]),
   ]);
+}
+
+String _addedMessage(int count) => count == 1 ? tr('Medij dodan.') : tr('Mediji dodani.');
+
+/// Shows all the photos of a day, or folds them back to nine.
+void _showAll(Ui ui, Trip trip, String key, int day) {
+  _keepStill(ui, trip, () {
+    if (!ui.openFolds.remove(key)) ui.openFolds.add(key);
+  }, day: day);
+}
+
+/// Makes [change] and redraws Uspomene alone, with the page standing still:
+/// what is at the top of the screen stays there, the day [day] folds open or
+/// shut smoothly and what is under it follows. A full redraw made an iPhone
+/// jump, as it did when polls were changed.
+void _keepStill(Ui ui, Trip trip, void Function() change, {int? day}) {
+  web.HTMLElement? group(int at) =>
+      web.document.querySelector('.day-group[data-day="$at"]') as web.HTMLElement?;
+  web.Element? find(String? selector) => selector == null ? null : web.document.querySelector(selector);
+  // The page never gets shorter under the finger.
+  final frame = web.document.querySelector('.frame') as web.HTMLElement?;
+  if (frame != null) {
+    final need = web.window.scrollY + web.window.innerHeight;
+    final has = double.tryParse(frame.style.minHeight.replaceAll('px', '')) ?? 0;
+    if (need > has) frame.style.minHeight = '${need.round()}px';
+  }
+  // What is held still: the name of the day folding, else the first photo,
+  // day name or empty day at the top of the screen.
+  String? anchor = day == null ? null : '.day-group[data-day="$day"] .day-title';
+  if (anchor == null) {
+    final seen = web.document.querySelectorAll('.day-group .day-title, .day-group .shot, .day-group .day-empty');
+    for (var i = 0; i < seen.length; i++) {
+      final one = seen.item(i) as web.Element;
+      if (one.getBoundingClientRect().top < 70) continue;
+      final photo = one.getAttribute('data-photo');
+      final at = one.closest('.day-group')?.getAttribute('data-day');
+      anchor = photo != null
+          ? '.shot[data-photo="$photo"]'
+          : '.day-group[data-day="$at"] .${one.classList.contains('day-title') ? 'day-title' : 'day-empty'}';
+      break;
+    }
+  }
+  final before = find(anchor)?.getBoundingClientRect().top;
+  final from = day == null ? 0 : group(day)?.offsetHeight ?? 0;
+  change();
+  redrawTripTab(ui, trip);
+  if (before != null) {
+    final after = find(anchor)?.getBoundingClientRect().top;
+    if (after != null && (after - before).abs() > 1) web.window.scrollBy(web.ScrollToOptions(top: after - before));
+  }
+  final folding = day == null ? null : group(day);
+  if (folding == null || wantsLessMotion) return;
+  final to = folding.offsetHeight;
+  if (from == 0 || from == to) return;
+  folding.style
+    ..transition = 'none'
+    ..overflow = 'hidden'
+    ..height = '${from}px';
+  folding.getBoundingClientRect(); // so that the browser sees where it starts
+  folding.style
+    ..transition = 'height 260ms ease'
+    ..height = '${to}px';
+  Timer(const Duration(milliseconds: 300), () {
+    folding.style
+      ..transition = ''
+      ..overflow = ''
+      ..height = '';
+  });
 }
