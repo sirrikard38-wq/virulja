@@ -251,7 +251,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
 - Hrana i piće: a swipe past the last category opens the field for a new one, as the +
   does, without the keyboard; a swipe back closes it. While it is open the + is green, not
   the category before it, and nothing of that category shows under the field.
-- Hrana i piće: while a category is held, a bin stands at the top in the middle; let go
+- Hrana i piće: while a category is held, a bin stands in the middle of the screen
+  (2026-11-18); carried down out of the row, a copy of the category follows the
+  finger (`kind-ghost`); let go
   over it and it goes with a puff of sparks and the usual undo. One the group made goes
   with its places, its Planirani trošak po osobi and the costs its places wrote
   (Razdijeli, ticks of Plan napada), all back with undo (`dropFoodKindCosts`,
@@ -372,7 +374,9 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   card's week in Plan napada, Sortiraj, the folds of Postavke, a brush) stays open
   when the screen is back within 5 s, as after a look at the next tab, and is folded
   again when it was left for longer (`Ui.closeFolds`, `_foldMemory`; 2026-11-09).
-- A heading that folds a list open has + before it, and − while open. In Postavke,
+- A heading that folds a list open has + before it, and − while open. It folds in
+  place, nothing redrawn (`foldSection`): a redraw wiped a new trip's country, city
+  and dates when Valuta was opened (2026-11-18). In Postavke,
   Jezik, Izgled and Valuta fold so under Obavijesti, and in a trip's settings
   Obavijesti, Putolovci and Valuta, in that order (`foldSection`, `Ui.openFolds`).
 - In Plan napada the day chips sit under the card's buttons and fill its width

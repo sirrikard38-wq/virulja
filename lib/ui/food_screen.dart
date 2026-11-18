@@ -422,8 +422,8 @@ void _puff(web.HTMLElement over) {
 /// A long press picks a category up, the others wobble as icons do on a phone,
 /// and it goes where the finger drops it. The green goes with it, as it is the
 /// one being worked on. [save] gets the new order and the one that moved. While
-/// it is up, a bin stands at the top in the middle: let go over it and [trash]
-/// gets the category.
+/// it is up, a bin stands in the middle of the screen; carried down out of the
+/// row, the category follows the finger, and let go over the bin [trash] gets it.
 void _reorderOnHold(
   web.HTMLElement row,
   void Function(List<String> keys, String moved) save,
@@ -433,6 +433,7 @@ void _reorderOnHold(
   web.HTMLElement? held;
   var lifted = false;
   web.HTMLElement? bin;
+  web.HTMLElement? ghost;
   var overBin = false;
   double lastX = 0, lastY = 0;
   double startX = 0, startY = 0, startLeft = 0, startScroll = 0;
@@ -470,6 +471,9 @@ void _reorderOnHold(
     final thrown = overBin && event.type == 'touchend';
     final where = bin;
     bin = null;
+    ghost?.remove();
+    ghost = null;
+    chip.style.visibility = '';
     overBin = false;
     if (thrown && where != null) {
       _puff(where);
@@ -536,6 +540,24 @@ void _reorderOnHold(
         lastX > box.left - 16 && lastX < box.right + 16 &&
         lastY > box.top - 16 && lastY < box.bottom + 16;
     bin?.classList.toggle('over', overBin);
+    // Down out of the row a copy of the category follows the finger, as the
+    // row cannot show it outside itself; back in the row it is ordered again.
+    final rowBox = row.getBoundingClientRect();
+    if (lastY > rowBox.bottom + 20) {
+      final copy = ghost ??= (chip.cloneNode(true) as web.HTMLElement)
+        ..classList.add('kind-ghost')
+        ..style.width = '${chip.offsetWidth}px'
+        ..style.height = '${chip.offsetHeight}px';
+      if (copy.parentNode == null) web.document.body!.append(copy);
+      copy.style
+        ..left = '${x - chip.offsetWidth / 2}px'
+        ..top = '${lastY - chip.offsetHeight / 2}px';
+      chip.style.visibility = 'hidden';
+      return;
+    }
+    ghost?.remove();
+    ghost = null;
+    chip.style.visibility = '';
     if (x < 40) row.scrollLeft -= 6;
     if (x > web.window.innerWidth - 40) row.scrollLeft += 6;
     follow(chip, x);

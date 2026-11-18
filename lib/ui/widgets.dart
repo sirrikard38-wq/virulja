@@ -282,21 +282,41 @@ web.HTMLSelectElement select<T>(
 /// A heading with + that folds [body] open, and − while it is open, as
 /// Obavijesti does. [key] remembers it in `Ui.openFolds`.
 List<web.HTMLElement> foldSection(Ui ui, String key, String title, List<web.HTMLElement> Function() body) {
-  final open = ui.openFolds.contains(key);
-  return [
-    button(
-      cls: open ? 'fold open' : 'fold',
-      onTap: () {
-        open ? ui.openFolds.remove(key) : ui.openFolds.add(key);
-        ui.rerender();
-      },
-      children: [
-        icon(open ? 'minus' : 'plus', size: 22),
-        el('span', cls: 'section', text: title),
-      ],
-    )..setAttribute('aria-expanded', '$open'),
-    if (open) ...body(),
-  ];
+  var open = ui.openFolds.contains(key);
+  var shown = open ? body() : <web.HTMLElement>[];
+  late final web.HTMLElement head;
+  // Folded open and shut in place, nothing else redrawn: a redraw wiped what
+  // was typed beside it, as a new trip's country, city and dates.
+  void mark() {
+    head
+      ..className = open ? 'fold open' : 'fold'
+      ..setAttribute('aria-expanded', '$open');
+    head.replaceChild(icon(open ? 'minus' : 'plus', size: 22), head.firstChild!);
+  }
+
+  head = button(
+    cls: 'fold',
+    onTap: () {
+      open = !open;
+      open ? ui.openFolds.add(key) : ui.openFolds.remove(key);
+      for (final node in shown) {
+        node.remove();
+      }
+      shown = open ? body() : [];
+      var after = head as web.Node;
+      for (final node in shown) {
+        after.parentNode?.insertBefore(node, after.nextSibling);
+        after = node;
+      }
+      mark();
+    },
+    children: [
+      icon('plus', size: 22),
+      el('span', cls: 'section', text: title),
+    ],
+  );
+  mark();
+  return [head, ...shown];
 }
 
 /// A field with its unit in dark letters at the right, inside the box.
