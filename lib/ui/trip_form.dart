@@ -191,6 +191,7 @@ web.HTMLElement tripForm(Ui ui, {Trip? trip}) {
           currencyWheel(ui, money, (code) async {
             if (trip == null || code == trip.currencies.first) {
               money = [code];
+              ui.toast(tr('Valuta {0} je odabrana za ovo putovanje.', [code]));
               return true;
             }
             await loadRates(ui, now: true);

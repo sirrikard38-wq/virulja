@@ -79,8 +79,8 @@ web.HTMLElement currencyWheel(
     cls: 'icon-button cost-tick currency-tick',
     ariaLabel: tr('Potvrdi valutu'),
     onTap: () async {
+      // The one in use too, so the tick always says it is taken.
       final code = currencies[middle()].code;
-      if (code == now) return;
       if (await onConfirm(code)) now = code;
       showTick();
     },

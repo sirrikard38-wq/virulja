@@ -133,6 +133,7 @@ web.HTMLElement groupScreen(Ui ui) {
           currencyWheel(ui, ui.data.currencies, (code) async {
             ui.data.currencies = [code];
             ui.store.save();
+            ui.toast(tr('Valuta {0} je odabrana za nova putovanja.', [code]));
             return true;
           }),
         ]),

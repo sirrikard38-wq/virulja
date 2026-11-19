@@ -323,7 +323,7 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   the currency). A trip's settings have no Spremi: Država and Grad keep as typed, the
   postcard photo once picked, the dates once the settings are left (`Ui.onLeave`, run
   by `render` when the address changes). A currency is taken only with the tick
-  beside its wheel, green while the wheel stands on the one in use (2026-11-09). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
+  beside its wheel, green while the wheel stands on the one in use (2026-11-09); a tap on it, on the one in use too, says "Valuta X je odabrana za ovo putovanje." (in Postavke "za nova putovanja", 2026-11-19). Postavke sets those of new trips (`AppData.currencies`). Both are picked on a
   narrow wheel (`currencyWheel`) turned like the time: the one in the middle, under a
   green ring that stands still, is chosen once the wheel stops. The second currency is
   off for now (2026-11-05, the user's wish): the wheel sets one and `alsoCode` stays
