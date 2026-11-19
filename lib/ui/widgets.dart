@@ -161,7 +161,8 @@ web.HTMLElement growWithText(web.HTMLElement field, web.HTMLInputElement box,
 
 /// A box alone in its row, as wide as what is typed in it, or its grey hint
 /// while empty, and a little more; it grows with the text up to the whole row.
-web.HTMLInputElement fitToText(web.HTMLInputElement box) {
+/// It is never narrower than [least] would be in it.
+web.HTMLInputElement fitToText(web.HTMLInputElement box, {String least = ''}) {
   void fit() {
     if (!box.isConnected) return;
     final ruler = _ruler ??= (web.document.createElement('canvas') as web.HTMLCanvasElement)
@@ -169,7 +170,12 @@ web.HTMLInputElement fitToText(web.HTMLInputElement box) {
     final empty = box.value.isEmpty;
     ruler.font = web.window.getComputedStyle(box, empty ? '::placeholder' : null).font;
     final text = empty ? box.placeholder : box.value;
-    box.style.width = '${(ruler.measureText(text).width + 40).ceil().clamp(64, 100000)}px';
+    var width = ruler.measureText(text).width;
+    if (least.isNotEmpty) {
+      ruler.font = web.window.getComputedStyle(box).font;
+      width = width < ruler.measureText(least).width ? ruler.measureText(least).width : width;
+    }
+    box.style.width = '${(width + 40).ceil().clamp(64, 100000)}px';
   }
 
   box

@@ -198,6 +198,7 @@ html.held, html.held body { overscroll-behavior: none; }
 .shop-edit .shop-name-box { font-weight: 700; }
 .shop-edit .shop-item-row { gap: 6px; margin-top: 6px; padding-right: 14px; }
 .shop-edit .shop-x { margin-right: -8px; }
+.shop-edit .shop-add-tick { color: var(--accent); }
 .ticks .tick.tick-in { padding-left: 28px; }
 .plan-cost { display: flex; align-items: center; gap: 6px; margin: 16px 20px 12px; font-size: 16px; font-weight: 400; }
 .stick-bottom .plan-cost { margin: 8px 20px 0; border-top: none; padding-top: 0; }

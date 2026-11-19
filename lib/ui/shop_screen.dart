@@ -90,11 +90,15 @@ final Map<String, String> _typedNext = {};
 web.HTMLElement _editCard(Ui ui, Trip trip, ShopList list, {required bool draft}) {
   final me = ui.meIn(trip);
   final cost = trip.expenses.where((each) => each.id == list.expenseId).firstOrNull;
-  // Each box is as wide as its words, and grows with them.
+  // Each box is as wide as its words, and grows with them; a thing's box is at
+  // least as wide as a word of seven letters. The keyboard starts with a capital.
   web.HTMLInputElement box(String key, String value, String placeholder) =>
-      fitToText(input(value: value, placeholder: placeholder)
-        ..setAttribute('data-box', key)
-        ..setAttribute('enterkeyhint', 'done'));
+      fitToText(
+          input(value: value, placeholder: placeholder)
+            ..setAttribute('data-box', key)
+            ..setAttribute('enterkeyhint', 'done')
+            ..setAttribute('autocapitalize', 'sentences'),
+          least: key == 'name' ? '' : 'Mlijeko');
   final name = box('name', list.name, tr('Naziv liste'))..classList.add('shop-name-box');
   final boxes = {for (final item in list.items) item: box(item.id, item.text, '')};
   final next = box('next', _typedNext.remove(list.id) ?? '', tr('Dodaj u listu'));
@@ -249,6 +253,13 @@ web.HTMLElement _editCard(Ui ui, Trip trip, ShopList list, {required bool draft}
     for (final item in list.items) itemRow(item),
     el('div', cls: 'shop-item-row', children: [
       el('label', cls: 'grow', attrs: {'style': 'display:block'}, children: [next]),
+      // Puts what was typed in and opens the next box, as the keyboard's tick.
+      keepsCursor(button(
+        cls: 'icon-button shop-add-tick',
+        ariaLabel: tr('Potvrdi'),
+        onTap: addNext,
+        children: [icon('check', size: 20)],
+      )),
     ]),
   ]);
 }

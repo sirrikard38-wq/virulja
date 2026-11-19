@@ -333,6 +333,9 @@ class ViruljaApp {
   final Map<String, DateTime> _leftAt = {};
   static const Duration _foldMemory = Duration(seconds: 5);
 
+  /// A day of Uspomene showing all its photos folds back to 9 sooner.
+  static const Duration _photoDayMemory = Duration(milliseconds: 1500);
+
   /// The screen of [hash] as folds know it: a trip's section (its first tab
   /// when it names none), or the page, such as `grupa`.
   String _foldPlace(String? hash) {
@@ -350,6 +353,9 @@ class ViruljaApp {
     _leftAt[was] = now;
     final left = _leftAt.remove(comes);
     if (left != null && now.difference(left) > _foldMemory) _ui.closeFolds(comes);
+    if (left != null && comes == 'slike' && now.difference(left) > _photoDayMemory) {
+      _ui.openFolds.removeWhere((key) => key.startsWith('photos:'));
+    }
   }
 
   /// Which step of the phone's history the app is on, counted from its start.

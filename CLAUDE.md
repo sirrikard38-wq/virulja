@@ -115,7 +115,8 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   added on, before or after the trip when added then, whenever it was taken
   (`Trip.dayOfAdding`, 2026-11-18). A day shows 9, the last row fading while there are
   more; a tap on its name or on that row shows them all (`_dayGroup`, key
-  `photos:<trip>:<day>`). Adding and folding redraw Uspomene alone and hold still what
+  `photos:<trip>:<day>`); left for more than 1.5 s, it shows 9 again
+  (`_photoDayMemory`, 2026-11-19). Adding and folding redraw Uspomene alone and hold still what
   is at the top of the screen (`_keepStill`, as polls do); adding says "Medij dodan."
   or "Mediji dodani." (2026-11-18).
 - Photos have reactions and comments, one reaction per person.
@@ -277,9 +278,11 @@ through `.github/workflows/pages.yml`, a service worker in `web/sw.js`.
   tick that greys and strikes it out. A list folds as "+ Naziv", open with Kupljeno
   only. Nova lista and a list's brush open the same card (`_editCard`; a new one is
   `Ui.shopDraft` until saved): a box for the name ("Naziv liste" in grey), each box as wide as
-  its words and growing with them (`fitToText`, 2026-11-10), a box with
-  an x for each thing, and an empty "Dodaj u listu" at the bottom; the keyboard's
-  tick puts it in and opens the next; so does the tick an iPhone shows over the
+  its words and growing with them (`fitToText`, 2026-11-10), a thing's box
+  never narrower than a word of 7 letters (`least`), each starting the keyboard
+  on a capital (2026-11-19), a box with an x for each thing, and an empty "Dodaj u listu" at the bottom with a green tick in the column
+  of the x's (`shop-add-tick`); it and the keyboard's
+  tick put it in and open the next; so does the tick an iPhone shows over the
   keyboard, which a page cannot remove (it only blurs: `onBlur`, 250 ms later, so a
   tap on the brush or another box goes first). An x leaves the cursor where it is. The brush,
   green, saves; the x in the corner, right of the others, throws the list away

@@ -530,6 +530,7 @@ const Map<String, List<String>> _texts = {
   'Svi iznosi su preračunati u {0} po današnjem tečaju.': ['Every amount is now in {0}, at today\'s rate.', 'Tüm tutarlar bugünkü kurla {0} birimine çevrildi.'],
   'Valuta {0} je odabrana za ovo putovanje.': ['{0} is the currency of this trip.', 'Bu seyahatin para birimi {0} olarak seçildi.'],
   'Valuta {0} je odabrana za nova putovanja.': ['{0} is the currency of new trips.', 'Yeni seyahatlerin para birimi {0} olarak seçildi.'],
+  'Potvrdi': ['Confirm', 'Onayla'],
   'Koliko je bilo?': ['How much was it?', 'Ne kadar tuttu?'],
   'Dodaj u troškove: {0}': ['Add to costs: {0}', 'Masraflara ekle: {0}'],
   'Dodaj u troškove': ['Add to costs', 'Masraflara ekle'],
